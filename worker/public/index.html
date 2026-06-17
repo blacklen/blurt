@@ -319,57 +319,20 @@ const CATS = [
   {id:'opinion',label:'🧠 Opinions'},
   {id:'story',  label:'📖 Storytelling'}
 ];
-const PROMPTS = [
+let PROMPTS = [
+ /* Compact cold-start fallback. The full ~100-prompt bank loads from /prompts.json
+    (cached in localStorage) via loadPrompts(); this keeps the app usable offline on
+    a first visit before that fetch lands. */
  {cat:'work',kind:'vn', text:'Cái bug này khó chịu thật, mình tìm cả buổi sáng mà chưa ra.', sample:"This bug is driving me crazy — I've been digging into it all morning and still nothing.", chunk:'driving me crazy', note:'“Driving me crazy” is the natural way to vent about something annoying.'},
- {cat:'work',kind:'vn', text:'Hóa ra vấn đề là do config sai chứ không phải code.', sample:"It turns out the problem was a misconfig, not the code itself.", chunk:'it turns out', note:'“It turns out” is the go-to opener for surprises.'},
- {cat:'work',kind:'sit', text:'The deploy failed at 5pm on Friday. Tell the team channel.', sample:"Heads up — the deploy just failed. Looking into it now, will post updates here.", chunk:'heads up', note:'“Heads up” opens almost every alert message.'},
- {cat:'work',kind:'sit', text:'You disagree with a senior engineer’s approach in a code review. Push back politely.', sample:"I might be missing something, but wouldn't this break if the list is empty?", chunk:'I might be missing something, but...', note:'The most powerful disagreement opener in English.'},
  {cat:'work',kind:'sit', text:'Your standup update: yesterday a bug fix, today a new task, no blockers.', sample:"Quick one from me — wrapped up the login bug yesterday, picking up the export task today. No blockers.", chunk:'wrapped up / picking up', note:'Standup verbs: wrap up, pick up, look into, follow up.'},
- {cat:'work',kind:'vn', text:'Đáng lẽ mình nên review kỹ hơn trước khi merge.', sample:"I should have reviewed it more carefully before merging.", chunk:'should have + V3', note:'“Đáng lẽ” = “should have”, every single time.'},
- {cat:'work',kind:'vn', text:'Tính năng này nghe thì đơn giản nhưng làm thì phức tạp lắm.', sample:"This feature sounds simple, but it's a lot trickier than it looks.", chunk:'trickier than it looks', note:'Classic dev sentence. Memorize whole.'},
- {cat:'work',kind:'sit', text:'A recruiter asks: “Tell me about yourself” — give the 15-second version.', sample:"I'm a developer based in Hanoi, mostly backend — I like taking messy systems and making them boring and reliable.", chunk:'mostly + noun', note:'“Mostly backend”, “mostly Python” — natural self-intro shape.'},
- {cat:'work',kind:'vn', text:'Cái này không gấp đâu, lúc nào rảnh thì làm.', sample:"No rush on this — whenever you get a chance.", chunk:'whenever you get a chance', note:'Polite-deadline chunk. Use it weekly.'},
- {cat:'work',kind:'sit', text:'Your PM asks why the feature is taking longer than estimated.', sample:"Honestly, it turned out messier than expected — the legacy code touches way more places than we thought.", chunk:'messier than expected', note:'“X than expected” saves you from word-by-word explanations.'},
  {cat:'daily',kind:'vn', text:'Mình định nghỉ sớm hôm nay vì hơi mệt.', sample:"I'm thinking of heading out early today — feeling a bit off.", chunk:'feeling a bit off', note:'“A bit off” covers tired, sick-ish, weird — all of it.'},
- {cat:'daily',kind:'vn', text:'Dạo này mình toàn ngủ muộn, sáng dậy không nổi.', sample:"I've been staying up way too late lately — mornings are a struggle.", chunk:'are a struggle', note:'“X is a struggle” — instant natural complaint.'},
- {cat:'daily',kind:'vn', text:'Trời này mà được nằm nhà xem phim thì thích phải biết.', sample:"Weather like this, I'd kill to just stay home and binge something.", chunk:"I'd kill to...", note:'“I’d kill to / I’d love to” = thích phải biết.'},
  {cat:'daily',kind:'sit', text:'Your food delivery is 40 minutes late. Message the shipper without being rude.', sample:"Hey, just checking in — any idea how far out you are? No worries if you're stuck in traffic.", chunk:'just checking in', note:'Softens any “where is it?!” message.'},
- {cat:'daily',kind:'vn', text:'Mình đang cố cắt giảm cà phê mà khó quá.', sample:"I'm trying to cut back on coffee, but it's not going great.", chunk:'cut back on', note:'Cut back on coffee, spending, screen time — endlessly reusable.'},
- {cat:'daily',kind:'sit', text:'Explain to a foreign friend why crossing the street in Hanoi is an art form.', sample:"The trick is to walk slowly and never stop — the bikes flow around you like water. Hesitate and you're done.", chunk:'the trick is to...', note:'“The trick is to” opens any how-to explanation.'},
- {cat:'daily',kind:'vn', text:'Cuối tuần này chắc mình ở nhà dọn dẹp với giặt giũ thôi.', sample:"This weekend's probably just chores — cleaning, laundry, the usual.", chunk:'the usual', note:'Two words that end a sentence perfectly.'},
- {cat:'daily',kind:'vn', text:'Mình quen làm việc buổi sáng hơn, đầu óc tỉnh táo hơn.', sample:"I'm more of a morning person — my brain just works better before lunch.", chunk:'more of a ... person', note:'“A tea person”, “a dog person” — endlessly reusable.'},
- {cat:'daily',kind:'sit', text:'Your gym buddy asks why you skipped this week.', sample:"Yeah, I fell off the wagon a bit — this week got away from me. Back on Monday, promise.", chunk:'this week got away from me', note:'The most forgiving excuse in English.'},
- {cat:'daily',kind:'vn', text:'Để mai tính đi, giờ muộn rồi.', sample:"Let's deal with it tomorrow — it's getting late.", chunk:'deal with it', note:'“Deal with” = xử lý, giải quyết, tính. One verb, many jobs.'},
- {cat:'social',kind:'sit', text:'Small talk: a coworker asks how your weekend was. It was boring.', sample:"Pretty quiet, honestly — just caught up on sleep and watched stuff. Needed it though.", chunk:'pretty quiet, honestly', note:'You don’t need an exciting weekend, just a natural-sounding one.'},
- {cat:'social',kind:'sit', text:'Recommend your favorite phở place to a foreign coworker visiting Hanoi.', sample:"You've got to try this place near my office — best broth in the Old Quarter, hands down.", chunk:'hands down', note:'“Hands down” = không phải bàn cãi.'},
- {cat:'social',kind:'sit', text:'Decline a friend’s invitation to go out tonight — you just don’t feel like it.', sample:"I'm gonna pass tonight — not really feeling it. Rain check?", chunk:'rain check?', note:'One word-pair that means “lần khác nhé” without guilt.'},
  {cat:'social',kind:'vn', text:'Lâu lắm rồi không gặp, dạo này thế nào?', sample:"Hey, it's been ages! How've you been?", chunk:"it's been ages", note:'Greeting chunk. Fires automatically once memorized.'},
- {cat:'social',kind:'sit', text:'Someone compliments your English. Respond without the awkward deny-everything reflex.', sample:"Ah, thanks — still a work in progress, but I'm getting there.", chunk:'a work in progress', note:'Accepts the compliment AND stays humble. Perfect.'},
- {cat:'social',kind:'vn', text:'Thôi để mình trả tiền lần này, lần sau bạn mời.', sample:"This one's on me — you can get the next one.", chunk:"this one's on me", note:'Paying-the-bill English in five words.'},
- {cat:'social',kind:'sit', text:'You forgot a person’s name two minutes after they introduced themselves. Recover.', sample:"I'm so sorry, your name slipped my mind — I'm terrible with names the first time.", chunk:'slipped my mind', note:'“Slipped my mind” works for names, deadlines, birthdays...'},
- {cat:'social',kind:'vn', text:'Nghe hấp dẫn đấy, kể thêm đi.', sample:"Ooh, that sounds interesting — tell me more.", chunk:'tell me more', note:'The two most powerful small-talk words. People love talking.'},
  {cat:'social',kind:'sit', text:'End a conversation politely because you need to leave.', sample:"Anyway, I should get going — it was really good catching up!", chunk:'I should get going', note:'The universal polite exit. “Anyway” signals the landing.'},
- {cat:'opinion',kind:'vn', text:'Mình không phản đối, nhưng mình nghĩ nên cân nhắc thêm rủi ro.', sample:"I'm not against it — I just think we should weigh the risks a bit more.", chunk:"I'm not against it, I just...", note:'Disagreement without conflict. Gold in any debate.'},
  {cat:'opinion',kind:'vn', text:'Càng nghĩ càng thấy giải pháp này không ổn.', sample:"The more I think about it, the more this feels wrong.", chunk:'the more... the more...', note:'A pattern chunk — memorize the shape, swap the words.'},
  {cat:'opinion',kind:'sit', text:'Hot take time: is AI going to replace developers? Honest opinion, 2 sentences.', sample:"Honestly, I think it replaces tasks, not developers — the job just shifts up a level. The people in trouble are the ones who refuse to use it.", chunk:'honestly, I think...', note:'“Honestly” buys you a second to think AND sounds confident.'},
- {cat:'opinion',kind:'vn', text:'Theo mình thì tiền không mua được hạnh phúc, nhưng thiếu tiền thì chắc chắn khổ.', sample:"The way I see it, money can't buy happiness — but not having it definitely buys misery.", chunk:'the way I see it', note:'Opinion opener that sounds thoughtful, not aggressive.'},
- {cat:'opinion',kind:'sit', text:'A friend says remote work is dead. You disagree. Argue back, friendly.', sample:"I don't know, man — companies keep saying that, but every good dev I know still gets remote offers.", chunk:"I don't know, man...", note:'Casual disagreement starts soft, then lands the punch.'},
- {cat:'opinion',kind:'vn', text:'Cũng tùy thôi, mỗi người một kiểu mà.', sample:"It really depends — different strokes for different folks.", chunk:'it really depends', note:'The honest answer to half of all questions.'},
- {cat:'opinion',kind:'sit', text:'Rank: bánh mì vs phở vs bún chả. Defend your #1 like it matters.', sample:"Bún chả, no contest — it's got the smoke, the herbs, the dipping ritual. Phở is comfort, but bún chả is an event.", chunk:'no contest', note:'“No contest” = không cần so. Confidence in two words.'},
- {cat:'opinion',kind:'vn', text:'Nói thật là mình thấy phim đó hơi bị đánh giá quá cao.', sample:"Honestly? I think that movie is kind of overrated.", chunk:'kind of overrated', note:'“Kind of” softens any spicy opinion just enough.'},
- {cat:'story',kind:'sit', text:'Tell the story of the worst bug you ever shipped — 3 sentences, make it dramatic.', sample:"So picture this: Friday night, everyone's gone home, and I push one tiny fix. Turns out that tiny fix logged every user out of the entire app. I spent the weekend pretending my phone was broken.", chunk:'so picture this...', note:'“Picture this” makes any story instantly cinematic.'},
  {cat:'story',kind:'vn', text:'Suýt nữa thì mình xóa nhầm database production.', sample:"I almost dropped the production database by accident.", chunk:'almost + verb', note:'No “suýt nữa thì” gymnastics — just “almost did”.'},
- {cat:'story',kind:'sit', text:'Describe your first day at your current job — one funny or awkward detail.', sample:"My first day, I spent twenty minutes looking for the meeting room before realizing it was the glass box I'd been standing next to the whole time.", chunk:'the whole time', note:'“The whole time” is the punchline chunk of English.'},
- {cat:'story',kind:'vn', text:'Đang giữa chừng cuộc họp thì mất điện, thế là cả phòng ngồi cười.', sample:"We were right in the middle of the meeting when the power went out — the whole room just burst out laughing.", chunk:'burst out laughing', note:'Emotion verbs: burst out laughing, break down crying, light up.'},
- {cat:'story',kind:'sit', text:'Tell a foreigner about a Tết tradition in your family — story, not Wikipedia.', sample:"Every year my mom wakes the whole house up at dawn to clean — apparently luck doesn't visit messy homes. We complain every single year, and every single year we do it anyway.", chunk:'every single year', note:'Repetition chunk that makes stories feel alive.'},
- {cat:'story',kind:'vn', text:'Lúc đó mình chẳng biết phải làm gì, đành cứ liều thôi.', sample:"At that point I had no idea what to do, so I just winged it.", chunk:'winged it', note:'“Wing it” = liều / làm đại. Beautiful little verb.'},
- {cat:'story',kind:'sit', text:'You ran into an old classmate unexpectedly. Tell a friend what happened.', sample:"You won't believe who I bumped into at the coffee shop — we ended up talking for like an hour, totally out of nowhere.", chunk:'bumped into', note:'“Bump into” = tình cờ gặp. “Run into” works too.'},
- {cat:'story',kind:'vn', text:'Chuyến đi đó đáng nhớ lắm, có cả trận mưa to nhất mình từng thấy.', sample:"That trip was unforgettable — we got caught in the heaviest rain I've ever seen.", chunk:"the ...est I've ever seen", note:'Superlative + “I’ve ever” = instant storytelling drama.'},
- {cat:'daily',kind:'vn', text:'Thôi kệ đi, không đáng để cãi nhau vì chuyện đó.', sample:"Ah, let it go — it's not worth arguing over.", chunk:'not worth + V-ing', note:'“Not worth doing X” covers a hundred Vietnamese sentences.'},
- {cat:'work',kind:'vn', text:'Để mình xem lại rồi báo bạn sau nhé.', sample:"Let me double-check and get back to you.", chunk:'get back to you', note:'One chunk replaces a whole word-by-word sentence.'},
- {cat:'work',kind:'sit', text:'Your teammate asks you to join a call in 5 minutes, but you are mid-debugging.', sample:"Can we push it back like 15 minutes? I'm right in the middle of something.", chunk:'in the middle of something', note:'Polite, vague, universal.'},
- {cat:'social',kind:'vn', text:'Dạo này mình hơi bận nên chưa trả lời tin nhắn được.', sample:"Sorry, things have been a bit hectic lately — just catching up on messages now.", chunk:'a bit hectic lately', note:'“Hectic” instantly upgrades “busy”.'},
- {cat:'opinion',kind:'vn', text:'Nếu mình là bạn thì mình sẽ hỏi sếp trước cho chắc.', sample:"If I were you, I'd run it by the boss first, just to be safe.", chunk:'run it by someone', note:'“Run it by X” = hỏi ý kiến X. Pure native.'}
+ {cat:'story',kind:'sit', text:'Tell the story of the worst bug you ever shipped — 3 sentences, make it dramatic.', sample:"So picture this: Friday night, everyone's gone home, and I push one tiny fix. Turns out that tiny fix logged every user out of the entire app. I spent the weekend pretending my phone was broken.", chunk:'so picture this...', note:'“Picture this” makes any story instantly cinematic.'}
 ];
 
 const REP_BASE = 45, REP_MIN = 30;   /* timer shrinks 1s per streak day */
@@ -381,8 +344,10 @@ const LADDER = [1,3,7,14,30,60];      /* days between successful reviews */
 let state = {streak:0, lastDate:null, total:0, cats:CATS.map(c=>c.id), hw:{date:null,reps:0}, ntfy:{on:false,hour:14,tzOffset:new Date().getTimezoneOffset()}, history:{}, lastRecap:null, settings:{hwReps:3}};
 const GEM_MODEL='gemini-2.5-flash';
 let chunks = [];
-let current=null, timer=null, secondsLeft=REP_BASE, lastResult=null;
+let current=null, timer=null, secondsLeft=REP_BASE, lastResult=null, recentPrompts=[];
 let drillCurrent=null, rec=null, micLive=false;
+const AI_MIX=0.33;   /* chance a normal rep auto-pulls a fresh AI prompt (logged in only) */
+let aiPrompts=(function(){ try{ return JSON.parse(localStorage.getItem('blurt:aiPrompts'))||[]; }catch(e){ return []; } })();  /* generated prompts, cached for variety + offline */
 
 /* ================= sync config (optional server) ================= */
 let API_BASE = (function(){ try{ return localStorage.getItem('blurt:apiBase'); }catch(e){ return null; } })()
@@ -544,15 +509,42 @@ function toggleCat(id){
   saveState(); renderChips();
 }
 
+/* ================= prompt bank loading ================= */
+/* The full bank lives in the static /prompts.json (served by the Worker, same as
+   index.html). Hydrate from the localStorage cache instantly so it works offline,
+   then refresh from the network in the background. */
+async function loadPrompts(){
+  try{ const c=localStorage.getItem('blurt:prompts'); if(c){ const arr=JSON.parse(c); if(Array.isArray(arr)&&arr.length) PROMPTS=arr; } }catch(e){}
+  try{
+    const r=await fetch(apiBase()+'/prompts.json',{cache:'no-cache'});
+    if(r.ok){ const arr=await r.json(); if(Array.isArray(arr)&&arr.length){ PROMPTS=arr; try{ localStorage.setItem('blurt:prompts',JSON.stringify(arr)); }catch(e){} } }
+  }catch(e){ /* offline → keep cache/fallback */ }
+}
+const CAT_IDS=CATS.map(c=>c.id);
+function cacheAiPrompt(p){
+  if(!p || !CAT_IDS.includes(p.cat) || !p.text || !p.sample || !p.chunk) return;   /* only cache well-formed, categorized prompts */
+  aiPrompts.push({cat:p.cat, kind:p.kind==='vn'?'vn':'sit', text:p.text, sample:p.sample, chunk:p.chunk, note:p.note||''});
+  if(aiPrompts.length>200) aiPrompts=aiPrompts.slice(-200);
+  try{ localStorage.setItem('blurt:aiPrompts',JSON.stringify(aiPrompts)); }catch(e){}
+}
+
 /* ================= practice flow ================= */
-function pool(){ return PROMPTS.filter(p=>state.cats.includes(p.cat)); }
+function pool(){ return PROMPTS.concat(aiPrompts).filter(p=>state.cats.includes(p.cat)); }
 function pickPrompt(){
-  const ps=pool(); let p;
-  do{ p=ps[Math.floor(Math.random()*ps.length)]; }
-  while(current && ps.length>1 && p===current.prompt);
+  const ps=pool();
+  const cap=Math.min(ps.length-1, 8);                       /* how many recent prompts to avoid; adapts to small pools */
+  let avail=ps.filter(p=>!recentPrompts.includes(p));
+  if(!avail.length) avail=ps.filter(p=>!current||p!==current.prompt); /* tiny pool: at least dodge the last one */
+  if(!avail.length) avail=ps;
+  const p=avail[Math.floor(Math.random()*avail.length)];
+  recentPrompts.push(p);
+  while(recentPrompts.length>cap) recentPrompts.shift();
   return p;
 }
-function startRep(){ startRepWith(pickPrompt()); }
+function startRep(){
+  if(loggedIn() && Math.random()<AI_MIX){ genPrompt(); return; }   /* ~1-in-3 reps come fresh from AI; genPrompt falls back to the bank on any failure */
+  startRepWith(pickPrompt());
+}
 function startRepWith(p){
   current={prompt:p};
   $('promptKind').textContent=p.kind==='vn'?'Say this in English':'React to this';
@@ -697,7 +689,7 @@ function drillBlank(chunkStr, exampleStr){
     const re=new RegExp("(?<![A-Za-z0-9'])"+body+"(?![A-Za-z0-9'])",'gi');
     out=out.replace(re,m=>{ hits++; answers.push(m); return BLANK; });
   }
-  return { html: esc(out).split(BLANK).join('<b>＿＿＿＿＿</b>'), hasBlank: hits>0, answer: answers.join(' ') };
+  return { html: esc(out).split(BLANK).join('<b>＿＿＿＿＿</b>'), hasBlank: hits>0, answer: [...new Set(answers.map(a=>a.toLowerCase()))].join(' ') };
 }
 function showDrillCard(idx, scheduled, mode, bodyId){
   mode=mode||'drill'; bodyId=bodyId||'drillBody';
@@ -913,6 +905,8 @@ function rxBodyHTML(fmt,c){
     cue='<div class="drillSentence"><b style="letter-spacing:0">'+esc(c.chunk)+'</b></div>';
     hint='Use it in a full sentence of your own.'; ph='Write a sentence using it...';
   } else if(fmt==='recall'){
+    const bl=drillBlank(c.chunk, c.example);
+    if(bl.hasBlank) rxCur.answer=bl.answer;
     cue='<div class="drillCtx">💬 '+esc(c.context)+'</div>';
     hint='What chunk did you save for this? (from memory)'; ph='Type the chunk...';
   } else {
@@ -994,7 +988,7 @@ function rxResolve(res,guess){
 /* end-of-mode screens */
 function rxBurstSummary(){
   const s=rxSession, pct=Math.round(100*(s.hits||0)/s.total);
-  $('randomBody').innerHTML='<div class="drillSentence" style="text-align:center"><div style="font-size:2rem">'+(pct>=80?'🏆':pct>=50?'👏':'💪')+'</div><b>'+(s.hits||0)+'/'+s.total+'</b> this burst · '+pct+'%</div>'+
+  $('randomBody').innerHTML='<div class="drillSentence" style="text-align:center;margin-top:18px"><div style="font-size:2rem">'+(pct>=80?'🏆':pct>=50?'👏':'💪')+'</div><b>'+(s.hits||0)+'/'+s.total+'</b> this burst · '+pct+'%</div>'+
     '<div class="row" style="justify-content:center"><button class="btn pulse" onclick="randomBegin(\'burst\')">Another burst</button>'+
     '<button class="btn ghost" onclick="randomLauncher()">Change mode</button></div>';
   rxSession=null;
@@ -1165,6 +1159,7 @@ function doLogout(){
 }
 /* Startup: straight to the app if a secret is stored, otherwise show the gate. */
 async function boot(){
+  loadPrompts();   /* fire-and-forget: hydrates from cache instantly, refreshes from /prompts.json in the background */
   if(loggedIn()){ hideGate(); await loadAll(); setAcctStatus(); }
   else { showGate(); }
 }
@@ -1243,10 +1238,12 @@ async function genPrompt(){
   if(!loggedIn()){ ntfyStatus('Log in (Settings below) to unlock AI prompts.', true); window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); return; }
   const btn=$('surpriseBtn'); btn.disabled=true; btn.textContent='✨ thinking...';
   const catNames=CATS.filter(c=>state.cats.includes(c.id)).map(c=>c.id+' ('+c.label.slice(2).trim()+')').join(', ');
-  const weak=[...chunks].sort((a,b)=>(b.misses||0)-(a.misses||0)).filter(c=>(c.misses||0)>0).slice(0,3).map(c=>c.chunk);
+  /* Prefer chunks due for review today (turns a rep into spaced repetition); fall back to the ones most often missed. */
+  const due=dueChunks();
+  const target=(due.length?due:[...chunks].filter(c=>(c.misses||0)>0).sort((a,b)=>(b.misses||0)-(a.misses||0))).slice(0,3).map(c=>c.chunk);
   const msg=`Generate ONE practice prompt for a Vietnamese software developer in Hanoi training spoken English fluency.
 Pick a category from: ${catNames}.
-${weak.length?'If it fits naturally, design the situation so a good answer could reuse one of these phrases the learner keeps missing: '+weak.join(' | ')+'.':''}
+${target.length?'If it fits naturally, design the situation so a good answer could reuse one of these phrases the learner is reviewing: '+target.join(' | ')+'.':''}
 Either kind "vn" (a natural everyday Vietnamese sentence to express in English) or kind "sit" (an English-described situation to react to). Be creative and specific — local Hanoi flavor welcome, sometimes funny.
 Reply ONLY JSON: {"cat":"work|daily|social|opinion|story","kind":"vn|sit","text":"the prompt itself","sample":"a natural native-speaker answer, 1-2 sentences","chunk":"the most reusable multi-word phrase from sample","note":"short coaching note, max 20 words"}`;
   try{
@@ -1255,11 +1252,11 @@ Reply ONLY JSON: {"cat":"work|daily|social|opinion|story","kind":"vn|sit","text"
     const text=((data.candidates||[])[0]?.content?.parts||[]).map(x=>x.text||'').join('');
     const s=text.indexOf('{'), e=text.lastIndexOf('}');
     const obj=JSON.parse(text.slice(s,e+1));
-    if(obj && obj.text && obj.sample && obj.chunk){ startRepWith(obj); }
+    if(obj && obj.text && obj.sample && obj.chunk){ cacheAiPrompt(obj); startRepWith(obj); }
     else throw new Error('bad prompt');
   }catch(err){
     console.error('genPrompt failed:',err);
-    startRep(); /* graceful: fall back to the bank */
+    startRepWith(pickPrompt()); /* graceful: fall back to the bank (no recursion into the AI roll) */
   }finally{
     btn.disabled=false; btn.textContent='✨ AI prompt';
   }

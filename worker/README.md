@@ -36,11 +36,12 @@ npm run dev                                # http://localhost:8787, simulated lo
 
 ## Use it
 
-The Worker also **hosts the app itself**: `npm run build` copies
-`../blurt-standalone.html` into `public/index.html` (this runs automatically
-before `dev`/`deploy`), and `[assets]` in `wrangler.toml` serves it at `/`.
-Static assets are served first; only `/api/*` invokes the Worker — so the app
-and its API share one origin (no CORS, one URL to bookmark).
+The Worker also **hosts the app itself**: everything in `public/` is a static
+asset — `index.html` (the whole app) and `prompts.json` (the practice bank) — and
+`[assets]` in `wrangler.toml` serves it at `/`. There is no build step; you edit
+`public/index.html` directly. Static assets are served first; only `/api/*`
+invokes the Worker — so the app and its API share one origin (no CORS, one URL to
+bookmark).
 
 Just open your Worker URL on any device:
 
@@ -52,6 +53,51 @@ In **Settings → 🔐 Log in & sync** the server field is pre-filled with the
 current origin, so you only type your secret and click **Log in**. With no
 secret entered the app still works fully offline (built-in sample answers, no
 reminders).
+
+## Prompt bank
+
+Practice prompts come from a **hybrid bank**: a curated static core plus fresh
+AI-generated prompts, so you get reliable quality *and* enough novelty that you
+never just memorize the answers.
+
+**1. Static core — `public/prompts.json`**
+The ~100 curated prompts live in a static JSON asset (served from the same origin
+as the app, like `index.html`). It is *not* in KV: the bank is identical for
+everyone and never changes per user, so it belongs in a static file, not the
+per-user store. To grow the bank, edit `prompts.json` — no redeploy of code, no
+DB write. Each entry:
+
+```json
+{ "cat": "work", "kind": "vn", "text": "...", "sample": "...", "chunk": "...", "note": "..." }
+```
+
+- `cat` — one of `work | daily | social | opinion | story` (the category chips).
+- `kind` — `vn` (a Vietnamese sentence to say in English) or `sit` (an English
+  situation to react to).
+- `sample` / `chunk` / `note` — the native phrasing, the one reusable phrase to
+  steal, and a short coaching line.
+
+**2. Loading & offline** (`loadPrompts()` in `index.html`)
+On boot the app hydrates `PROMPTS` from `localStorage['blurt:prompts']`
+instantly (so it works offline), then refreshes from `/prompts.json` in the
+background and re-caches. If both miss (cold first visit, no network), a small
+inline fallback array baked into `index.html` keeps every category playable.
+
+**3. AI top-up** (`genPrompt()`)
+When logged in, ~1 in 3 reps (`AI_MIX = 0.33`) is generated live via the Gemini
+proxy (`POST /api/ai`) instead of drawn from the bank; the ✨ button forces one on
+demand. Any failure or offline state falls straight back to the bank, so a rep
+never stalls. Generation is **chunk-aware**: it biases the prompt toward a chunk
+that is *due for review today* (falling back to your most-missed chunks), so a
+practice rep doubles as spaced-repetition review of phrases you've saved.
+
+**4. Caching generated prompts**
+Successful AI prompts are appended to `localStorage['blurt:aiPrompts']` (capped at
+200) and folded back into the practice pool, so they add lasting variety and keep
+working offline after the first generation.
+
+Selection avoids recently-shown prompts (a short rolling history) so you cycle
+through your chosen categories before any prompt repeats.
 
 ## API
 
