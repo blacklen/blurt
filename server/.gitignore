@@ -1,0 +1,4 @@
+node_modules/
+blurt.db
+blurt.db-wal
+blurt.db-shm
