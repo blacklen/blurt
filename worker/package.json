@@ -4,10 +4,7 @@
   "private": true,
   "description": "Cloudflare Worker + KV backend for Blurt cross-device sync",
   "scripts": {
-    "build": "node -e \"const fs=require('fs');fs.mkdirSync('public',{recursive:true});fs.copyFileSync('../blurt-standalone.html','public/index.html')\"",
-    "predev": "npm run build",
     "dev": "wrangler dev",
-    "predeploy": "npm run build",
     "deploy": "wrangler deploy",
     "kv:create": "wrangler kv namespace create BLURT_KV"
   },
