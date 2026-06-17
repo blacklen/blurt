@@ -832,7 +832,7 @@ function randomBegin(mode){
   if(mode==='burst') rxSession={mode:'burst', total:Math.min(10,Math.max(5,chunks.length)), done:0, hits:0};
   else if(mode==='boss'){ const q=rxLeeches(Math.min(5,chunks.length)); rxSession={mode:'boss', queue:q.slice(), total:q.length, cleared:0}; }
   else if(mode==='wager') rxSession={mode:'wager', mult:1, best:1};
-  else if(mode==='capsule') rxSession={mode:'capsule'};
+  else if(mode==='capsule') rxSession={mode:'capsule', total:chunks.length, seen:0};
   else rxSession={mode:'shuffle'};
   $('randomEyebrow').textContent='Random · '+(RMODES.find(m=>m.id===mode).label);
   $('randomModes').innerHTML=RMODES.map(m=>'<button class="chip'+(m.id===mode?' on':'')+'" onclick="randomBegin(\''+m.id+'\')">'+m.label+'</button>').join('');
@@ -852,6 +852,7 @@ function rxNext(){
   if(s){
     if(s.mode==='burst' && (s.done||0)>=s.total) return rxBurstSummary();
     if(s.mode==='boss' && s.queue.length===0) return rxBossWin();
+    if(s.mode==='capsule' && s.seen>=s.total) return rxCapsuleDone();
     if(s.mode==='wager') return rxWagerBet();
   }
   rxRenderNext();
@@ -868,7 +869,7 @@ function rxSetBet(b){ rxSession.bet=b; rxRenderNext(); }
 function rxRenderNext(){
   const s=rxSession; let idx;
   if(s && s.mode==='boss'){ idx=s.queue.shift(); }
-  else if(s && s.mode==='capsule'){ idx=rxDrawOldest(); }
+  else if(s && s.mode==='capsule'){ idx=rxDrawOldest(); s.seen++; }
   else idx=rxDraw();
   rxRender(idx);
 }
@@ -1001,6 +1002,13 @@ function rxBurstSummary(){
 function rxBossWin(){
   $('randomBody').innerHTML='<div class="drillSentence" style="text-align:center"><div style="font-size:2rem">👾💥</div>Boss cleared — every chunk down!</div>'+
     '<div class="row" style="justify-content:center"><button class="btn pulse" onclick="randomBegin(\'boss\')">Rematch</button>'+
+    '<button class="btn ghost" onclick="randomLauncher()">Change mode</button></div>';
+  rxSession=null;
+}
+function rxCapsuleDone(){
+  const n=rxSession.total;
+  $('randomBody').innerHTML='<div class="drillSentence" style="text-align:center"><div style="font-size:2rem">🕰️✨</div>All '+n+' chunk'+(n!==1?'s':'')+' resurfaced!</div>'+
+    '<div class="row" style="justify-content:center"><button class="btn pulse" onclick="randomBegin(\'capsule\')">Again</button>'+
     '<button class="btn ghost" onclick="randomLauncher()">Change mode</button></div>';
   rxSession=null;
 }
