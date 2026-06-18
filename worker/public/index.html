@@ -184,6 +184,7 @@
         <div>
           <div class="eyebrow" id="promptKind">Express this</div>
           <p class="promptText" id="promptText"></p>
+          <p class="hint" id="chunkHint" style="display:none;margin-top:8px">Use this chunk → <b id="chunkHintText"></b></p>
         </div>
         <div class="clock" id="clock">45</div>
       </div>
@@ -547,8 +548,11 @@ function startRep(){
 }
 function startRepWith(p){
   current={prompt:p};
-  $('promptKind').textContent=p.kind==='vn'?'Say this in English':'React to this';
+  $('promptKind').textContent=p.kind==='vn'?'Say this in English':'Situation';
   $('promptText').textContent=p.text;
+  const hint=$('chunkHint');
+  if(p.kind==='sit' && p.chunk){ $('chunkHintText').textContent=p.chunk; hint.style.display=''; }
+  else hint.style.display='none';
   $('blurtInput').value=''; $('blurtInput').disabled=false;
   $('checkBtn').disabled=false;
   show('blurtCard'); $('blurtInput').focus();
@@ -598,6 +602,7 @@ async function finishRep(){
   let result=null;
   if(blurt) result=await askGemini(p,blurt);
   if(!result) result={natural:p.sample, chunk:p.chunk, note:p.note};
+  if(p.kind==='sit' && p.chunk && result) result.chunk=p.chunk;
   lastResult=result;
   $('naturalText').textContent=result.natural;
   $('chunkText').textContent=result.chunk;
@@ -605,16 +610,21 @@ async function finishRep(){
 }
 
 async function askGemini(p,blurt){
-  const task=p.kind==='vn'
-    ? 'The prompt was a Vietnamese sentence to express in English: "'+p.text+'"'
-    : 'The prompt was a situation to respond to: "'+p.text+'"';
+  let task, instr;
+  if(p.kind==='vn'){
+    task='The prompt was a Vietnamese sentence to express in English: "'+p.text+'"';
+    instr='{"natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","note":"one short encouraging coaching note (max 22 words) about the main gap between their version and the natural one. If their version was already natural, say so."}';
+  } else {
+    task='Situation: "'+p.text+'"'+(p.chunk?'\nTarget chunk to practice: "'+p.chunk+'"':'');
+    instr='{"natural":"a corrected, natural response to the situation that includes the target chunk (casual register, 1-2 sentences)","chunk":"copy the target chunk exactly as given","note":"one short coaching note (max 22 words): did they use the chunk? If not, show how to slip it in naturally."}';
+  }
   const userMsg=
 `You are a friendly English fluency coach for a Vietnamese software developer practicing fast speech-like production.
 ${task}
 Their fast, unedited attempt: "${blurt}"
 
 Reply with ONLY a JSON object:
-{"natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","note":"one short encouraging coaching note (max 22 words) about the main gap between their version and the natural one. If their version was already natural, say so."}`;
+${instr}`;
   const data=await geminiJSON({contents:[{parts:[{text:userMsg}]}], generationConfig:{responseMimeType:'application/json'}});
   if(!data) return null;
   try{
