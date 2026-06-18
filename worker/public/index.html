@@ -701,6 +701,7 @@ function showDrillCard(idx, scheduled, mode, bodyId){
   $(bodyId).innerHTML=
     (c.context ? '<div class="drillCtx">💬 '+esc(c.context)+'</div>' : '')+
     '<div class="drillSentence">'+shown+'</div>'+
+    '<button class="speak" onclick="speakDrillEx()" title="Hear it">🔊</button>'+
     (hasBlank?'':'<p class="hint">Type the chunk you saved for this sentence:</p>')+
     '<input class="drillIn" id="drillInput" autocomplete="off" placeholder="Fill the blank from memory...">'+
     '<div class="row"><button class="btn" onclick="drillCheck()">Check</button>'+
@@ -887,7 +888,8 @@ function rxRenderWith(idx, fmt){
 function rxBodyHTML(fmt,c){
   const showMe='<button class="btn ghost" onclick="rxReveal()">I forgot — show me</button>';
   if(fmt==='scramble'){
-    return '<p class="hint">Tap the words back into the right order:</p>'+
+    return '<button class="speak" onclick="speakRxEx()" title="Hear it">🔊</button>'+
+      '<p class="hint">Tap the words back into the right order:</p>'+
       '<div class="drillSentence" id="rxAns">&nbsp;</div><div class="rxBank" id="rxBank"></div>'+
       '<div class="row"><button class="btn" onclick="rxScrambleCheck()">Check</button>'+
       '<button class="btn ghost" onclick="rxScrambleClear()">Clear</button>'+showMe+'</div><div id="rxVerdict"></div>';
@@ -895,6 +897,7 @@ function rxBodyHTML(fmt,c){
   if(fmt==='persona'){
     rxCur.persona=RX_PERSONAS[Math.floor(Math.random()*RX_PERSONAS.length)];
     return '<div class="drillSentence"><b style="letter-spacing:0">'+esc(c.chunk)+'</b></div>'+
+      '<button class="speak" onclick="speakRxEx()" title="Hear it">🔊</button>'+
       '<p class="hint">Say it out loud — but '+rxCur.persona+'.</p>'+
       '<div class="row"><button class="btn" onclick="rxSelfGrade(true)">🎙️ Nailed it</button>'+
       '<button class="btn ghost" onclick="rxSelfGrade(false)">😬 Fumbled</button></div>'+
@@ -914,7 +917,7 @@ function rxBodyHTML(fmt,c){
     rxCur.answer=bl.answer||c.chunk;
     cue='<div class="drillSentence">'+bl.html+'</div>'; ph='Fill the blank from memory...';
   }
-  return cue+(hint?'<p class="hint">'+hint+'</p>':'')+
+  return cue+'<button class="speak" onclick="speakRxEx()" title="Hear it">🔊</button>'+(hint?'<p class="hint">'+hint+'</p>':'')+
     '<input class="drillIn" id="rxInput" autocomplete="off" placeholder="'+ph+'">'+
     '<div class="row"><button class="btn" onclick="rxCheck()">Check</button>'+showMe+'</div><div id="rxVerdict"></div>';
 }
@@ -1038,12 +1041,14 @@ async function rxRenderAI(fmt, idx, banner){
   if(fmt==='frankenstein'){
     html+='<div class="drillCtx">🧪 Frankenstein — use BOTH phrases in one sentence</div>'+
       '<div class="drillSentence">'+esc(obj.scenario||'Make one sentence using both phrases.')+'</div>'+
+      '<button class="speak" onclick="speakRxEx()" title="Hear it">🔊</button>'+
       '<p class="hint">Must include: <b>'+esc(c.chunk)+'</b> + <b>'+esc(c2.chunk)+'</b></p>'+
       '<input class="drillIn" id="rxInput" autocomplete="off" placeholder="One sentence, both phrases...">'+
       '<div class="row"><button class="btn" onclick="rxCheck()">Check</button>'+showMe+'</div><div id="rxVerdict"></div>';
   } else if(fmt==='scene'){
     html+='<div class="drillCtx">🎬 You\'re in the scene — reply naturally</div>'+
       '<div class="drillSentence">'+(obj.a?'<b>A:</b> '+esc(obj.a)+'<br>':'')+(obj.b?'<b>B:</b> '+esc(obj.b):'')+'</div>'+
+      '<button class="speak" onclick="speakRxEx()" title="Hear it">🔊</button>'+
       '<p class="hint">Reply using the chunk you saved.</p>'+
       '<input class="drillIn" id="rxInput" autocomplete="off" placeholder="Your reply...">'+
       '<div class="row"><button class="btn" onclick="rxCheck()">Check</button>'+showMe+'</div><div id="rxVerdict"></div>';
@@ -1056,6 +1061,7 @@ async function rxRenderAI(fmt, idx, banner){
     const opts=shuffle([c.chunk].concat(obj.wrong.slice(0,3))); rxCur.mcOptions=opts;
     const cue=c.context?esc(c.context):esc(c.example).replace(new RegExp(esc(c.chunk).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),'<b>＿＿＿</b>');
     html+='<div class="drillCtx">🎯 Which form is right?</div><div class="drillSentence">'+cue+'</div>'+
+      '<button class="speak" onclick="speakRxEx()" title="Hear it">🔊</button>'+
       '<div class="rxBank" style="flex-direction:column;align-items:stretch">'+opts.map((o,i)=>'<button class="rxWord" style="text-align:left" onclick="rxMcPick('+i+')">'+esc(o)+'</button>').join('')+'</div><div id="rxVerdict"></div>';
   }
   $('randomBody').innerHTML=html;
@@ -1085,7 +1091,7 @@ function renderChunks(){
   list.innerHTML=[...chunks].sort((a,b)=>a.due.localeCompare(b.due)).map(c=>{
     const i=chunks.indexOf(c);
     const dueTxt=c.due<=t?'<span class="dueNow">due now</span>':'next: '+c.due;
-    return '<div class="chunkItem"><div><b>'+esc(c.chunk)+'</b><small>'+esc(c.example)+'</small>'+
+    return '<div class="chunkItem"><div><b>'+esc(c.chunk)+'</b><button class="speak" onclick="speakChunk('+i+')" title="Hear it">🔊</button><small>'+esc(c.example)+'</small>'+
     '<div class="meta">✓'+(c.hits||0)+' ✗'+(c.misses||0)+
       ((c.rhits||c.rmisses)?' · 🎲 ✓'+(c.rhits||0)+' ✗'+(c.rmisses||0):'')+
       ' · '+dueTxt+'</div></div>'+
@@ -1211,15 +1217,19 @@ function hist(){
 }
 
 /* ================= 1. text-to-speech ================= */
-function speakNatural(){
-  if(!lastResult || !('speechSynthesis' in window)) return;
+function speakText(text){
+  if(!text || !('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(lastResult.natural);
+  const u=new SpeechSynthesisUtterance(text);
   u.lang='en-US'; u.rate=0.95;
   const v=speechSynthesis.getVoices().find(v=>v.lang.startsWith('en'));
   if(v) u.voice=v;
   speechSynthesis.speak(u);
 }
+function speakNatural(){ if(lastResult) speakText(lastResult.natural); }
+function speakDrillEx(){ if(drillCurrent) speakText(chunks[drillCurrent.idx].example||chunks[drillCurrent.idx].chunk); }
+function speakRxEx(){ if(rxCur) speakText(chunks[rxCur.idx].example||chunks[rxCur.idx].chunk); }
+function speakChunk(i){ speakText(chunks[i].example||chunks[i].chunk); }
 
 /* ================= 2. manual chunk ================= */
 async function addManualChunk(){
