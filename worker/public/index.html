@@ -199,11 +199,30 @@
     <div class="card result" id="resultCard" style="display:none">
       <div class="eyebrow">How a native might say it<button class="speak" onclick="speakNatural()" title="Hear it">🔊</button></div>
       <div class="you" id="yourBlurt"></div>
-      <div class="natural" id="naturalText"></div>
-      <div class="chunkBox">
-        <div>steal this chunk → <b id="chunkText"></b></div>
-        <button class="btn ghost" id="saveChunkBtn" onclick="saveChunk()">Save</button>
+
+      <div id="vnResult">
+        <div class="natural" id="naturalText"></div>
+        <div class="chunkBox">
+          <div>steal this chunk → <b id="chunkText"></b></div>
+          <button class="btn ghost" id="saveChunkBtn" onclick="saveChunk()">Save</button>
+        </div>
       </div>
+
+      <div id="sitResult" style="display:none">
+        <div class="eyebrow" style="margin-top:2px">Your answer, fixed</div>
+        <div class="natural" id="fixedText"></div>
+        <div class="chunkBox">
+          <div>chunk → <b id="fixedChunkText"></b></div>
+          <button class="btn ghost" id="saveFixedBtn" onclick="saveChunk('fixed')">Save</button>
+        </div>
+        <div class="eyebrow" style="margin-top:14px">Or say it like this</div>
+        <div class="natural" id="suggestText"></div>
+        <div class="chunkBox">
+          <div>chunk → <b id="suggestChunkText"></b></div>
+          <button class="btn ghost" id="saveSuggestBtn" onclick="saveChunk('suggested')">Save</button>
+        </div>
+      </div>
+
       <p class="note" id="noteText"></p>
       <div class="row">
         <button class="btn pulse js-next" onclick="startRep()">Next rep →</button>
@@ -595,17 +614,38 @@ async function finishRep(){
 
   show('resultCard');
   $('yourBlurt').textContent=blurt?'You: '+blurt:"You: (blank — that's okay, blank reps count too)";
-  $('naturalText').innerHTML='<span class="spin"></span> Getting the natural version...';
-  $('chunkText').textContent='...'; $('noteText').textContent='';
   resetSaveBtn();
+
+  const isSit=p.kind==='sit' && !!p.chunk;
+  $('vnResult').style.display=isSit?'none':'';
+  $('sitResult').style.display=isSit?'':'none';
+
+  if(isSit){
+    $('fixedText').innerHTML='<span class="spin"></span> Fixing your answer...';
+    $('suggestText').innerHTML='<span class="spin"></span> Cooking up a suggestion...';
+  } else {
+    $('naturalText').innerHTML='<span class="spin"></span> Getting the natural version...';
+    $('chunkText').textContent='...';
+  }
+  $('noteText').textContent='';
 
   let result=null;
   if(blurt) result=await askGemini(p,blurt);
-  if(!result) result={natural:p.sample, chunk:p.chunk, note:p.note};
-  if(p.kind==='sit' && p.chunk && result) result.chunk=p.chunk;
+  if(!result) result=isSit
+    ? {fixedAnswer:p.sample, natural:p.sample, chunk:p.chunk, note:p.note}
+    : {natural:p.sample, chunk:p.chunk, note:p.note};
+  if(isSit) result.chunk=p.chunk;
   lastResult=result;
-  $('naturalText').textContent=result.natural;
-  $('chunkText').textContent=result.chunk;
+
+  if(isSit){
+    $('fixedText').textContent=result.fixedAnswer||result.natural;
+    $('fixedChunkText').textContent=result.chunk;
+    $('suggestText').textContent=result.natural;
+    $('suggestChunkText').textContent=result.chunk;
+  } else {
+    $('naturalText').textContent=result.natural;
+    $('chunkText').textContent=result.chunk;
+  }
   $('noteText').textContent=result.note||'';
 }
 
@@ -616,7 +656,7 @@ async function askGemini(p,blurt){
     instr='{"natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","note":"one short encouraging coaching note (max 22 words) about the main gap between their version and the natural one. If their version was already natural, say so."}';
   } else {
     task='Situation: "'+p.text+'"'+(p.chunk?'\nTarget chunk to practice: "'+p.chunk+'"':'');
-    instr='{"natural":"a corrected, natural response to the situation that includes the target chunk (casual register, 1-2 sentences)","chunk":"copy the target chunk exactly as given","note":"one short coaching note (max 22 words): did they use the chunk? If not, show how to slip it in naturally."}';
+    instr='{"fixedAnswer":"THEIR OWN attempt, corrected — keep their content and structure as close as possible, just fix grammar/word choice/naturalness, and weave in the target chunk if it is missing or used awkwardly","natural":"a separate, freshly written example answer (1-2 sentences) that naturally uses the target chunk — does not need to follow their wording","chunk":"copy the target chunk exactly as given","note":"one short coaching note (max 22 words): did they use the chunk, and what was the main fix?"}';
   }
   const userMsg=
 `You are a friendly English fluency coach for a Vietnamese software developer practicing fast speech-like production.
@@ -723,7 +763,7 @@ function showDrillCard(idx, scheduled, mode, bodyId){
   $('drillInput').focus();
   $('drillInput').addEventListener('keydown',e=>{ if(e.key==='Enter') drillCheck(); });
 }
-function norm(s){ return s.toLowerCase().replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ').trim(); }
+function norm(s){ return s.toLowerCase().replace(/['‘’ʼ′]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
 function drillCheck(){
   const c=chunks[drillCurrent.idx];
   const guess=norm($('drillInput').value);
@@ -778,6 +818,7 @@ const RMODES=[
   {id:'boss',    label:'👾 Boss',    desc:'clear your worst chunks one by one'},
   {id:'wager',   label:'🎲 Wager',   desc:'bet before each card, build a multiplier'},
   {id:'capsule', label:'🕰️ Capsule', desc:'resurface your oldest chunks'},
+  {id:'context', label:'📝 Full sentence', desc:'see the context you saved it with, reply with a full sentence using the chunk'},
 ];
 const RX_FMTS=['blank','recall','produce','scramble','persona'];     /* client-side formats (Phase 2 adds AI ones) */
 const RX_PERSONAS=['😤 furious','🤵 painfully formal','😏 flirty','👶 explaining to a 5-year-old','🤫 whispering a secret','🎭 over-the-top dramatic','😴 half-asleep','📢 announcing it to a stadium'];
@@ -836,6 +877,7 @@ function randomBegin(mode){
   else if(mode==='boss'){ const q=rxLeeches(Math.min(5,chunks.length)); rxSession={mode:'boss', queue:q.slice(), total:q.length, cleared:0}; }
   else if(mode==='wager') rxSession={mode:'wager', mult:1, best:1};
   else if(mode==='capsule') rxSession={mode:'capsule', total:chunks.length, seen:0};
+  else if(mode==='context') rxSession={mode:'context'};
   else rxSession={mode:'shuffle'};
   $('randomEyebrow').textContent='Random · '+(RMODES.find(m=>m.id===mode).label);
   $('randomModes').innerHTML=RMODES.map(m=>'<button class="chip'+(m.id===mode?' on':'')+'" onclick="randomBegin(\''+m.id+'\')">'+m.label+'</button>').join('');
@@ -882,13 +924,18 @@ function rxPickFormat(){
   if(loggedIn()){ pool=pool.concat('mc','emoji','scene'); if(chunks.length>=2) pool.push('frankenstein'); }
   return pool[Math.floor(Math.random()*pool.length)];
 }
-function rxRender(idx){ const s=rxSession; rxRenderWith(idx, (s&&s.mode==='capsule')?'blank':rxPickFormat()); }
+function rxRender(idx){
+  const s=rxSession;
+  const fmt=(s&&s.mode==='capsule')?'blank':(s&&s.mode==='context')?'ctxFull':rxPickFormat();
+  rxRenderWith(idx, fmt);
+}
 function rxRenderWith(idx, fmt){
   const c=chunks[idx], s=rxSession;
   const inExample=drillBlank(c.chunk, c.example).hasBlank;
   if(fmt==='blank' && !inExample) fmt='recall';
   if(fmt==='recall' && !c.context) fmt=inExample?'blank':'produce';
-  rxCur={idx, fmt, answered:false, produce:(fmt==='produce'||fmt==='scene'||fmt==='frankenstein')};
+  if(fmt==='ctxFull' && !c.context) fmt='produce';
+  rxCur={idx, fmt, answered:false, produce:(fmt==='produce'||fmt==='scene'||fmt==='frankenstein'||fmt==='ctxFull')};
   let banner=rxModeBanner();
   if(s&&s.mode==='capsule'){ const a=rxDaysAgo(c.date); banner='<div class="drillCtx">🕰️ '+(a<=0?'today':a+' day'+(a>1?'s':'')+' ago')+' you stole this'+(c.context?' — '+esc(c.context):'')+'</div>'; }
   if(RX_AI_FMTS.includes(fmt)){ $('randomBody').innerHTML=banner+'<div class="drillSentence"><span class="spin"></span> Cooking up a surprise…</div>'; rxRenderAI(fmt,idx,banner); return; }
@@ -914,7 +961,10 @@ function rxBodyHTML(fmt,c){
       '<div id="rxVerdict"></div><div class="drillStats">Speaking drill — you grade yourself.</div>';
   }
   let cue, ph, hint='';
-  if(fmt==='produce'){
+  if(fmt==='ctxFull'){
+    cue='<div class="drillCtx">💬 '+esc(c.context)+'</div><div class="drillSentence"><b style="letter-spacing:0">'+esc(c.chunk)+'</b></div>';
+    hint='Reply to that context with a full sentence using the chunk.'; ph='Write your full sentence...';
+  } else if(fmt==='produce'){
     cue='<div class="drillSentence"><b style="letter-spacing:0">'+esc(c.chunk)+'</b></div>';
     hint='Use it in a full sentence of your own.'; ph='Write a sentence using it...';
   } else if(fmt==='recall'){
@@ -1084,12 +1134,18 @@ function rxMcPick(i){
 }
 
 /* ================= chunks tab ================= */
-function resetSaveBtn(){ const b=$('saveChunkBtn'); b.textContent='Save'; b.disabled=false; }
-async function saveChunk(){
+function resetSaveBtn(){
+  [['saveChunkBtn','Save'],['saveFixedBtn','Save'],['saveSuggestBtn','Save']].forEach(([id,label])=>{
+    const b=$(id); if(b){ b.textContent=label; b.disabled=false; }
+  });
+}
+async function saveChunk(which){
   if(!lastResult) return;
-  chunks.unshift({chunk:lastResult.chunk, example:lastResult.natural, context:(current&&current.prompt&&current.prompt.text)||'', date:dayStr(0), hits:0, misses:0, due:dayStr(1), step:0});
+  const example=which==='fixed'?(lastResult.fixedAnswer||lastResult.natural):lastResult.natural;
+  chunks.unshift({chunk:lastResult.chunk, example, context:(current&&current.prompt&&current.prompt.text)||'', date:dayStr(0), hits:0, misses:0, due:dayStr(1), step:0});
   await persistChunks(); renderHeader(); renderHW();
-  const b=$('saveChunkBtn'); b.textContent='Saved ✓ (first review tomorrow)'; b.disabled=true;
+  const btnId=which==='fixed'?'saveFixedBtn':which==='suggested'?'saveSuggestBtn':'saveChunkBtn';
+  const b=$(btnId); if(b){ b.textContent='Saved ✓ (first review tomorrow)'; b.disabled=true; }
 }
 function renderChunks(){
   const list=$('chunkList');
