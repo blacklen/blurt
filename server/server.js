@@ -8,6 +8,7 @@
  */
 
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 const Database = require('better-sqlite3');
@@ -31,14 +32,44 @@ db.exec(`
 
 const nowIso = () => new Date().toISOString();
 
+// Constant-time secret compare (length-guarded so timingSafeEqual won't throw).
+function safeEqual(a, b) {
+  const ab = Buffer.from(String(a)), bb = Buffer.from(String(b));
+  return ab.length === bb.length && crypto.timingSafeEqual(ab, bb);
+}
+
+// In-memory login brute-force throttle (the local twin of the Worker's KV counter).
+// 10 failures in 10 min from one IP → blocked; the window resets once it lapses.
+const LOGIN_MAX = 10;
+const LOGIN_WINDOW_MS = 10 * 60 * 1000;
+const loginFails = new Map(); // ip -> { count, first }
+function loginBlocked(ip) {
+  const e = loginFails.get(ip);
+  if (!e) return false;
+  if (Date.now() - e.first > LOGIN_WINDOW_MS) { loginFails.delete(ip); return false; }
+  return e.count >= LOGIN_MAX;
+}
+function noteLoginFailure(ip) {
+  const now = Date.now();
+  let e = loginFails.get(ip);
+  if (!e || now - e.first > LOGIN_WINDOW_MS) { e = { count: 0, first: now }; loginFails.set(ip, e); }
+  e.count++;
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '4mb' }));
 
-// Gate every /api route on the single shared secret.
+// Gate every /api route on the single shared secret. The login endpoint is also
+// brute-force throttled (failed attempts only, so normal use is unaffected).
 app.use('/api', (req, res, next) => {
+  const isLogin = req.method === 'GET' && req.path === '/login';
+  if (isLogin && loginBlocked(req.ip)) return res.status(429).json({ error: 'too many attempts, try later' });
   const m = (req.get('authorization') || '').match(/^Bearer\s+(.+)$/i);
-  if (!APP_SECRET || !m || m[1].trim() !== APP_SECRET) return res.status(401).json({ error: 'unauthorized' });
+  if (!APP_SECRET || !m || !safeEqual(m[1].trim(), APP_SECRET)) {
+    if (isLogin) noteLoginFailure(req.ip);
+    return res.status(401).json({ error: 'unauthorized' });
+  }
   next();
 });
 
@@ -100,8 +131,8 @@ app.post('/api/notify', async (req, res) => {
   }
 });
 
-// Convenience: also serve the app itself at /blurt-standalone.html (same-origin, no CORS needed).
-app.use(express.static(path.join(__dirname, '..')));
+// Convenience: also serve the app itself from worker/public/ (same-origin, no CORS needed).
+app.use(express.static(path.join(__dirname, '../worker/public')));
 
 // Local twin of the Worker cron: send the one daily homework ping when the
 // current hour matches the user's chosen time. The server owning the schedule

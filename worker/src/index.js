@@ -19,10 +19,33 @@ const CORS = {
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json', ...CORS } });
 
+// Constant-time string compare so a wrong secret can't be narrowed down by timing.
+function safeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 // True only if the request carries the correct secret.
 function authed(req, env) {
   const m = (req.headers.get('authorization') || '').match(/^Bearer\s+(.+)$/i);
-  return !!(env.APP_SECRET && m && m[1].trim() === env.APP_SECRET);
+  return !!(env.APP_SECRET && m && safeEqual(m[1].trim(), env.APP_SECRET));
+}
+
+// Login brute-force throttle: a KV counter keyed by client IP, written only on a
+// failed login, so the happy path stays free. 10 failures in 10 min → blocked.
+const LOGIN_MAX = 10;
+const LOGIN_WINDOW = 600; // seconds
+async function loginBlocked(env, ip) {
+  if (!env.BLURT_KV) return false;
+  return (Number(await env.BLURT_KV.get('login:fail:' + ip)) || 0) >= LOGIN_MAX;
+}
+async function noteLoginFailure(env, ip) {
+  if (!env.BLURT_KV) return;
+  const key = 'login:fail:' + ip;
+  const n = (Number(await env.BLURT_KV.get(key)) || 0) + 1;
+  await env.BLURT_KV.put(key, String(n), { expirationTtl: LOGIN_WINDOW }); // count decays after the window
 }
 
 async function getDoc(env, key) {
@@ -129,8 +152,17 @@ export default {
 
     if (!pathname.startsWith('/api/')) return new Response('Not found', { status: 404, headers: CORS });
 
+    const isLogin = pathname === '/api/login' && req.method === 'GET';
+    const ip = req.headers.get('CF-Connecting-IP') || 'unknown';
+
+    // Throttle only the login endpoint, so the AI/KV proxies stay write-free.
+    if (isLogin && (await loginBlocked(env, ip))) return json({ error: 'too many attempts, try later' }, 429);
+
     // Everything under /api requires the secret.
-    if (!authed(req, env)) return json({ error: 'unauthorized' }, 401);
+    if (!authed(req, env)) {
+      if (isLogin) await noteLoginFailure(env, ip); // only failed logins cost a KV write
+      return json({ error: 'unauthorized' }, 401);
+    }
     try {
       if (pathname === '/api/login' && req.method === 'GET') return json({ ok: true });
       if (pathname === '/api/ai' && req.method === 'POST') return await proxyAi(req, env);

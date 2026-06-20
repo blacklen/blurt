@@ -99,7 +99,7 @@ npm install
 APP_SECRET=yourpassword GEMINI_KEY=yourkey NTFY_TOPIC=yourtopic node server.js
 ```
 
-Point the app at `http://your-server:3000` via the Server URL field in Settings.
+Point the app at `http://your-server:8787` via the Server URL field in Settings.
 
 ## Login
 

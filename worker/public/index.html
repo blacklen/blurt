@@ -262,6 +262,11 @@
         <input class="drillIn" id="addChunkEx" placeholder="Example sentence using it (optional)" autocomplete="off">
         <div class="row"><button class="btn ghost" onclick="addManualChunk()">Add to schedule</button></div>
       </div>
+      <div class="addForm">
+        <input class="drillIn" id="ctxChunkText" placeholder="✨ Mô tả tình huống bằng tiếng Việt — AI tìm chunk (vd: nhờ ai đó kiểm tra code giúp)" autocomplete="off">
+        <div class="row"><button class="btn ghost" id="genCtxBtn" onclick="genChunkFromContext()">Generate chunk</button></div>
+        <div id="ctxChunkPreview"></div>
+      </div>
       <div id="chunkList"></div>
     </div>
   </div>
@@ -390,14 +395,38 @@ async function geminiJSON(payload){
   try{ return await api('/api/ai', {method:'POST', body:JSON.stringify({model:GEM_MODEL, body:payload})}); }
   catch(e){ console.error('AI proxy failed:',e); return null; }
 }
+/* One AI round-trip → parsed JSON object (or null): wraps geminiJSON plus the
+   shared "first { … last }" extraction. Per-call validation stays at the call site. */
+async function aiObj(payload){
+  const data=await geminiJSON(payload);
+  if(!data) return null;
+  try{
+    const text=((data.candidates||[])[0]?.content?.parts||[]).map(x=>x.text||'').join('');
+    const s=text.indexOf('{'), e=text.lastIndexOf('}');
+    if(s<0||e<0) return null;
+    return JSON.parse(text.slice(s,e+1));
+  }catch(err){ console.error('AI parse failed:',err); return null; }
+}
 
 /* ================= storage (localStorage cache + optional sync server) ================= */
+/* Newest-timestamp-wins sync: we cache the server's updated_at per key as
+   '<k>:ts'. On get, if the server copy is older than our cached baseline we have
+   newer un-pushed local edits, so we keep local and push it up instead of being
+   clobbered. (Single-user: last-writer-by-clock, no field-level merge.) */
 const store={
   async get(k){
     if(loggedIn()){
       try{
         const d=await api('/api/kv/'+encodeURIComponent(k));
-        if(d && d.value!=null){ try{ localStorage.setItem(k,d.value); }catch(e){} return {value:d.value}; }
+        if(d && d.value!=null){
+          const localTs=localStorage.getItem(k+':ts'), localVal=localStorage.getItem(k);
+          if(localVal!=null && localTs && d.updated_at && d.updated_at<localTs){
+            await store.set(k,localVal);                   /* server is stale → re-push our newer copy */
+            return {value:localVal};
+          }
+          try{ localStorage.setItem(k,d.value); if(d.updated_at) localStorage.setItem(k+':ts',d.updated_at); }catch(e){}
+          return {value:d.value};
+        }
       }catch(e){ /* offline → fall back to the local cache below */ }
     }
     try{ const v=localStorage.getItem(k); return v!==null?{value:v}:null; }catch(e){ return null; }
@@ -405,8 +434,13 @@ const store={
   async set(k,v){
     try{ localStorage.setItem(k,v); }catch(e){}            /* instant local cache */
     if(loggedIn()){
-      try{ await api('/api/kv/'+encodeURIComponent(k), {method:'PUT', body:JSON.stringify({value:v})}); }
-      catch(e){ /* offline → stays cached, pushes on next successful save */ }
+      try{
+        const r=await api('/api/kv/'+encodeURIComponent(k), {method:'PUT', body:JSON.stringify({value:v})});
+        try{ localStorage.setItem(k+':ts', (r&&r.updated_at)||new Date().toISOString()); }catch(e){}
+      }catch(e){
+        /* offline → record a local baseline so a later get() won't clobber this un-pushed edit */
+        try{ localStorage.setItem(k+':ts', new Date().toISOString()); }catch(e){}
+      }
     }
   }
 };
@@ -676,15 +710,8 @@ Their fast, unedited attempt: "${blurt}"
 
 Reply with ONLY a JSON object:
 ${instr}`;
-  const data=await geminiJSON({contents:[{parts:[{text:userMsg}]}], generationConfig:{responseMimeType:'application/json'}});
-  if(!data) return null;
-  try{
-    const text=((data.candidates||[])[0]?.content?.parts||[]).map(x=>x.text||'').join('');
-    const start=text.indexOf('{'), end=text.lastIndexOf('}');
-    if(start===-1||end===-1) throw new Error('no JSON in response');
-    const obj=JSON.parse(text.slice(start,end+1));
-    if(obj && obj.natural && obj.chunk) return obj;
-  }catch(e){ console.error('AI check failed:',e); }
+  const obj=await aiObj({contents:[{parts:[{text:userMsg}]}], generationConfig:{responseMimeType:'application/json'}});
+  if(obj && obj.natural && obj.chunk) return obj;
   return null;
 }
 
@@ -783,12 +810,7 @@ It MUST contain this exact phrase verbatim: "${c.chunk}"
 Use a fresh, concrete situation different from this earlier one: "${c.example||''}"
 Reply with ONLY JSON: {"example":"the sentence"}`;
   try{
-    const data=await geminiJSON({contents:[{parts:[{text:msg}]}], generationConfig:{responseMimeType:'application/json'}});
-    if(!data) return null;
-    const text=((data.candidates||[])[0]?.content?.parts||[]).map(x=>x.text||'').join('');
-    const s=text.indexOf('{'), e=text.lastIndexOf('}');
-    if(s===-1||e===-1) return null;
-    const obj=JSON.parse(text.slice(s,e+1));
+    const obj=await aiObj({contents:[{parts:[{text:msg}]}], generationConfig:{responseMimeType:'application/json'}});
     const ex=obj && obj.example && String(obj.example).trim();
     if(!ex) return null;
     if(!drillBlank(c.chunk, ex).hasBlank) return null;                 /* must contain the chunk so we can blank it */
@@ -1165,14 +1187,7 @@ function rxCapsuleDone(){
 
 /* ---- AI-backed formats (Phase 2): generation runs through the Worker; grading stays client-side ---- */
 async function rxAI(prompt){
-  const data=await geminiJSON({contents:[{parts:[{text:prompt}]}], generationConfig:{responseMimeType:'application/json'}});
-  if(!data) return null;
-  try{
-    const text=((data.candidates||[])[0]?.content?.parts||[]).map(x=>x.text||'').join('');
-    const a=text.indexOf('{'), b=text.lastIndexOf('}');
-    if(a<0||b<0) return null;
-    return JSON.parse(text.slice(a,b+1));
-  }catch(e){ console.error('rxAI parse failed:',e); return null; }
+  return aiObj({contents:[{parts:[{text:prompt}]}], generationConfig:{responseMimeType:'application/json'}});
 }
 async function rxRenderAI(fmt, idx, banner){
   const c=chunks[idx]; let obj=null, c2=null;
@@ -1402,6 +1417,45 @@ async function addManualChunk(){
   renderHeader(); renderHW(); renderChunks();
 }
 
+/* Describe a situation in Vietnamese → AI proposes a reusable chunk + example to save. */
+let ctxPending=null;
+async function genChunkFromContext(){
+  if(!loggedIn()){ ntfyStatus('Log in (Settings below) to unlock AI chunk generation.', true); window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); return; }
+  const ctx=$('ctxChunkText').value.trim();
+  if(!ctx) return;
+  const btn=$('genCtxBtn'), prev=$('ctxChunkPreview');
+  btn.disabled=true; btn.textContent='✨ thinking...';
+  const msg=`A Vietnamese software developer describes a situation they want to handle in spoken English:
+"${ctx}"
+Pick the SINGLE most useful, reusable multi-word English phrase (a "chunk") for that situation, and write ONE short, natural everyday English sentence (max 18 words) using it. The sentence MUST contain the phrase verbatim.
+Reply with ONLY JSON: {"chunk":"the phrase","example":"the sentence","note":"a one-line gloss in Vietnamese of when to use it"}`;
+  try{
+    const obj=await aiObj({contents:[{parts:[{text:msg}]}], generationConfig:{responseMimeType:'application/json'}});
+    const chunk=obj && obj.chunk && String(obj.chunk).trim();
+    const example=obj && obj.example && String(obj.example).trim();
+    if(!chunk || !example) throw new Error('bad chunk');
+    ctxPending={chunk, example, context:ctx};
+    prev.innerHTML='<div class="chunkItem"><div><b>'+esc(chunk)+'</b>'+
+      '<button class="speak" onclick="speakText('+JSON.stringify(chunk).replace(/"/g,'&quot;')+')" title="Hear it">🔊</button>'+
+      '<small>'+esc(example)+'</small>'+
+      (obj.note?'<div class="meta">💬 '+esc(String(obj.note).trim())+'</div>':'')+'</div>'+
+      '<button class="btn ghost" onclick="saveCtxChunk()">Save</button></div>';
+  }catch(e){
+    ctxPending=null;
+    prev.innerHTML='<div class="empty">Couldn\'t generate one — try rephrasing, or add it manually above.</div>';
+  }finally{
+    btn.disabled=false; btn.textContent='Generate chunk';
+  }
+}
+async function saveCtxChunk(){
+  if(!ctxPending) return;
+  chunks.unshift({chunk:ctxPending.chunk, example:ctxPending.example, context:ctxPending.context, date:dayStr(0), hits:0, misses:0, due:dayStr(1), step:0});
+  ctxPending=null;
+  await persistChunks();
+  $('ctxChunkText').value=''; $('ctxChunkPreview').innerHTML='';
+  renderHeader(); renderHW(); renderChunks();
+}
+
 /* ================= 4. AI-generated prompts ================= */
 async function genPrompt(){
   if(!loggedIn()){ ntfyStatus('Log in (Settings below) to unlock AI prompts.', true); window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'}); return; }
@@ -1416,11 +1470,7 @@ ${target.length?'If it fits naturally, design the situation so a good answer cou
 Either kind "vn" (a natural everyday Vietnamese sentence to express in English) or kind "sit" (an English-described situation to react to). Be creative and specific — local Hanoi flavor welcome, sometimes funny.
 Reply ONLY JSON: {"cat":"work|daily|social|opinion|story","kind":"vn|sit","text":"the prompt itself","sample":"a natural native-speaker answer, 1-2 sentences","chunk":"the most reusable multi-word phrase from sample","note":"short coaching note, max 20 words"}`;
   try{
-    const data=await geminiJSON({contents:[{parts:[{text:msg}]}], generationConfig:{responseMimeType:'application/json'}});
-    if(!data) throw new Error('no AI response');
-    const text=((data.candidates||[])[0]?.content?.parts||[]).map(x=>x.text||'').join('');
-    const s=text.indexOf('{'), e=text.lastIndexOf('}');
-    const obj=JSON.parse(text.slice(s,e+1));
+    const obj=await aiObj({contents:[{parts:[{text:msg}]}], generationConfig:{responseMimeType:'application/json'}});
     if(obj && obj.text && obj.sample && obj.chunk){ cacheAiPrompt(obj); startRepWith(obj); }
     else throw new Error('bad prompt');
   }catch(err){
@@ -1471,15 +1521,8 @@ async function genWeeklyPattern(){
 ${samples}
 Identify the 1-2 most RECURRING mistake patterns (e.g. dropped articles, verb tense, word order, preposition choice). Be specific and encouraging, and end with one quick tip.
 Reply with ONLY JSON: {"pattern":"one or two short sentences"}`;
-  try{
-    const data=await geminiJSON({contents:[{parts:[{text:msg}]}], generationConfig:{responseMimeType:'application/json'}});
-    if(!data) return null;
-    const text=((data.candidates||[])[0]?.content?.parts||[]).map(x=>x.text||'').join('');
-    const s=text.indexOf('{'), e=text.lastIndexOf('}');
-    if(s===-1||e===-1) return null;
-    const obj=JSON.parse(text.slice(s,e+1));
-    return (obj && obj.pattern && String(obj.pattern).trim()) || null;
-  }catch(err){ console.error('weekly pattern failed:',err); return null; }
+  const obj=await aiObj({contents:[{parts:[{text:msg}]}], generationConfig:{responseMimeType:'application/json'}});
+  return (obj && obj.pattern && String(obj.pattern).trim()) || null;
 }
 async function maybeWeeklyRecap(){
   if(!loggedIn()) return;
