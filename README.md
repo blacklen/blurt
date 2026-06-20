@@ -18,16 +18,16 @@ After you submit, Gemini shows you how a native speaker would say it, picks the 
 |-----|-------------|
 | **Practice** | One rep with a timer. Pick mood categories, or generate an AI prompt. |
 | **Random** | Five game modes (Shuffle, Burst, Boss, Wager, Capsule) that drill your saved chunks without touching the SRS schedule. |
-| **Drill** | Spaced-repetition queue — due chunks only. Fill-in-the-blank from memory. |
+| **Drill** | Spaced-repetition queue — due chunks only. Fill-in-the-blank from memory; type **or speak** your answer. Each review rotates through fresh AI-written example sentences (🔄 for a new one on demand) so you recall the chunk, not a memorised sentence. Grade a correct rep **Good** (next rung) or **Easy** (skip a rung). |
 | **My chunks** | Everything you've stolen. Add manually, export/import as JSON. |
-| **Stats** | 14-day rep bar chart, drill retention %, streak, nemesis chunks. |
+| **Stats** | 14-day rep bar chart, drill retention %, streak, nemesis chunks, and a weekly AI "mistake pattern" digest. |
 
 ### Other features
 
 - **Streak system** — homework = 3 practice reps + all due drill chunks. Miss a day, streak resets.
 - **Phone reminders** — daily ntfy.sh ping at a configurable hour, sent by the server.
-- **Weekly recap** — automatic ntfy ping summarising your week's reps and worst chunk.
-- **Voice input** — Web Speech API mic button on supported browsers.
+- **Weekly recap** — automatic ntfy ping summarising your week's reps and worst chunk, plus an AI-spotted recurring mistake pattern (also shown in Stats).
+- **Voice input** — Web Speech API mic button on supported browsers, in both Practice and Drill.
 - **Text-to-speech** — hear the natural version read aloud.
 - **Cross-device sync** — state and chunks sync to the server via a shared secret. Works offline from localStorage cache.
 

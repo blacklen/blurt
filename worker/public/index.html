@@ -361,11 +361,11 @@ let repTotal = REP_BASE;
 function hwReps(){ return state.settings.hwReps; }   /* daily blurt quota (user setting) */
 const LADDER = [1,3,7,14,30,60];      /* days between successful reviews */
 
-let state = {streak:0, lastDate:null, total:0, cats:CATS.map(c=>c.id), hw:{date:null,reps:0}, ntfy:{on:false,hour:14,tzOffset:new Date().getTimezoneOffset()}, history:{}, lastRecap:null, settings:{hwReps:3}};
+let state = {streak:0, lastDate:null, total:0, cats:CATS.map(c=>c.id), hw:{date:null,reps:0}, ntfy:{on:false,hour:14,tzOffset:new Date().getTimezoneOffset()}, history:{}, lastRecap:null, lastPattern:null, repLog:[], settings:{hwReps:3}};
 const GEM_MODEL='gemini-2.5-flash';
 let chunks = [];
 let current=null, timer=null, secondsLeft=REP_BASE, lastResult=null, recentPrompts=[];
-let drillCurrent=null, rec=null, micLive=false;
+let drillCurrent=null, rec=null, micLive=false, micBtnId='micBtn', micOnFinal=null, lastShownEx=null;
 const AI_MIX=0.33;   /* chance a normal rep auto-pulls a fresh AI prompt (logged in only) */
 let aiPrompts=(function(){ try{ return JSON.parse(localStorage.getItem('blurt:aiPrompts'))||[]; }catch(e){ return []; } })();  /* generated prompts, cached for variety + offline */
 
@@ -437,16 +437,18 @@ function dayStr(off){ const d=new Date(); d.setDate(d.getDate()+off); return d.t
 
 /* ================= scheduling ================= */
 function dueChunks(){ const t=dayStr(0); return chunks.filter(c=>c.due<=t); }
-function scheduleAfter(c, correct){
-  if(correct){
-    c.step=Math.min((c.step||0)+1, LADDER.length-1);
-    c.due=dayStr(LADDER[Math.min(c.step-1, LADDER.length-1)]);
-    c.hits=(c.hits||0)+1;
-  } else {
+/* grade: 'again' (missed — stays due today) | 'good' (next rung) | 'easy' (skip a rung). */
+function scheduleAfter(c, grade){
+  if(grade==='again'){
     c.step=0;
     c.due=dayStr(0); /* stays due today until you get it right */
     c.misses=(c.misses||0)+1;
+    return;
   }
+  const jump=grade==='easy'?2:1;
+  c.step=Math.min((c.step||0)+jump, LADDER.length);
+  c.due=dayStr(LADDER[Math.min(c.step-1, LADDER.length-1)]);
+  c.hits=(c.hits||0)+1;
 }
 
 /* ================= homework ================= */
@@ -647,6 +649,15 @@ async function finishRep(){
     $('chunkText').textContent=result.chunk;
   }
   $('noteText').textContent=result.note||'';
+
+  /* keep a small rolling log of attempts + corrections — fuel for the weekly
+     mistake-pattern digest (see maybeWeeklyRecap). Blank reps have nothing to learn from. */
+  if(blurt){
+    if(!Array.isArray(state.repLog)) state.repLog=[];
+    state.repLog.push({d:dayStr(0), prompt:p.text, blurt, fix:(isSit?(result.fixedAnswer||result.natural):result.natural)||'', note:result.note||''});
+    if(state.repLog.length>30) state.repLog=state.repLog.slice(-30);
+    saveState();
+  }
 }
 
 async function askGemini(p,blurt){
@@ -681,20 +692,29 @@ ${instr}`;
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 if(SR){ document.addEventListener('DOMContentLoaded',()=>{ $('micBtn').style.display=''; }); }
 function toggleMic(){ micLive?stopMic():startMic(); }
-function startMic(){
+function startMic(inputId, btnId, onFinal){
   if(!SR) return;
+  micBtnId=btnId||'micBtn'; micOnFinal=onFinal||null;
   rec=new SR();
   rec.lang='en-US'; rec.continuous=true; rec.interimResults=false;
   rec.onresult=e=>{
     let t='';
     for(let i=e.resultIndex;i<e.results.length;i++) t+=e.results[i][0].transcript;
-    const box=$('blurtInput'); box.value=(box.value+' '+t).trim();
+    const box=$(inputId||'blurtInput'); if(box) box.value=(box.value+' '+t).trim();
+    if(micOnFinal) micOnFinal();
   };
-  rec.onend=()=>{ micLive=false; $('micBtn').classList.remove('live'); };
-  rec.onerror=()=>{ micLive=false; $('micBtn').classList.remove('live'); };
-  try{ rec.start(); micLive=true; $('micBtn').classList.add('live'); }catch(e){}
+  rec.onend=()=>{ micLive=false; const b=$(micBtnId); if(b) b.classList.remove('live'); };
+  rec.onerror=()=>{ micLive=false; const b=$(micBtnId); if(b) b.classList.remove('live'); };
+  try{ rec.start(); micLive=true; const b=$(micBtnId); if(b) b.classList.add('live'); }catch(e){}
 }
-function stopMic(){ if(rec){ try{rec.stop();}catch(e){} } micLive=false; const m=$('micBtn'); if(m) m.classList.remove('live'); }
+function stopMic(){ if(rec){ try{rec.stop();}catch(e){} } micLive=false; const b=$(micBtnId); if(b) b.classList.remove('live'); }
+/* Drill: speak your answer. The recognized text fills the blank, then we
+   auto-check it — closes the gap between typing and actually saying the chunk. */
+function toggleDrillMic(){
+  if(micLive){ stopMic(); return; }
+  const box=$('drillInput'); if(box) box.value='';
+  startMic('drillInput','drillMicBtn', ()=>{ stopMic(); drillCheck(); });
+}
 
 /* ================= drill (due-today queue) ================= */
 function drillNext(){
@@ -741,48 +761,121 @@ function drillBlank(chunkStr, exampleStr){
   }
   return { html: esc(out).split(BLANK).join('<b>＿＿＿＿＿</b>'), hasBlank: hits>0, answer: [...new Set(answers.map(a=>a.toLowerCase()))].join(' ') };
 }
-function showDrillCard(idx, scheduled, mode, bodyId){
+/* Every known example sentence for a chunk: the original you saved plus any
+   the AI has since grown. Drilling rotates through these so you recall the
+   chunk in fresh contexts instead of memorizing one fixed sentence. */
+function examplePool(c){ return [c.example].concat(c.examples||[]).filter(Boolean); }
+function pickExample(c, override){
+  if(override) return override;
+  const pool=examplePool(c);
+  if(pool.length<=1) return pool[0]||c.chunk;
+  let choices=pool.filter(s=>s!==lastShownEx);
+  if(!choices.length) choices=pool;
+  return choices[Math.floor(Math.random()*choices.length)];
+}
+/* Ask the AI for one new sentence using this chunk verbatim, in a fresh
+   context. Validates it can actually be blanked, dedupes, caps the pool, and
+   persists. Returns the sentence or null (offline / AI down / unusable). */
+async function genFreshExample(c){
+  if(!loggedIn()) return null;
+  const msg=`Write ONE short, natural everyday English sentence (max 18 words) for a Vietnamese software developer practicing spoken fluency.
+It MUST contain this exact phrase verbatim: "${c.chunk}"
+Use a fresh, concrete situation different from this earlier one: "${c.example||''}"
+Reply with ONLY JSON: {"example":"the sentence"}`;
+  try{
+    const data=await geminiJSON({contents:[{parts:[{text:msg}]}], generationConfig:{responseMimeType:'application/json'}});
+    if(!data) return null;
+    const text=((data.candidates||[])[0]?.content?.parts||[]).map(x=>x.text||'').join('');
+    const s=text.indexOf('{'), e=text.lastIndexOf('}');
+    if(s===-1||e===-1) return null;
+    const obj=JSON.parse(text.slice(s,e+1));
+    const ex=obj && obj.example && String(obj.example).trim();
+    if(!ex) return null;
+    if(!drillBlank(c.chunk, ex).hasBlank) return null;                 /* must contain the chunk so we can blank it */
+    if(examplePool(c).some(x=>x.toLowerCase()===ex.toLowerCase())) return null;   /* dedupe */
+    c.examples=(c.examples||[]).concat(ex).slice(-3);                  /* keep the 3 most recent grown sentences */
+    persistChunks();
+    return ex;
+  }catch(err){ console.error('fresh example failed:',err); return null; }
+}
+async function freshDrillEx(){
+  if(!drillCurrent) return;
+  const c=chunks[drillCurrent.idx];
+  const b=$('freshExBtn'); if(b){ b.disabled=true; b.textContent='⏳'; }
+  const ex=await genFreshExample(c);
+  showDrillCard(drillCurrent.idx, drillCurrent.scheduled, drillCurrent.mode, 'drillBody', ex||undefined);
+  if(!ex){ const nb=$('freshExBtn'); if(nb){ nb.textContent='🔄'; } }
+}
+function showDrillCard(idx, scheduled, mode, bodyId, exOverride){
   mode=mode||'drill'; bodyId=bodyId||'drillBody';
   const c=chunks[idx];
-  const blanked=drillBlank(c.chunk, c.example);
+  const sentence=pickExample(c, exOverride);
+  lastShownEx=sentence;
+  const blanked=drillBlank(c.chunk, sentence);
   const hasBlank=blanked.hasBlank;
   const shown=blanked.html;
-  drillCurrent={idx, scheduled, mode, answer: hasBlank?blanked.answer:c.chunk};
+  drillCurrent={idx, scheduled, mode, example:sentence, answer: hasBlank?blanked.answer:c.chunk};
   $(bodyId).innerHTML=
     (c.context ? '<div class="drillCtx">💬 '+esc(c.context)+'</div>' : '')+
     '<div class="drillSentence">'+shown+'</div>'+
     '<button class="speak" onclick="speakDrillEx()" title="Hear it">🔊</button>'+
+    (loggedIn()?'<button class="speak" id="freshExBtn" onclick="freshDrillEx()" title="New example sentence">🔄</button>':'')+
     (hasBlank?'':'<p class="hint">Type the chunk you saved for this sentence:</p>')+
     '<input class="drillIn" id="drillInput" autocomplete="off" placeholder="Fill the blank from memory...">'+
     '<div class="row"><button class="btn" onclick="drillCheck()">Check</button>'+
+    (SR?'<button class="btn mic" id="drillMicBtn" onclick="toggleDrillMic()" title="Say it out loud">🎤</button>':'')+
     '<button class="btn ghost" onclick="drillReveal()">I forgot — show me</button></div>'+
     '<div id="drillVerdict"></div>'+
     (mode==='drill'
-      ? '<div class="drillStats">Schedule: right → 1, 3, 7, 14, 30, 60 days · wrong → due again today</div>'
+      ? '<div class="drillStats">Schedule: Good → 1, 3, 7, 14, 30, 60 days · Easy → skip a rung · missed → due again today</div>'
       : '<div class="drillStats">Free practice — this doesn\'t change your review schedule.</div>');
   $('drillInput').focus();
   $('drillInput').addEventListener('keydown',e=>{ if(e.key==='Enter') drillCheck(); });
+  /* quietly grow the example pool in the background for next time */
+  if(mode==='drill' && loggedIn() && examplePool(c).length<3) genFreshExample(c);
 }
 function norm(s){ return s.toLowerCase().replace(/['‘’ʼ′]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
 function drillCheck(){
+  if(micLive) stopMic();
   const c=chunks[drillCurrent.idx];
   const guess=norm($('drillInput').value);
   const target=norm(drillCurrent.answer||c.chunk);
   const ok=guess && (guess===target || (target.includes(guess) && guess.length>=target.length*0.6) || guess.includes(target));
-  if(!drillCurrent.retry){
-    if(drillCurrent.scheduled){ scheduleAfter(c, ok); const hd=hist(); ok?hd.h++:hd.m++; saveState(); persistChunks(); creditStreakIfDone(); }
+  /* A correct, scheduled rep gets self-graded (Good/Easy) below; a miss is
+     automatically 'again' and stays due today, same honest rule as before. */
+  if(ok && drillCurrent.scheduled && !drillCurrent.retry){
+    renderHeader();
+    $('drillVerdict').innerHTML=
+      '<p class="verdict good">✓ Nailed it: <b>'+esc(c.chunk)+'</b></p>'+
+      '<p class="sched">How did that feel?</p>'+
+      '<div class="row"><button class="btn pulse js-next" onclick="gradeDrill(\'good\')">Good 👍</button>'+
+      '<button class="btn ghost" onclick="gradeDrill(\'easy\')">Easy ⏩</button></div>';
+    if($('drillInput')) $('drillInput').blur();
+    return;
   }
+  if(drillCurrent.scheduled && !drillCurrent.retry){ scheduleAfter(c,'again'); hist().m++; saveState(); persistChunks(); creditStreakIfDone(); }
   renderHeader(); renderHW();
   $('drillVerdict').innerHTML=
     '<p class="verdict '+(ok?'good':'badv')+'">'+(ok?'✓ Nailed it':'✗ It was:')+' <b>'+esc(c.chunk)+'</b></p>'+
-    (drillCurrent.scheduled&&!drillCurrent.retry?'<p class="sched">'+(ok?'Next review: '+c.due:'Coming back today until you get it.')+'</p>':'')+
+    (drillCurrent.scheduled&&!drillCurrent.retry?'<p class="sched">Coming back today until you get it.</p>':'')+
     '<div class="row">'+(ok?'':'<button class="btn" onclick="practiceRetry()">Try again</button>')+'<button class="btn pulse js-next" id="drillNextBtn" onclick="practiceNext()">Next →</button></div>';
   if($('drillInput')) $('drillInput').blur();   /* free up Space for "Next" (see drillKeyNav) */
 }
+/* The Good/Easy buttons shown after a correct scheduled rep. */
+function gradeDrill(grade){
+  if(!drillCurrent) return;
+  const c=chunks[drillCurrent.idx];
+  scheduleAfter(c, grade);
+  hist().h++;
+  saveState(); persistChunks(); creditStreakIfDone();
+  renderHeader(); renderHW();
+  practiceNext();
+}
 function drillReveal(){
+  if(micLive) stopMic();
   const c=chunks[drillCurrent.idx];
   if(!drillCurrent.retry){
-    if(drillCurrent.scheduled){ scheduleAfter(c,false); hist().m++; saveState(); persistChunks(); }
+    if(drillCurrent.scheduled){ scheduleAfter(c,'again'); hist().m++; saveState(); persistChunks(); }
   }
   renderHW();
   $('drillVerdict').innerHTML=
@@ -1293,7 +1386,7 @@ function speakText(text){
   speechSynthesis.speak(u);
 }
 function speakNatural(){ if(lastResult) speakText(lastResult.natural); }
-function speakDrillEx(){ if(drillCurrent) speakText(chunks[drillCurrent.idx].example||chunks[drillCurrent.idx].chunk); }
+function speakDrillEx(){ if(drillCurrent) speakText(drillCurrent.example||chunks[drillCurrent.idx].example||chunks[drillCurrent.idx].chunk); }
 function speakRxEx(){ if(rxCur) speakText(chunks[rxCur.idx].example||chunks[rxCur.idx].chunk); }
 function speakChunk(i){ speakText(chunks[i].example||chunks[i].chunk); }
 
@@ -1362,12 +1455,34 @@ function renderStats(){
       '<div class="statCell"><div class="statBig">'+state.streak+'</div><p class="hint">day streak</p></div>'+
       '<div class="statCell"><div class="statBig">'+rrW+'</div><p class="hint">random rounds this week'+(racc!==null?' · '+racc+'%':'')+'</p></div>'+
     '</div>'+
+    (state.lastPattern && state.lastPattern.text?'<div style="margin-top:18px"><div class="eyebrow">This week\'s pattern</div><div class="chunkItem"><div>'+esc(state.lastPattern.text)+'</div></div></div>':'')+
     (worst.length?'<div style="margin-top:18px"><div class="eyebrow">Your nemesis chunks</div>'+worst.map(c=>'<div class="chunkItem"><div><b>'+esc(c.chunk)+'</b><div class="meta">missed '+c.misses+'x</div></div></div>').join('')+'</div>':'');
 }
 
 /* ================= 7. weekly recap ping ================= */
+/* Look at the week's attempts vs corrections and name the recurring mistakes.
+   Returns a short coaching line, or null (too few samples / offline / AI down). */
+async function genWeeklyPattern(){
+  if(!loggedIn()) return null;
+  const log=(state.repLog||[]).filter(r=>r.d>=dayStr(-7) && r.blurt && r.fix);
+  if(log.length<3) return null;   /* need a few samples before a pattern means anything */
+  const samples=log.slice(-15).map(r=>'- said: "'+r.blurt+'" → better: "'+r.fix+'"').join('\n');
+  const msg=`A Vietnamese software developer is practicing spoken English. Here are this week's fast attempts and the corrected versions:
+${samples}
+Identify the 1-2 most RECURRING mistake patterns (e.g. dropped articles, verb tense, word order, preposition choice). Be specific and encouraging, and end with one quick tip.
+Reply with ONLY JSON: {"pattern":"one or two short sentences"}`;
+  try{
+    const data=await geminiJSON({contents:[{parts:[{text:msg}]}], generationConfig:{responseMimeType:'application/json'}});
+    if(!data) return null;
+    const text=((data.candidates||[])[0]?.content?.parts||[]).map(x=>x.text||'').join('');
+    const s=text.indexOf('{'), e=text.lastIndexOf('}');
+    if(s===-1||e===-1) return null;
+    const obj=JSON.parse(text.slice(s,e+1));
+    return (obj && obj.pattern && String(obj.pattern).trim()) || null;
+  }catch(err){ console.error('weekly pattern failed:',err); return null; }
+}
 async function maybeWeeklyRecap(){
-  if(!loggedIn() || !state.ntfy || !state.ntfy.on) return;
+  if(!loggedIn()) return;
   const today=dayStr(0);
   if(state.lastRecap && (new Date(today)-new Date(state.lastRecap))/86400000 < 7) return;
   const h=state.history||{};
@@ -1375,14 +1490,17 @@ async function maybeWeeklyRecap(){
   if(!reps) return;
   const fresh=chunks.filter(c=>c.date && c.date>=dayStr(-7)).length;
   const worst=[...chunks].filter(c=>(c.misses||0)>0).sort((a,b)=>(b.misses||0)-(a.misses||0))[0];
-  const msg='This week: '+reps+' reps, '+fresh+' new chunks.'+
+  const pattern=await genWeeklyPattern();   /* graceful: null when offline / too few reps */
+  if(pattern) state.lastPattern={text:pattern, date:today};
+  let msg='This week: '+reps+' reps, '+fresh+' new chunks.'+
     (worst?' Nemesis: "'+worst.chunk+'" (missed '+worst.misses+'x).':'')+
+    (pattern?' Pattern: '+pattern:'')+
     ' Keep the chain alive.';
-  try{
-    await pingNtfy('Blurt weekly recap 📊',msg);
-    state.lastRecap=today;
-    saveState();
-  }catch(e){}
+  state.lastRecap=today;
+  saveState();
+  if(state.ntfy && state.ntfy.on){
+    try{ await pingNtfy('Blurt weekly recap 📊',msg); }catch(e){}
+  }
 }
 
 boot();
