@@ -138,8 +138,24 @@ async function fireDueReminder(env) {
   await fetch('https://ntfy.sh/' + encodeURIComponent(env.NTFY_TOPIC), {
     method: 'POST',
     headers: { 'X-Title': 'Blurt homework ⏰', 'X-Tags': 'books' },
-    body: '3 blurts + due chunks. ~5 minutes. No homework, no streak.',
+    body: await reminderBody(env, today),
   });
+}
+
+// Build a reminder that names an actual due chunk, so the ping is useful at a glance.
+async function reminderBody(env, today) {
+  const generic = '3 blurts + due chunks. ~5 minutes. No homework, no streak.';
+  try {
+    const raw = await env.BLURT_KV.get('doc:blurt:chunks');
+    if (!raw) return generic;
+    const arr = JSON.parse(JSON.parse(raw).value); // doc.value is itself a JSON string
+    const due = Array.isArray(arr) ? arr.filter((c) => c && c.due && c.due <= today) : [];
+    if (!due.length) return generic;
+    const pick = due[Math.floor(Math.random() * due.length)];
+    return due.length + ' chunk' + (due.length > 1 ? 's' : '') + ' due + 3 blurts (~5 min). First up: “' + pick.chunk + '”';
+  } catch (e) {
+    return generic;
+  }
 }
 
 export default {

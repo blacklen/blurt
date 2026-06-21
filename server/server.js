@@ -160,10 +160,25 @@ async function fireDueReminder() {
     await fetch('https://ntfy.sh/' + encodeURIComponent(NTFY_TOPIC), {
       method: 'POST',
       headers: { 'X-Title': 'Blurt homework ⏰', 'X-Tags': 'books' },
-      body: '3 blurts + due chunks. ~5 minutes. No homework, no streak.',
+      body: reminderBody(today),
     });
   } catch (e) {
     ntfyLastSent = null; // failed → let the next tick retry
+  }
+}
+// Name an actual due chunk in the ping so it's useful at a glance.
+function reminderBody(today) {
+  const generic = '3 blurts + due chunks. ~5 minutes. No homework, no streak.';
+  try {
+    const row = db.prepare('SELECT value FROM documents WHERE key = ?').get('blurt:chunks');
+    if (!row) return generic;
+    const arr = JSON.parse(row.value);
+    const due = Array.isArray(arr) ? arr.filter((c) => c && c.due && c.due <= today) : [];
+    if (!due.length) return generic;
+    const pick = due[Math.floor(Math.random() * due.length)];
+    return due.length + ' chunk' + (due.length > 1 ? 's' : '') + ' due + 3 blurts (~5 min). First up: “' + pick.chunk + '”';
+  } catch (e) {
+    return generic;
   }
 }
 setInterval(fireDueReminder, 5 * 60 * 1000); // check a few times an hour
