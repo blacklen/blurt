@@ -1716,14 +1716,43 @@ function hist(){
 }
 
 /* ================= 1. text-to-speech ================= */
+/* Score English voices so we pick the most natural one installed, not just
+   the first match (which is often a low-quality default like "Albert"). */
+function scoreVoice(v){
+  const n=v.name.toLowerCase();
+  let s=0;
+  if(/premium|enhanced|neural|natural/.test(n)) s+=100;   // Safari/macOS high-quality variants
+  if(/google/.test(n)) s+=60;                             // Chrome's network voice — quite natural
+  if(/\b(samantha|ava|zoe|aaron|allison|jenny|aria|nicky|evan|joelle)\b/.test(n)) s+=40;
+  if(/\b(albert|fred|zarvox|trinoids|whisper|bells|bad news|cellos|compact|eloquence)\b/.test(n)) s-=80; // novelty/robotic
+  if(v.lang==='en-US') s+=10; else if(v.lang==='en-GB') s+=5;
+  if(v.localService) s+=2;                                // slight nudge for offline reliability
+  return s;
+}
+function pickVoice(){
+  const en=speechSynthesis.getVoices().filter(v=>v.lang.startsWith('en'));
+  if(!en.length) return null;
+  return en.sort((a,b)=>scoreVoice(b)-scoreVoice(a))[0];
+}
+/* getVoices() is often empty until the engine loads; warm it up. */
+if('speechSynthesis' in window){ speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices(); }
 function speakText(text){
   if(!text || !('speechSynthesis' in window)) return;
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang='en-US'; u.rate=0.95;
-  const v=speechSynthesis.getVoices().find(v=>v.lang.startsWith('en'));
-  if(v) u.voice=v;
-  speechSynthesis.speak(u);
+  let spoken=false;
+  const speak=()=>{
+    if(spoken) return; spoken=true;
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='en-US'; u.rate=0.95; u.pitch=1;
+    const v=pickVoice();
+    if(v) u.voice=v;
+    speechSynthesis.speak(u);
+  };
+  // If voices haven't loaded yet, wait for them once so we don't fall back to the default voice.
+  if(!speechSynthesis.getVoices().length){
+    speechSynthesis.addEventListener('voiceschanged', speak, {once:true});
+    setTimeout(speak, 250);   // fallback in case the event never fires
+  } else speak();
 }
 function speakNatural(){ if(lastResult) speakText(lastResult.natural); }
 function speakDrillEx(){ if(drillCurrent) speakText(drillCurrent.example||chunks[drillCurrent.idx].example||chunks[drillCurrent.idx].chunk); }
