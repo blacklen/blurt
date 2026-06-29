@@ -104,14 +104,24 @@ async function proxyNotify(req, env) {
   } catch (e) {
     return json({ error: 'invalid JSON' }, 400);
   }
-  const headers = { 'X-Title': body.title || 'Blurt', 'X-Tags': body.tags || 'books' };
+  // ntfy header values travel as Latin-1; Workers' fetch mangles any multibyte
+  // char (emoji etc.) into a control byte, which ntfy rejects (400 -> our 502).
+  // Keep headers ASCII-only — emoji belongs in the UTF-8 message body instead.
+  const ascii = (s, fb) =>
+    String(s == null ? '' : s)
+      .replace(/[^\x20-\x7E]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim() || fb;
+  const headers = { 'X-Title': ascii(body.title, 'Blurt'), 'X-Tags': ascii(body.tags, 'books') };
   if (body.delay) headers['X-Delay'] = String(body.delay); // unix timestamp for scheduled delivery
   const r = await fetch('https://ntfy.sh/' + encodeURIComponent(env.NTFY_TOPIC), {
     method: 'POST',
     headers,
     body: String(body.message || ''),
   });
-  if (!r.ok) return json({ error: 'ntfy responded ' + r.status }, 502);
+  // Forward ntfy's real status so the client can tell rate-limiting (429) apart
+  // from an actual outage, instead of collapsing everything into a vague 502.
+  if (!r.ok) return json({ error: 'ntfy responded ' + r.status }, r.status === 429 ? 429 : 502);
   return json({ ok: true });
 }
 
@@ -137,8 +147,10 @@ async function fireDueReminder(env) {
   await env.BLURT_KV.put('ntfy:lastsent', today);
   await fetch('https://ntfy.sh/' + encodeURIComponent(env.NTFY_TOPIC), {
     method: 'POST',
-    headers: { 'X-Title': 'Blurt homework ⏰', 'X-Tags': 'books' },
-    body: await reminderBody(env, today),
+    // Title stays ASCII (Workers' fetch can't carry multibyte chars in a header);
+    // the ⏰ lives in the UTF-8 body instead.
+    headers: { 'X-Title': 'Blurt homework', 'X-Tags': 'books' },
+    body: '⏰ ' + (await reminderBody(env, today)),
   });
 }
 

@@ -6,7 +6,7 @@
 <title>Blurt — 60-second English reps</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=20260628">
 </head>
 <body>
 <div id="timebar"></div>
@@ -37,6 +37,9 @@
       <div class="eyebrow">One rep · timer shrinks as your streak grows</div>
       <p class="promptText">Say it before you can translate it.</p>
       <p class="hint">Pick your moods below, then blurt your English fast — messy is fine, editing is cheating. Speak it out loud first if you can.</p>
+      <div class="eyebrow" style="margin-top:12px">Practice as</div>
+      <div class="chips" id="typeChips"></div>
+      <div class="eyebrow" style="margin-top:12px">Moods</div>
       <div class="chips" id="catChips"></div>
       <div class="row">
         <button class="btn pulse" onclick="startRep()">Start a rep →</button>
@@ -51,20 +54,26 @@
           <div class="eyebrow" id="promptKind">Express this</div>
           <p class="promptText" id="promptText"></p>
           <p class="hint" id="chunkHint" style="display:none;margin-top:8px">Use this chunk → <b id="chunkHintText"></b></p>
+          <p class="hint" id="threeCounter" style="display:none;margin-top:8px">Phrasing <b id="threeNum">1</b> of 3 — say it a different way each time.</p>
         </div>
         <div class="clock" id="clock">45</div>
       </div>
-      <textarea id="blurtInput" placeholder="Type fast — or hit the mic and speak. (Enter to check · Shift+Enter for a new line)" autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();finishRep();}"></textarea>
+      <textarea id="blurtInput" placeholder="Type fast — or hit the mic and speak. (Enter to check · Shift+Enter for a new line)" autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();repPrimary();}"></textarea>
       <div class="row">
-        <button class="btn" id="checkBtn" onclick="finishRep()">Done — check it</button>
+        <button class="btn" id="checkBtn" onclick="repPrimary()">Done — check it</button>
         <button class="btn mic" id="micBtn" onclick="toggleMic()" title="Speak instead of typing" style="display:none">🎙</button>
         <button class="btn ghost" onclick="skipPrompt()">Different prompt</button>
+        <button class="btn ghost" id="dislikeBtn" onclick="dislikePrompt()" title="Hide this prompt for good" style="display:none">👎 Not for me</button>
       </div>
     </div>
 
     <div class="card result" id="resultCard" style="display:none">
       <div class="eyebrow">How a native might say it<button class="speak" onclick="speakNatural()" title="Hear it">🔊</button></div>
       <div class="you" id="yourBlurt"></div>
+      <div id="calqueNote" style="display:none">
+        <div class="eyebrow" style="margin-top:2px;color:var(--bad)">⚠️ Word-for-word from Vietnamese</div>
+        <div class="natural" id="calqueText"></div>
+      </div>
 
       <div id="vnResult">
         <div class="natural" id="naturalText"></div>
@@ -75,14 +84,16 @@
       </div>
 
       <div id="sitResult" style="display:none">
-        <div class="eyebrow" style="margin-top:2px">Your answer, fixed</div>
-        <div class="natural" id="fixedText"></div>
-        <div class="chunkBox">
-          <div>chunk → <b id="fixedChunkText"></b></div>
-          <button class="btn ghost" id="saveFixedBtn" onclick="saveChunk('fixed')">Save</button>
+        <div id="fixedBlock">
+          <div class="eyebrow" style="margin-top:2px">Your answer, fixed</div>
+          <div class="natural" id="fixedText"></div>
+          <div class="chunkBox">
+            <div>chunk → <b id="fixedChunkText"></b></div>
+            <button class="btn ghost" id="saveFixedBtn" onclick="saveChunk('fixed')">Save</button>
+          </div>
         </div>
         <div id="suggestBlock">
-          <div class="eyebrow" style="margin-top:14px">Or say it like this</div>
+          <div class="eyebrow" id="suggestEyebrow" style="margin-top:14px">Or say it like this</div>
           <div class="natural" id="suggestText"></div>
           <div class="chunkBox">
             <div>chunk → <b id="suggestChunkText"></b></div>
@@ -93,7 +104,7 @@
 
       <p class="note" id="noteText"></p>
       <div class="row">
-        <button class="btn pulse js-next" onclick="startRep()">Next rep →</button>
+        <button class="btn pulse js-next" onclick="nextRep()">Next rep →</button>
         <button class="btn ghost" onclick="backToReady()">Done for now</button>
       </div>
     </div>
@@ -200,6 +211,14 @@
       <p class="hint" id="hwCfgStatus"></p>
     </div>
 
+    <div class="card" id="ctxCard">
+      <div class="eyebrow">🎯 Make prompts about your life</div>
+      <p class="hint">Names, your role, current project, daily routine — AI prompts weave these in so practice matches your real conversations. (e.g. "PM is Minh; I'm a backend dev on the export feature; standup at 9:30")</p>
+      <textarea id="personalCtx" class="drillIn" placeholder="Your real context (optional)" autocomplete="off" style="min-height:64px;resize:vertical"></textarea>
+      <div class="row"><button class="btn ghost" onclick="savePersonalCtx()">Save</button></div>
+      <p class="hint" id="ctxStatus"></p>
+    </div>
+
     <div class="card" id="ntfyCard" style="margin-bottom:0">
       <div class="eyebrow">AI feedback</div>
       <p class="hint" id="gemStatus">AI feedback and phone reminders run through the server — your Gemini key and ntfy topic are stored as server secrets, never in this browser. Log in to switch them on.</p>
@@ -216,6 +235,6 @@
 
 <footer>homework done = streak earned · no freebies</footer>
 
-<script src="app.js"></script>
+<script src="app.js?v=20260629"></script>
 </body>
 </html>

@@ -62,7 +62,6 @@ let drillCurrent = null,
   micBtnId = 'micBtn',
   micOnFinal = null,
   lastShownEx = null;
-const AI_MIX = 0.33; /* chance a normal rep auto-pulls a fresh AI prompt (logged in only) */
 let aiPrompts = (function () {
   try {
     return JSON.parse(localStorage.getItem('blurt:aiPrompts')) || [];
@@ -208,9 +207,13 @@ async function loadAll() {
     if (r) chunks = JSON.parse(r.value);
   } catch (e) {}
   if (!state.cats || !state.cats.length) state.cats = CATS.map((c) => c.id);
+  if (!Array.isArray(state.disliked)) state.disliked = []; /* bank prompt texts to never re-serve */
+  if (!['vn', 'sit', 'mix', 'three'].includes(state.ptype)) state.ptype = 'vn';
   if (!state.settings) state.settings = { hwReps: 3 };
   if (!(state.settings.hwReps > 0)) state.settings.hwReps = 3;
   if (!state.hw || state.hw.date !== dayStr(0)) state.hw = { date: dayStr(0), reps: 0 };
+  if (!state.warmup || state.warmup.date !== dayStr(0))
+    state.warmup = { date: dayStr(0), done: false };
   // migrate old chunks into the schedule: anything without a due date is due today,
   // and anything still on the old step-ladder gets SM-2 fields (ef/interval/reps).
   let migrated = false;
@@ -407,6 +410,8 @@ function renderHW() {
    drills first (best retention ROI), then hit the rep quota with nemesis-targeted
    AI prompts, then one mistake replay. */
 function smartNext() {
+  if (loggedIn() && warmupPick())
+    return { fn: 'warmup', label: "🔥 Warm up — beat yesterday's miss" };
   const due = dueChunks().length;
   if (due) return { fn: 'drill', label: '▶ Drill ' + due + ' due chunk' + (due > 1 ? 's' : '') };
   if (state.hw.reps < hwReps())
@@ -421,6 +426,9 @@ function startSmartSession() {
   else if (n.fn === 'practice') {
     showTab('practice');
     loggedIn() ? genPrompt() : startRep();
+  } else if (n.fn === 'warmup') {
+    showTab('practice');
+    startReplay(warmupPick(), { warmup: true });
   } else if (n.fn === 'replay') {
     showTab('practice');
     startReplay();
@@ -429,6 +437,7 @@ function startSmartSession() {
 function renderAll() {
   renderHeader();
   renderChips();
+  renderTypeChips();
   renderHW();
   renderChunks();
 }
@@ -451,7 +460,16 @@ function toggleSettings() {
     stopMic();
     $('hwRepsIn').value = state.settings.hwReps;
     $('hwCfgStatus').textContent = '';
+    $('personalCtx').value = state.settings.context || '';
+    $('ctxStatus').textContent = '';
   } /* don't run a rep behind the panel */
+}
+function savePersonalCtx() {
+  state.settings.context = $('personalCtx').value.trim();
+  saveState();
+  $('ctxStatus').textContent = state.settings.context
+    ? 'Saved — AI prompts will use your context.'
+    : 'Cleared.';
 }
 function saveHwReps() {
   const n = Math.floor(Number($('hwRepsIn').value));
@@ -516,6 +534,33 @@ function toggleCat(id) {
   renderChips();
 }
 
+const PTYPES = [
+  { id: 'vn', label: 'Say it in English' },
+  { id: 'sit', label: 'Situation' },
+  { id: 'mix', label: 'Mix' },
+  { id: 'three', label: '3 ways' },
+];
+/* '3 ways' is a flow variation, not a prompt kind — under the hood it draws any
+   kind, like Mix. Keep this list in sync wherever ptype gates kind filtering. */
+const KIND_PTYPES = ['vn', 'sit'];
+function renderTypeChips() {
+  $('typeChips').innerHTML = PTYPES.map(
+    (t) =>
+      '<button class="chip ' +
+      (state.ptype === t.id ? 'on' : '') +
+      '" onclick="setPtype(\'' +
+      t.id +
+      '\')">' +
+      t.label +
+      '</button>',
+  ).join('');
+}
+function setPtype(id) {
+  state.ptype = id;
+  saveState();
+  renderTypeChips();
+}
+
 /* ================= prompt bank loading ================= */
 /* The full bank lives in the static /prompts.json (served by the Worker, same as
    index.html). Hydrate from the localStorage cache instantly so it works offline,
@@ -563,31 +608,46 @@ function cacheAiPrompt(p) {
 
 /* ================= practice flow ================= */
 function pool() {
-  return PROMPTS.concat(aiPrompts).filter((p) => state.cats.includes(p.cat));
+  const disliked = new Set((state.disliked || []).map(norm));
+  const byCat = PROMPTS.concat(aiPrompts).filter(
+    (p) => state.cats.includes(p.cat) && !disliked.has(norm(p.text)),
+  );
+  if (!KIND_PTYPES.includes(state.ptype)) return byCat; /* mix / 3-ways: any kind */
+  const byKind = byCat.filter((p) => p.kind === state.ptype);
+  /* never strand the learner: if this kind is empty for the chosen moods, fall back to all */
+  return byKind.length ? byKind : byCat;
+}
+const MAX_RECENT = 40; /* how many recent prompts to avoid re-serving */
+/* Remember a prompt by TEXT (not object ref): identity breaks when the bank
+   reloads from the network, and text lets bank + AI prompts share one history. */
+function rememberPrompt(text) {
+  if (!text) return;
+  recentPrompts.push(text);
+  while (recentPrompts.length > MAX_RECENT) recentPrompts.shift();
 }
 function pickPrompt() {
   const ps = pool();
-  const cap = Math.min(
-    ps.length - 1,
-    8,
-  ); /* how many recent prompts to avoid; adapts to small pools */
-  let avail = ps.filter((p) => !recentPrompts.includes(p));
+  let avail = ps.filter((p) => !recentPrompts.includes(p.text));
   if (!avail.length)
     avail = ps.filter(
-      (p) => !current || p !== current.prompt,
+      (p) => !current || !current.prompt || current.prompt.text !== p.text,
     ); /* tiny pool: at least dodge the last one */
   if (!avail.length) avail = ps;
   const p = avail[Math.floor(Math.random() * avail.length)];
-  recentPrompts.push(p);
-  while (recentPrompts.length > cap) recentPrompts.shift();
+  rememberPrompt(p.text);
   return p;
 }
+/* Two explicit prompt sources: 'bank' (Start a rep) and 'ai' (✨ AI prompt).
+   nextRep / skip continue whichever you started with. */
+let repSource = 'bank';
 function startRep() {
-  if (loggedIn() && Math.random() < AI_MIX) {
-    genPrompt();
-    return;
-  } /* ~1-in-3 reps come fresh from AI; genPrompt falls back to the bank on any failure */
+  repSource = 'bank';
   startRepWith(pickPrompt());
+}
+/* Result-card "Next rep →" and "Different prompt": stay on the current source. */
+function nextRep() {
+  if (repSource === 'ai' && loggedIn()) genPrompt();
+  else startRep();
 }
 function startRepWith(p) {
   current = { prompt: p };
@@ -598,6 +658,13 @@ function startRepWith(p) {
     $('chunkHintText').textContent = p.chunk;
     hint.style.display = '';
   } else hint.style.display = 'none';
+  /* '3 ways': collect three different phrasings before checking. */
+  const three = state.ptype === 'three';
+  current.three = three ? { attempts: [], n: 1 } : null;
+  renderThreeUI();
+  /* "Not for me" only applies to real bank prompts (not AI-generated ones). */
+  const isBank = PROMPTS.some((x) => norm(x.text) === norm(p.text));
+  $('dislikeBtn').style.display = isBank ? '' : 'none';
   $('blurtInput').value = '';
   $('blurtInput').disabled = false;
   $('checkBtn').disabled = false;
@@ -605,10 +672,46 @@ function startRepWith(p) {
   $('blurtInput').focus();
   startTimer();
 }
+/* Reflect the current 3-ways step in the counter + primary button label. */
+function renderThreeUI() {
+  const t = current && current.three;
+  $('threeCounter').style.display = t ? '' : 'none';
+  if (t) {
+    $('threeNum').textContent = t.n;
+    $('checkBtn').textContent = t.n < 3 ? 'Next phrasing →' : 'Check all three';
+  } else {
+    $('checkBtn').textContent = 'Done — check it';
+  }
+}
+/* The primary action: in 3-ways mode, banks the phrasing and advances (or checks
+   on the third); otherwise just checks the single rep. */
+function repPrimary() {
+  const t = current && current.three;
+  if (t && t.n < 3) {
+    t.attempts.push($('blurtInput').value.trim());
+    t.n++;
+    renderThreeUI();
+    $('blurtInput').value = '';
+    $('blurtInput').focus();
+    return;
+  }
+  finishRep();
+}
 function skipPrompt() {
   stopTimer();
   stopMic();
-  startRep();
+  nextRep(); /* "Different prompt" stays on the current source (bank or AI) */
+}
+/* Hide this bank prompt for good, then move on. Bank-only — pool() filters
+   state.disliked out of future picks; AI prompts are never recorded here. */
+function dislikePrompt() {
+  if (!current || !current.prompt) return;
+  const t = current.prompt.text;
+  if (!state.disliked.some((x) => norm(x) === norm(t))) state.disliked.push(t);
+  saveState();
+  stopTimer();
+  stopMic();
+  nextRep();
 }
 function startTimer() {
   stopTimer();
@@ -670,6 +773,11 @@ async function finishRep() {
     return;
   }
 
+  if (current.three) {
+    await finishThreeWays(blurt);
+    return;
+  }
+
   show('resultCard');
   $('yourBlurt').textContent = blurt
     ? 'You: ' + blurt
@@ -698,17 +806,30 @@ async function finishRep() {
       : { natural: p.sample, chunk: p.chunk, note: p.note };
   if (isSit) result.chunk = p.chunk;
   lastResult = result;
+  showCalque(result.calque);
 
   if (isSit) {
     const fixed = result.fixedAnswer || result.natural;
-    $('fixedText').textContent = fixed;
-    $('fixedChunkText').textContent = result.chunk;
-    /* if the AI's "native version" is just a repeat of the fixed answer, there's
-       nothing new to show — hide the second block rather than print a duplicate. */
-    const dupe = norm(result.natural || '') === norm(fixed || '');
-    $('suggestBlock').style.display = dupe ? 'none' : '';
-    if (!dupe) {
-      $('suggestText').textContent = result.natural;
+    const native = result.natural || fixed;
+    if (blurt) {
+      /* they actually wrote something → show the correction of THEIR answer,
+         then a native version only if it's genuinely different. */
+      $('fixedBlock').style.display = '';
+      $('fixedText').textContent = fixed;
+      $('fixedChunkText').textContent = result.chunk;
+      const dupe = norm(native) === norm(fixed);
+      $('suggestBlock').style.display = dupe ? 'none' : '';
+      $('suggestEyebrow').textContent = 'Or say it like this';
+      if (!dupe) {
+        $('suggestText').textContent = native;
+        $('suggestChunkText').textContent = result.chunk;
+      }
+    } else {
+      /* blank rep → nothing to fix, just show how a native would say it. */
+      $('fixedBlock').style.display = 'none';
+      $('suggestBlock').style.display = '';
+      $('suggestEyebrow').textContent = 'How a native might say it';
+      $('suggestText').textContent = native;
       $('suggestChunkText').textContent = result.chunk;
     }
   } else {
@@ -733,12 +854,19 @@ async function finishRep() {
   }
 }
 
+/* Flag a word-for-word translation from Vietnamese when the AI spots one. */
+function showCalque(text) {
+  const has = !!(text && String(text).trim());
+  $('calqueNote').style.display = has ? '' : 'none';
+  if (has) $('calqueText').textContent = String(text).trim();
+}
+
 async function askGemini(p, blurt) {
   let task, instr;
   if (p.kind === 'vn') {
     task = 'The prompt was a Vietnamese sentence to express in English: "' + p.text + '"';
     instr =
-      '{"natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","note":"one short encouraging coaching note (max 22 words) about the main gap between their version and the natural one. If their version was already natural, say so."}';
+      '{"natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (e.g. wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short encouraging coaching note (max 22 words) about the main gap between their version and the natural one. If their version was already natural, say so."}';
   } else {
     task =
       'Situation: "' +
@@ -746,7 +874,7 @@ async function askGemini(p, blurt) {
       '"' +
       (p.chunk ? '\nTarget chunk to practice: "' + p.chunk + '"' : '');
     instr =
-      '{"fixedAnswer":"A MINIMAL correction of THEIR exact attempt. Start from their own words and keep as many of them and their sentence structure as possible — only change what is grammatically wrong, unclear, or unnatural, and weave in the target chunk if it is missing or used awkwardly. Do NOT rewrite it into a polished native sentence; this should still read as THEIR answer, just cleaned up. The freely-written native version belongs in the next field.","natural":"a SEPARATE, freshly written native example (1-2 sentences) that uses the target chunk — write it your own way with different wording and structure from fixedAnswer; it must NOT be the same sentence as fixedAnswer","chunk":"copy the target chunk exactly as given","note":"one short coaching note (max 22 words): did they use the chunk, and what was the main fix?"}';
+      '{"fixedAnswer":"THEIR sentence, corrected. Keep their own words and structure; change only what is grammatically wrong, unclear, or unnatural, and make sure the target chunk is used. This is their answer cleaned up — NOT a rewrite.","natural":"a different, native way to say it that uses the target chunk. Must NOT be the same sentence as fixedAnswer.","chunk":"the target chunk, copied exactly","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short tip (max 20 words): did they use the chunk well, and the key fix."}';
   }
   const userMsg = `You are a friendly English fluency coach for a Vietnamese software developer practicing fast speech-like production.
 ${task}
@@ -758,8 +886,100 @@ ${instr}`;
     contents: [{ parts: [{ text: userMsg }] }],
     generationConfig: { responseMimeType: 'application/json' },
   });
+  if (!obj || !obj.chunk) return null;
+  if (p.kind === 'sit') {
+    /* situation needs at least one answer field; fill the missing one from the other
+       so the renderer always has a real value to show. */
+    if (!obj.fixedAnswer && !obj.natural) return null;
+    if (!obj.fixedAnswer) obj.fixedAnswer = obj.natural;
+    if (!obj.natural) obj.natural = obj.fixedAnswer;
+    return obj;
+  }
+  if (obj.natural) return obj;
+  return null;
+}
+
+/* '3 ways': judge three phrasings of the same idea. Returns {best, natural, chunk,
+   note} or null on failure. `best` is a 1-based index into the attempts. */
+async function askGeminiThreeWays(p, attempts) {
+  const tries = attempts
+    .map((a, i) => i + 1 + ') ' + (a || '(blank)'))
+    .join('\n');
+  const framing =
+    p.kind === 'sit'
+      ? 'Situation they responded to: "' + p.text + '"'
+      : 'Idea to express (Vietnamese): "' + p.text + '"';
+  const userMsg = `A Vietnamese software developer practiced saying ONE idea three different ways to build fluency flexibility.
+${framing}
+Their three attempts:
+${tries}
+Pick which attempt sounds most natural, then give one fresh native model version, the key reusable chunk, and a short note.
+Reply with ONLY a JSON object:
+{"best":1,"natural":"one natural native version (1-2 sentences)","chunk":"the single most reusable phrase from your native version","note":"max 22 words: which attempt was most natural and one quick tip"}`;
+  const obj = await aiObj({
+    contents: [{ parts: [{ text: userMsg }] }],
+    generationConfig: { responseMimeType: 'application/json' },
+  });
   if (obj && obj.natural && obj.chunk) return obj;
   return null;
+}
+
+async function finishThreeWays(lastAttempt) {
+  const p = current.prompt;
+  const attempts = [...current.three.attempts, lastAttempt]; /* 3 entries, blanks allowed */
+  const nonBlank = attempts.filter(Boolean);
+
+  show('resultCard');
+  showCalque('');
+  $('vnResult').style.display = '';
+  $('sitResult').style.display = 'none';
+  $('yourBlurt').innerHTML =
+    'You tried:' +
+    attempts.map((a, i) => '<div>' + (i + 1) + '. ' + (a ? esc(a) : '(blank)') + '</div>').join('');
+  resetSaveBtn();
+  $('naturalText').innerHTML = '<span class="spin"></span> Picking your most natural take...';
+  $('chunkText').textContent = '...';
+  $('noteText').textContent = '';
+
+  let res = null;
+  if (nonBlank.length) res = await askGeminiThreeWays(p, attempts);
+  if (!res) res = { best: 1, natural: p.sample, chunk: p.chunk || '', note: p.note || '' };
+  lastResult = { natural: res.natural, chunk: res.chunk, note: res.note };
+
+  /* mark the AI's pick among the three tries */
+  const bi = Math.min(Math.max(parseInt(res.best, 10) || 1, 1), attempts.length) - 1;
+  $('yourBlurt').innerHTML =
+    'You tried:' +
+    attempts
+      .map(
+        (a, i) =>
+          '<div' +
+          (i === bi ? ' style="color:var(--mint)"' : '') +
+          '>' +
+          (i + 1) +
+          '. ' +
+          (a ? esc(a) : '(blank)') +
+          (i === bi ? ' ← most natural' : '') +
+          '</div>',
+      )
+      .join('');
+  $('naturalText').textContent = res.natural;
+  $('chunkText').textContent = res.chunk || '—';
+  $('noteText').textContent = res.note || '';
+
+  /* log the chosen take so warm-up / replay can re-serve it */
+  if (nonBlank.length) {
+    if (!Array.isArray(state.repLog)) state.repLog = [];
+    state.repLog.push({
+      d: dayStr(0),
+      prompt: p.text,
+      blurt: attempts[bi] || nonBlank[0],
+      fix: res.natural || '',
+      note: res.note || '',
+    });
+    if (state.repLog.length > 30) state.repLog = state.repLog.slice(-30);
+    saveState();
+  }
 }
 
 /* ================= mistake replay ================= */
@@ -770,14 +990,35 @@ function replayPool() {
     (r) => r.prompt && r.blurt && r.fix && norm(r.blurt) !== norm(r.fix),
   );
 }
-function startReplay() {
+/* Chunks you've saved but never actually used in a rep answer — the ones rotting
+   on the shelf. genPrompt targets these to force them into real use. */
+function avoidedChunks() {
+  const used = (state.repLog || []).map((r) => norm(r.blurt || ''));
+  return chunks.filter((c) => c.chunk && !used.some((b) => b && b.includes(norm(c.chunk))));
+}
+/* The session warm-up: re-serve one recent miss. Prefer a miss from a PRIOR day —
+   a day-later retry is exactly when retrieval cements the fix — else the latest one.
+   Null once it's been done today, so it stops nagging. */
+function warmupPick() {
+  if (state.warmup && state.warmup.done) return null;
   const p = replayPool();
-  if (!p.length) return;
-  const orig = p[Math.floor(Math.random() * p.length)];
+  if (!p.length) return null;
+  const today = dayStr(0);
+  const prior = p.filter((r) => r.d && r.d < today);
+  return (prior.length ? prior : p)[(prior.length ? prior : p).length - 1];
+}
+function startReplay(orig, opts) {
+  if (!orig) orig = replayPool()[Math.floor(Math.random() * replayPool().length)];
+  if (!orig) return;
   current = { prompt: { kind: 'replay', text: orig.prompt }, replay: orig };
-  $('promptKind').textContent = 'Re-attempt — beat last time';
+  if (opts && opts.warmup) current.warmup = true;
+  $('promptKind').textContent = current.warmup
+    ? '🔥 Warm-up — beat last time'
+    : 'Re-attempt — beat last time';
   $('promptText').textContent = orig.prompt;
   $('chunkHint').style.display = 'none';
+  $('dislikeBtn').style.display = 'none'; /* replays aren't bank prompts */
+  renderThreeUI(); /* clear any leftover 3-ways counter/label from a prior rep */
   $('blurtInput').value = '';
   $('blurtInput').disabled = false;
   $('checkBtn').disabled = false;
@@ -801,7 +1042,13 @@ Judge whether the new attempt avoids the earlier mistake and sounds natural. Rep
   return null;
 }
 async function finishReplay(blurt) {
+  if (current.warmup) {
+    state.warmup = { date: dayStr(0), done: true };
+    saveState();
+    renderHW(); /* advance the action button to the next thing */
+  }
   show('resultCard');
+  showCalque('');
   $('yourBlurt').textContent = blurt ? 'You now: ' + blurt : "You: (blank — that's okay)";
   resetSaveBtn();
   $('vnResult').style.display = '';
@@ -2474,18 +2721,29 @@ async function saveNtfy() {
   ntfyStatus('Sending test ping...', false);
   try {
     await pingNtfy(
-      'Blurt ✓ connected',
-      'Test ping! Your homework reminder will arrive daily at ' + pad(hour) + ':00.',
+      'Blurt connected',
+      '✓ Test ping! Your homework reminder will arrive daily at ' + pad(hour) + ':00.',
     );
     ntfyStatus(
       'Test ping sent ✓ Check your phone. Daily reminder set for ' + pad(hour) + ':00.',
       false,
     );
   } catch (e) {
-    ntfyStatus(
-      "Couldn't reach the server to send the ping (" + e.message + '). Check the server URL above.',
-      true,
-    );
+    // The reminder time is already saved (saveState above), so failures here only
+    // mean the test ping didn't go out — reassure rather than alarm.
+    if (/429/.test(e.message)) {
+      ntfyStatus(
+        'ntfy is rate-limiting test pings — wait a minute and try again. Your daily reminder at ' +
+          pad(hour) +
+          ':00 is already saved.',
+        true,
+      );
+    } else {
+      ntfyStatus(
+        "Couldn't reach the server to send the ping (" + e.message + '). Check the server URL above.',
+        true,
+      );
+    }
   }
 }
 
@@ -2810,27 +3068,42 @@ async function genPrompt() {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     return;
   }
+  repSource = 'ai'; /* AI button → stay on AI for following next/skip */
   const btn = $('surpriseBtn');
   btn.disabled = true;
   btn.textContent = '✨ thinking...';
   const catNames = CATS.filter((c) => state.cats.includes(c.id))
     .map((c) => c.id + ' (' + c.label.slice(2).trim() + ')')
     .join(', ');
-  /* Prefer chunks due for review today (turns a rep into spaced repetition); fall back to the ones most often missed. */
+  /* Targeting priority: chunks due for review today (spaced repetition), else ones
+     you've saved but never actually used in a rep (force them off the shelf), else
+     the ones you miss most. */
   const due = dueChunks();
+  const avoided = due.length ? [] : avoidedChunks();
+  const forcing = !due.length && avoided.length > 0; // avoided chunks get a "must use" nudge
   const target = (
     due.length
       ? due
-      : [...chunks]
-          .filter((c) => (c.misses || 0) > 0)
-          .sort((a, b) => (b.misses || 0) - (a.misses || 0))
+      : avoided.length
+        ? avoided
+        : [...chunks]
+            .filter((c) => (c.misses || 0) > 0)
+            .sort((a, b) => (b.misses || 0) - (a.misses || 0))
   )
     .slice(0, 3)
     .map((c) => c.chunk);
+  const kindInstr =
+    state.ptype === 'vn'
+      ? 'Use kind "vn": a natural everyday Vietnamese sentence for the learner to express in English.'
+      : state.ptype === 'sit'
+        ? 'Use kind "sit": an English-described situation for the learner to react to.'
+        : 'Either kind "vn" (a natural everyday Vietnamese sentence to express in English) or kind "sit" (an English-described situation to react to).';
+  const ctx = (state.settings.context || '').trim();
   const msg = `Generate ONE practice prompt for a Vietnamese software developer in Hanoi training spoken English fluency.
 Pick a category from: ${catNames}.
-${target.length ? 'If it fits naturally, design the situation so a good answer could reuse one of these phrases the learner is reviewing: ' + target.join(' | ') + '.' : ''}
-Either kind "vn" (a natural everyday Vietnamese sentence to express in English) or kind "sit" (an English-described situation to react to). Be creative and specific — local Hanoi flavor welcome, sometimes funny.
+${ctx ? "Weave in this learner's real life when it fits naturally (use the names/details): " + ctx : ''}
+${target.length ? (forcing ? 'Design the situation so a good answer MUST naturally use one of these phrases the learner keeps avoiding: ' : 'If it fits naturally, design the situation so a good answer could reuse one of these phrases the learner is reviewing: ') + target.join(' | ') + '.' : ''}
+${kindInstr} Be creative and specific — local Hanoi flavor welcome, sometimes funny.
 Reply ONLY JSON: {"cat":"work|daily|social|opinion|story","kind":"vn|sit","text":"the prompt itself","sample":"a natural native-speaker answer, 1-2 sentences","chunk":"the most reusable multi-word phrase from sample","note":"short coaching note, max 20 words"}`;
   try {
     const obj = await aiObj({
@@ -2839,6 +3112,7 @@ Reply ONLY JSON: {"cat":"work|daily|social|opinion|story","kind":"vn|sit","text"
     });
     if (obj && obj.text && obj.sample && obj.chunk) {
       cacheAiPrompt(obj);
+      rememberPrompt(obj.text); /* so a fresh AI prompt isn't echoed by the next pick */
       startRepWith(obj);
     } else throw new Error('bad prompt');
   } catch (err) {
