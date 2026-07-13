@@ -1685,6 +1685,10 @@ function dictCheck() {
     esc(dictCur.sentence) +
     '</div>' +
     '<div class="row"><button class="btn pulse js-next" onclick="dictationNext()">Next →</button></div>';
+  /* move focus off the input onto Next so Enter/Space advance (no scroll jump) */
+  if ($('dictInput')) $('dictInput').blur();
+  const nb = $('dictVerdict').querySelector('.js-next');
+  if (nb) nb.focus({ preventScroll: true });
 }
 
 /* ---- card loop ---- */
@@ -1880,7 +1884,7 @@ function rxBodyInit(fmt) {
   }
   const inp = $('rxInput');
   if (inp) {
-    inp.focus();
+    inp.focus({ preventScroll: true }); /* don't yank the page to the top on Next */
     inp.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') rxCheck();
     });
@@ -2202,7 +2206,7 @@ async function rxRenderAI(fmt, idx, banner) {
   $('randomBody').innerHTML = html;
   const inp = $('rxInput');
   if (inp) {
-    inp.focus();
+    inp.focus({ preventScroll: true }); /* don't yank the page to the top on Next */
     inp.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') rxCheck();
     });
