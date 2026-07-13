@@ -60,7 +60,7 @@
   .promptText{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:clamp(1.3rem,4.5vw,1.65rem);line-height:1.25;letter-spacing:-.01em}
   .hint{margin-top:10px;color:var(--muted);font-size:.9rem}
 
-  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px;margin-bottom:16px}
   .chip{border:1.5px solid var(--line);background:var(--paper);color:var(--muted);font:inherit;font-size:.8rem;font-weight:600;padding:6px 13px;border-radius:999px;cursor:pointer}
   .chip.on{border-color:var(--mint);color:var(--mint);background:#fff}
 
