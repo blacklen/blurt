@@ -486,6 +486,12 @@ function saveHwReps() {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && $('settingsOverlay').style.display === 'flex') toggleSettings();
 });
+/* First on-screen, still-enabled Save button — the one keyboard focus targets. */
+function visibleSaveBtn() {
+  return ['saveFixedBtn', 'saveSuggestBtn', 'saveChunkBtn']
+    .map((id) => $(id))
+    .find((b) => b && !b.disabled && b.offsetParent !== null);
+}
 function showTab(t) {
   ['practice', 'drill', 'random', 'chat', 'chunks', 'stats'].forEach(
     (x) => ($(x).style.display = x === t ? '' : 'none'),
@@ -837,6 +843,10 @@ async function finishRep() {
     $('chunkText').textContent = result.chunk;
   }
   $('noteText').textContent = result.note || '';
+
+  /* answer's in — put focus on the Save button so Tab/Enter work without the mouse. */
+  const saveBtn = visibleSaveBtn();
+  if (saveBtn) saveBtn.focus();
 
   /* keep a small rolling log of attempts + corrections — fuel for the weekly
      mistake-pattern digest (see maybeWeeklyRecap). Blank reps have nothing to learn from. */
