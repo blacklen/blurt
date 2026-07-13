@@ -2036,6 +2036,9 @@ function rxResolve(res, guess) {
     extra +
     '<div class="row"><button class="btn pulse js-next" onclick="rxNext()">Next →</button>' +
     '<button class="btn ghost" onclick="randomLauncher()">Change mode</button></div>';
+  /* drop the pre-answer action row (Check / I forgot…) so it doesn't linger under the verdict */
+  const actionRow = $('rxVerdict').previousElementSibling;
+  if (actionRow && actionRow.classList.contains('row')) actionRow.style.display = 'none';
   if ($('rxInput')) $('rxInput').blur(); /* free up Space for "Next" (see drillKeyNav) */
 }
 
