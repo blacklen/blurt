@@ -2425,6 +2425,14 @@ function resetSaveBtn() {
 }
 async function saveChunk(which) {
   if (!lastResult) return;
+  const btnId =
+    which === 'fixed' ? 'saveFixedBtn' : which === 'suggested' ? 'saveSuggestBtn' : 'saveChunkBtn';
+  const b = $(btnId);
+  if (b && b.disabled) return; /* already saving/saved — ignore double taps */
+  if (b) {
+    b.textContent = 'Saving…';
+    b.disabled = true;
+  }
   const example =
     which === 'fixed' ? lastResult.fixedAnswer || lastResult.natural : lastResult.natural;
   chunks.unshift({
@@ -2436,11 +2444,8 @@ async function saveChunk(which) {
   await persistChunks();
   renderHeader();
   renderHW();
-  const btnId =
-    which === 'fixed' ? 'saveFixedBtn' : which === 'suggested' ? 'saveSuggestBtn' : 'saveChunkBtn';
-  const b = $(btnId);
   if (b) {
-    b.textContent = 'Saved ✓ (first review tomorrow)';
+    b.textContent = 'Saved ✓';
     b.disabled = true;
   }
 }
@@ -2828,11 +2833,15 @@ function speakChunk(i) {
 }
 
 /* ================= 2. manual chunk ================= */
-async function addManualChunk() {
+async function addManualChunk(btn) {
   const t = $('addChunkText').value.trim();
   if (!t) return;
   let ex = $('addChunkEx').value.trim();
   if (!ex) ex = t;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+  }
   chunks.unshift({ ...newChunkBase(), chunk: t, example: ex });
   await persistChunks();
   $('addChunkText').value = '';
@@ -2840,6 +2849,10 @@ async function addManualChunk() {
   renderHeader();
   renderHW();
   renderChunks();
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Add to schedule';
+  }
 }
 
 /* Describe a situation in Vietnamese → AI proposes a reusable chunk + example to save. */
@@ -2881,7 +2894,7 @@ Reply with ONLY JSON: {"chunk":"the phrase","example":"the sentence","note":"a o
       '</small>' +
       (obj.note ? '<div class="meta">💬 ' + esc(String(obj.note).trim()) + '</div>' : '') +
       '</div>' +
-      '<button class="btn ghost" onclick="saveCtxChunk()">Save</button></div>';
+      '<button class="btn ghost" onclick="saveCtxChunk(this)">Save</button></div>';
   } catch (e) {
     ctxPending = null;
     prev.innerHTML =
@@ -2891,8 +2904,12 @@ Reply with ONLY JSON: {"chunk":"the phrase","example":"the sentence","note":"a o
     btn.textContent = 'Generate chunk';
   }
 }
-async function saveCtxChunk() {
+async function saveCtxChunk(btn) {
   if (!ctxPending) return;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+  }
   chunks.unshift({
     ...newChunkBase(),
     chunk: ctxPending.chunk,
@@ -2955,10 +2972,10 @@ For each, give the phrase and ONE short natural example sentence using it verbat
             j +
             '" onclick="savePasteChunk(' +
             j +
-            ')">Save</button></div>',
+            ', this)">Save</button></div>',
         )
         .join('') +
-      '<div class="row"><button class="btn" onclick="savePasteChunk(\'all\')">Save all</button></div>';
+      '<div class="row"><button class="btn" onclick="savePasteChunk(\'all\', this)">Save all</button></div>';
   } catch (e) {
     prev.innerHTML = '<div class="empty">Couldn\'t extract — try again.</div>';
   } finally {
@@ -2966,7 +2983,11 @@ For each, give the phrase and ONE short natural example sentence using it verbat
     btn.textContent = 'Extract chunks';
   }
 }
-async function savePasteChunk(which) {
+async function savePasteChunk(which, btn) {
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+  }
   const add = (x) => {
     if (x) chunks.unshift({ ...newChunkBase(), chunk: x.chunk, example: x.example });
   };

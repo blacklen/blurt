@@ -109,6 +109,14 @@
   .rxWrote{color:var(--muted);font-size:.85rem;font-weight:500}
   .sched{margin-top:6px;font-size:.83rem;color:var(--muted)}
 
+  /* Add/import tools tuck away behind a toggle so the chunk list is the main view. */
+  .chunkTools{margin-bottom:8px}
+  .chunkTools summary{cursor:pointer;color:var(--muted);font-size:.82rem;font-weight:600;list-style:none;padding:6px 0}
+  .chunkTools summary::-webkit-details-marker{display:none}
+  .chunkTools summary::before{content:'＋ ';opacity:.6}
+  .chunkTools[open] summary::before{content:'− '}
+  /* Long saved-chunk list scrolls within its own bounded area — tools + eyebrow stay put. */
+  #chunkList{max-height:55vh;overflow-y:auto;margin-top:8px;padding-right:6px}
   .chunkItem{display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:13px 2px;border-bottom:1px solid var(--line)}
   .chunkItem:last-child{border-bottom:none}
   .chunkItem b{font-size:1.02rem}

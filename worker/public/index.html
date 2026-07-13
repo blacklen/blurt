@@ -139,26 +139,29 @@
   <div id="chunks" style="display:none">
     <div class="card">
       <div class="eyebrow">Your stolen chunks</div>
-      <div class="toolbar">
-        <button class="btn ghost" onclick="exportChunks()">Copy backup</button>
-        <button class="btn ghost" onclick="importChunks()">Import</button>
-        <span class="toast" id="backupToast"></span>
-      </div>
-      <div class="addForm">
-        <input class="drillIn" id="addChunkText" placeholder="+ Add a chunk manually (e.g. run it by someone)" autocomplete="off">
-        <input class="drillIn" id="addChunkEx" placeholder="Example sentence using it (optional)" autocomplete="off">
-        <div class="row"><button class="btn ghost" onclick="addManualChunk()">Add to schedule</button></div>
-      </div>
-      <div class="addForm">
-        <input class="drillIn" id="ctxChunkText" placeholder="✨ Mô tả tình huống bằng tiếng Việt — AI tìm chunk (vd: nhờ ai đó kiểm tra code giúp)" autocomplete="off">
-        <div class="row"><button class="btn ghost" id="genCtxBtn" onclick="genChunkFromContext()">Generate chunk</button></div>
-        <div id="ctxChunkPreview"></div>
-      </div>
-      <div class="addForm">
-        <textarea class="drillIn" id="pasteText" placeholder="📋 Paste English you wrote (a Slack message, PR comment...) — AI pulls out the reusable chunks" autocomplete="off" style="min-height:64px;resize:vertical"></textarea>
-        <div class="row"><button class="btn ghost" id="pasteBtn" onclick="extractChunks()">Extract chunks</button></div>
-        <div id="pastePreview"></div>
-      </div>
+      <details class="chunkTools">
+        <summary>Add / import chunks</summary>
+        <div class="toolbar">
+          <button class="btn ghost" onclick="exportChunks()">Copy backup</button>
+          <button class="btn ghost" onclick="importChunks()">Import</button>
+          <span class="toast" id="backupToast"></span>
+        </div>
+        <div class="addForm">
+          <input class="drillIn" id="addChunkText" placeholder="+ Add a chunk manually (e.g. run it by someone)" autocomplete="off">
+          <input class="drillIn" id="addChunkEx" placeholder="Example sentence using it (optional)" autocomplete="off">
+          <div class="row"><button class="btn ghost" onclick="addManualChunk(this)">Add to schedule</button></div>
+        </div>
+        <div class="addForm">
+          <input class="drillIn" id="ctxChunkText" placeholder="✨ Mô tả tình huống bằng tiếng Việt — AI tìm chunk (vd: nhờ ai đó kiểm tra code giúp)" autocomplete="off">
+          <div class="row"><button class="btn ghost" id="genCtxBtn" onclick="genChunkFromContext()">Generate chunk</button></div>
+          <div id="ctxChunkPreview"></div>
+        </div>
+        <div class="addForm">
+          <textarea class="drillIn" id="pasteText" placeholder="📋 Paste English you wrote (a Slack message, PR comment...) — AI pulls out the reusable chunks" autocomplete="off" style="min-height:64px;resize:vertical"></textarea>
+          <div class="row"><button class="btn ghost" id="pasteBtn" onclick="extractChunks()">Extract chunks</button></div>
+          <div id="pastePreview"></div>
+        </div>
+      </details>
       <div id="chunkList"></div>
     </div>
   </div>
