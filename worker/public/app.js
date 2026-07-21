@@ -1877,7 +1877,8 @@ function rxBodyHTML(fmt, c) {
     cue =
       '<div class="drillCtx">💬 ' +
       esc(c.context) +
-      '</div><div class="drillSentence"><b style="letter-spacing:0">' +
+      '<button class="speak" onclick="speakRxEx()" title="Hear it">🔊</button>' +
+      '</div><div class="drillSentence" id="rxChunkHint" style="display:none"><b style="letter-spacing:0">' +
       esc(c.chunk) +
       '</b></div>';
     hint = 'Reply to that context with a full sentence using the chunk.';
@@ -1898,14 +1899,21 @@ function rxBodyHTML(fmt, c) {
     cue = '<div class="drillSentence">' + bl.html + '</div>';
     ph = 'Fill the blank from memory...';
   }
+  const hintBtn =
+    fmt === 'ctxFull'
+      ? '<button class="btn ghost" id="rxHintBtn" onclick="rxShowChunkHint()">💡 Hint</button>'
+      : '';
   return (
     cue +
-    '<button class="speak" onclick="speakRxEx()" title="Hear it">🔊</button>' +
+    (fmt === 'ctxFull'
+      ? ''
+      : '<button class="speak" onclick="speakRxEx()" title="Hear it">🔊</button>') +
     (hint ? '<p class="hint">' + hint + '</p>' : '') +
     '<input class="drillIn" id="rxInput" autocomplete="off" placeholder="' +
     ph +
     '">' +
     '<div class="row"><button class="btn" onclick="rxCheck()">Check</button>' +
+    hintBtn +
     showMe +
     '</div><div id="rxVerdict"></div>'
   );
@@ -1985,6 +1993,11 @@ function rxContains(guess, chunk) {
   return !!g && (g.includes(t) || t.split(' ').every((w) => g.includes(w)));
 }
 function rxVerdictHTML(res, c, guess) {
+  /* full-sentence / produce modes: goal is using the chunk in a sentence, not matching an exact form */
+  if (rxCur && (rxCur.fmt === 'ctxFull' || rxCur.fmt === 'produce'))
+    return res.ok
+      ? '<p class="verdict good">✓ Nice — you worked in <b>' + esc(c.chunk) + '</b></p>'
+      : '<p class="verdict badv">✗ Include the chunk: <b>' + esc(c.chunk) + '</b></p>';
   if (res.ok && res.exact)
     return '<p class="verdict good">✓ Nailed it — <b>' + esc(c.chunk) + '</b></p>';
   if (res.ok)
@@ -2042,6 +2055,12 @@ function rxCheck() {
 function rxReveal() {
   rxResolve({ ok: false, exact: false }, '');
 }
+function rxShowChunkHint() {
+  const h = $('rxChunkHint');
+  if (h) h.style.display = '';
+  const b = $('rxHintBtn');
+  if (b) b.style.display = 'none';
+}
 function rxSelfGrade(ok) {
   rxResolve({ ok, exact: ok, self: true }, '');
 }
@@ -2059,6 +2078,8 @@ function rxResolve(res, guess) {
     : rxVerdictHTML(res, c, guess);
   const s = rxSession;
   let extra = '';
+  if (rxCur.fmt === 'ctxFull' && c.example)
+    extra += '<p class="sched">Full sentence: <b>' + esc(c.example) + '</b></p>';
   if (rxCur.fmt === 'frankenstein')
     extra +=
       '<p class="sched">Both targets: <b>' +
