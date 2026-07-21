@@ -208,7 +208,7 @@ async function loadAll() {
   } catch (e) {}
   if (!state.cats || !state.cats.length) state.cats = CATS.map((c) => c.id);
   if (!Array.isArray(state.disliked)) state.disliked = []; /* bank prompt texts to never re-serve */
-  if (!['vn', 'sit', 'mix', 'three'].includes(state.ptype)) state.ptype = 'vn';
+  if (!['vn', 'sit', 'reflex', 'mix', 'three'].includes(state.ptype)) state.ptype = 'vn';
   if (!state.settings) state.settings = { hwReps: 3 };
   if (!(state.settings.hwReps > 0)) state.settings.hwReps = 3;
   if (!state.hw || state.hw.date !== dayStr(0)) state.hw = { date: dayStr(0), reps: 0 };
@@ -543,12 +543,15 @@ function toggleCat(id) {
 const PTYPES = [
   { id: 'vn', label: 'Say it in English' },
   { id: 'sit', label: 'Situation' },
+  { id: 'reflex', label: 'Reflex' },
   { id: 'mix', label: 'Mix' },
   { id: 'three', label: '3 ways' },
 ];
 /* '3 ways' is a flow variation, not a prompt kind — under the hood it draws any
-   kind, like Mix. Keep this list in sync wherever ptype gates kind filtering. */
-const KIND_PTYPES = ['vn', 'sit'];
+   kind, like Mix. Keep this list in sync wherever ptype gates kind filtering.
+   'reflex' renders like 'sit' (see isSit / askGemini) but draws only reflex
+   prompts, and reflexes are kept OUT of the mix/3-ways pool (see pool()). */
+const KIND_PTYPES = ['vn', 'sit', 'reflex'];
 function renderTypeChips() {
   $('typeChips').innerHTML = PTYPES.map(
     (t) =>
@@ -594,13 +597,45 @@ async function loadPrompts() {
     /* offline → keep cache/fallback */
   }
 }
+/* Reflex prompts (the "Reflex" ptype): tiny everyday moments + the one short line a
+   native fires off automatically. Kept in a SEPARATE hand-curated /reflexes.json so a
+   gen_prompts.py regen of the main bank can't wipe them. Merged into the draw pool()
+   at runtime; a compact cold-start fallback lives here so it works offline first-run. */
+let REFLEXES = [
+  { cat: 'daily', kind: 'reflex', text: 'The guy next to you on the train lets out a monster sneeze.', sample: 'Bless you!', chunk: 'bless you', note: "Fires automatically. 'Gesundheit' is the casual alt." },
+  { cat: 'social', kind: 'reflex', text: "You spot an old friend across the street — you haven't seen them in years.", sample: "No way — it's been ages!", chunk: "it's been ages", note: 'The reunion reflex. Fires the second you recognize them.' },
+  { cat: 'work', kind: 'reflex', text: "Your manager freezes on the call, then: '...so can you take that?' You caught none of it.", sample: 'Sorry, you cut out — could you say that again?', chunk: 'you cut out', note: 'The exact phrase for bad audio. Everyone uses it.' },
+];
+async function loadReflexes() {
+  try {
+    const c = localStorage.getItem('blurt:reflexes');
+    if (c) {
+      const arr = JSON.parse(c);
+      if (Array.isArray(arr) && arr.length) REFLEXES = arr;
+    }
+  } catch (e) {}
+  try {
+    const r = await fetch(apiBase() + '/reflexes.json', { cache: 'no-cache' });
+    if (r.ok) {
+      const arr = await r.json();
+      if (Array.isArray(arr) && arr.length) {
+        REFLEXES = arr;
+        try {
+          localStorage.setItem('blurt:reflexes', JSON.stringify(arr));
+        } catch (e) {}
+      }
+    }
+  } catch (e) {
+    /* offline → keep cache/fallback */
+  }
+}
 const CAT_IDS = CATS.map((c) => c.id);
 function cacheAiPrompt(p) {
   if (!p || !CAT_IDS.includes(p.cat) || !p.text || !p.sample || !p.chunk)
     return; /* only cache well-formed, categorized prompts */
   aiPrompts.push({
     cat: p.cat,
-    kind: p.kind === 'vn' ? 'vn' : 'sit',
+    kind: ['vn', 'sit', 'reflex'].includes(p.kind) ? p.kind : 'sit',
     text: p.text,
     sample: p.sample,
     chunk: p.chunk,
@@ -615,10 +650,12 @@ function cacheAiPrompt(p) {
 /* ================= practice flow ================= */
 function pool() {
   const disliked = new Set((state.disliked || []).map(norm));
-  const byCat = PROMPTS.concat(aiPrompts).filter(
+  const byCat = PROMPTS.concat(aiPrompts, REFLEXES).filter(
     (p) => state.cats.includes(p.cat) && !disliked.has(norm(p.text)),
   );
-  if (!KIND_PTYPES.includes(state.ptype)) return byCat; /* mix / 3-ways: any kind */
+  /* mix / 3-ways draw any kind — but NOT reflexes (a reflex is a focused drill,
+     and "say it 3 ways" makes no sense for a one-line reaction). */
+  if (!KIND_PTYPES.includes(state.ptype)) return byCat.filter((p) => p.kind !== 'reflex');
   const byKind = byCat.filter((p) => p.kind === state.ptype);
   /* never strand the learner: if this kind is empty for the chosen moods, fall back to all */
   return byKind.length ? byKind : byCat;
@@ -657,7 +694,8 @@ function nextRep() {
 }
 function startRepWith(p) {
   current = { prompt: p };
-  $('promptKind').textContent = p.kind === 'vn' ? 'Say this in English' : 'Situation';
+  $('promptKind').textContent =
+    p.kind === 'vn' ? 'Say this in English' : p.kind === 'reflex' ? 'In the moment' : 'Situation';
   $('promptText').textContent = p.text;
   const hint = $('chunkHint');
   if (p.kind === 'sit' && p.chunk) {
@@ -669,7 +707,7 @@ function startRepWith(p) {
   current.three = three ? { attempts: [], n: 1 } : null;
   renderThreeUI();
   /* "Not for me" only applies to real bank prompts (not AI-generated ones). */
-  const isBank = PROMPTS.some((x) => norm(x.text) === norm(p.text));
+  const isBank = PROMPTS.concat(REFLEXES).some((x) => norm(x.text) === norm(p.text));
   $('dislikeBtn').style.display = isBank ? '' : 'none';
   $('blurtInput').value = '';
   $('blurtInput').disabled = false;
@@ -790,7 +828,7 @@ async function finishRep() {
     : "You: (blank — that's okay, blank reps count too)";
   resetSaveBtn();
 
-  const isSit = p.kind === 'sit' && !!p.chunk;
+  const isSit = (p.kind === 'sit' || p.kind === 'reflex') && !!p.chunk;
   $('vnResult').style.display = isSit ? 'none' : '';
   $('sitResult').style.display = isSit ? '' : 'none';
 
@@ -897,9 +935,9 @@ ${instr}`;
     generationConfig: { responseMimeType: 'application/json' },
   });
   if (!obj || !obj.chunk) return null;
-  if (p.kind === 'sit') {
-    /* situation needs at least one answer field; fill the missing one from the other
-       so the renderer always has a real value to show. */
+  if (p.kind === 'sit' || p.kind === 'reflex') {
+    /* situation/reflex needs at least one answer field; fill the missing one from the
+       other so the renderer always has a real value to show. */
     if (!obj.fixedAnswer && !obj.natural) return null;
     if (!obj.fixedAnswer) obj.fixedAnswer = obj.natural;
     if (!obj.natural) obj.natural = obj.fixedAnswer;
@@ -916,9 +954,9 @@ async function askGeminiThreeWays(p, attempts) {
     .map((a, i) => i + 1 + ') ' + (a || '(blank)'))
     .join('\n');
   const framing =
-    p.kind === 'sit'
-      ? 'Situation they responded to: "' + p.text + '"'
-      : 'Idea to express (Vietnamese): "' + p.text + '"';
+    p.kind === 'vn'
+      ? 'Idea to express (Vietnamese): "' + p.text + '"'
+      : 'Situation they responded to: "' + p.text + '"';
   const userMsg = `A Vietnamese software developer practiced saying ONE idea three different ways to build fluency flexibility.
 ${framing}
 Their three attempts:
@@ -2690,6 +2728,7 @@ function doLogout() {
 /* Startup: straight to the app if a secret is stored, otherwise show the gate. */
 async function boot() {
   loadPrompts(); /* fire-and-forget: hydrates from cache instantly, refreshes from /prompts.json in the background */
+  loadReflexes(); /* same pattern for the curated /reflexes.json (Reflex ptype) */
   if (loggedIn()) {
     hideGate();
     await loadAll();
@@ -3135,14 +3174,18 @@ async function genPrompt() {
       ? 'Use kind "vn": a natural everyday Vietnamese sentence for the learner to express in English.'
       : state.ptype === 'sit'
         ? 'Use kind "sit": an English-described situation for the learner to react to.'
-        : 'Either kind "vn" (a natural everyday Vietnamese sentence to express in English) or kind "sit" (an English-described situation to react to).';
+        : state.ptype === 'reflex'
+          ? 'Use kind "reflex": write "text" like a vivid beat from a movie scene — present tense, often another character\'s line in quotes (e.g. "Your friend\'s voice cracks: \'We had to put the dog down.\'"). The "sample" is the ONE short, snappy line a real native blurts back in that instant (a few words, not 1-2 sentences) — spoken and idiomatic, never textbook. "chunk" is the reusable phrase inside it.'
+          : 'Either kind "vn" (a natural everyday Vietnamese sentence to express in English) or kind "sit" (an English-described situation to react to).';
+  const kindEnum =
+    state.ptype === 'reflex' ? 'reflex' : KIND_PTYPES.includes(state.ptype) ? state.ptype : 'vn|sit';
   const ctx = (state.settings.context || '').trim();
   const msg = `Generate ONE practice prompt for a Vietnamese software developer in Hanoi training spoken English fluency.
 Pick a category from: ${catNames}.
 ${ctx ? "Weave in this learner's real life when it fits naturally (use the names/details): " + ctx : ''}
 ${target.length ? (forcing ? 'Design the situation so a good answer MUST naturally use one of these phrases the learner keeps avoiding: ' : 'If it fits naturally, design the situation so a good answer could reuse one of these phrases the learner is reviewing: ') + target.join(' | ') + '.' : ''}
 ${kindInstr} Be creative and specific — local Hanoi flavor welcome, sometimes funny.
-Reply ONLY JSON: {"cat":"work|daily|social|opinion|story","kind":"vn|sit","text":"the prompt itself","sample":"a natural native-speaker answer, 1-2 sentences","chunk":"the most reusable multi-word phrase from sample","note":"short coaching note, max 20 words"}`;
+Reply ONLY JSON: {"cat":"work|daily|social|opinion|story","kind":"${kindEnum}","text":"the prompt itself","sample":"a natural native-speaker answer, 1-2 sentences","chunk":"the most reusable multi-word phrase from sample","note":"short coaching note, max 20 words"}`;
   try {
     const obj = await aiObj({
       contents: [{ parts: [{ text: msg }] }],
