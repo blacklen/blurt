@@ -680,16 +680,19 @@ function pickPrompt() {
   rememberPrompt(p.text);
   return p;
 }
-/* Two explicit prompt sources: 'bank' (Start a rep) and 'ai' (✨ AI prompt).
+/* Three explicit prompt sources: 'bank' (Start a rep), 'ai' (✨ AI prompt) and
+   'replay' (a run through your past mistakes).
    nextRep / skip continue whichever you started with. */
 let repSource = 'bank';
 function startRep() {
   repSource = 'bank';
+  endReplayRun();
   startRepWith(pickPrompt());
 }
 /* Result-card "Next rep →" and "Different prompt": stay on the current source. */
 function nextRep() {
-  if (repSource === 'ai' && loggedIn()) genPrompt();
+  if (repSource === 'replay') nextReplay();
+  else if (repSource === 'ai' && loggedIn()) genPrompt();
   else startRep();
 }
 function startRepWith(p) {
@@ -792,6 +795,10 @@ function stopTimer() {
 function backToReady() {
   stopTimer();
   stopMic();
+  endReplayRun(); /* leaving practice abandons any mistake-replay run */
+  repSource = 'bank';
+  const note = $('replayDoneNote');
+  if (note) note.style.display = 'none';
   show('readyCard');
 }
 
@@ -1055,14 +1062,50 @@ function warmupPick() {
   const prior = p.filter((r) => r.d && r.d < today);
   return (prior.length ? prior : p)[(prior.length ? prior : p).length - 1];
 }
+/* A replay RUN: entering "Replay a past mistake" queues up EVERY unfixed miss and
+   walks it oldest-first, so Next rep keeps serving misses until the queue is empty
+   instead of dropping you back into fresh practice. */
+let replayRun = null; /* { queue: [...pending], total, done } */
+function endReplayRun() {
+  replayRun = null;
+}
+/* Next miss in the run, or wrap it up when there are none left. */
+function nextReplay() {
+  if (replayRun && replayRun.queue.length) return startReplay();
+  const total = replayRun ? replayRun.total : 0;
+  endReplayRun();
+  repSource = 'bank';
+  show('readyCard');
+  const note = $('replayDoneNote');
+  if (note && total) {
+    note.textContent =
+      '✓ That’s all ' + total + ' past mistake' + (total > 1 ? 's' : '') + ' re-attempted. Nice.';
+    note.style.display = '';
+  }
+}
 function startReplay(orig, opts) {
-  if (!orig) orig = replayPool()[Math.floor(Math.random() * replayPool().length)];
+  const warmup = !!(opts && opts.warmup);
+  if (!warmup) {
+    /* start a fresh run unless one is already in progress */
+    if (!replayRun || !replayRun.queue.length) {
+      const pool = replayPool();
+      if (!pool.length) return;
+      replayRun = { queue: pool.slice(), total: pool.length, done: 0 };
+    }
+    repSource = 'replay';
+    orig = replayRun.queue.shift();
+    replayRun.done++;
+  }
   if (!orig) return;
+  const note = $('replayDoneNote');
+  if (note) note.style.display = 'none';
   current = { prompt: { kind: 'replay', text: orig.prompt }, replay: orig };
-  if (opts && opts.warmup) current.warmup = true;
+  if (warmup) current.warmup = true;
   $('promptKind').textContent = current.warmup
     ? '🔥 Warm-up — beat last time'
-    : 'Re-attempt — beat last time';
+    : replayRun
+      ? 'Re-attempt ' + replayRun.done + ' of ' + replayRun.total + ' — beat last time'
+      : 'Re-attempt — beat last time';
   $('promptText').textContent = orig.prompt;
   $('chunkHint').style.display = 'none';
   $('dislikeBtn').style.display = 'none'; /* replays aren't bank prompts */
@@ -3167,6 +3210,7 @@ async function genPrompt() {
     return;
   }
   repSource = 'ai'; /* AI button → stay on AI for following next/skip */
+  endReplayRun();
   const btn = $('surpriseBtn');
   btn.disabled = true;
   btn.textContent = '✨ thinking...';
