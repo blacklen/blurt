@@ -208,7 +208,7 @@ async function loadAll() {
   } catch (e) {}
   if (!state.cats || !state.cats.length) state.cats = CATS.map((c) => c.id);
   if (!Array.isArray(state.disliked)) state.disliked = []; /* bank prompt texts to never re-serve */
-  if (!['vn', 'sit', 'reflex', 'mix', 'three'].includes(state.ptype)) state.ptype = 'vn';
+  if (!['vn', 'sit', 'reflex', 'expr', 'mix', 'three'].includes(state.ptype)) state.ptype = 'vn';
   if (!state.settings) state.settings = { hwReps: 3 };
   if (!(state.settings.hwReps > 0)) state.settings.hwReps = 3;
   if (!state.hw || state.hw.date !== dayStr(0)) state.hw = { date: dayStr(0), reps: 0 };
@@ -544,14 +544,18 @@ const PTYPES = [
   { id: 'vn', label: 'Say it in English' },
   { id: 'sit', label: 'Situation' },
   { id: 'reflex', label: 'Reflex' },
+  { id: 'expr', label: 'Expression' },
   { id: 'mix', label: 'Mix' },
   { id: 'three', label: '3 ways' },
 ];
 /* '3 ways' is a flow variation, not a prompt kind — under the hood it draws any
    kind, like Mix. Keep this list in sync wherever ptype gates kind filtering.
-   'reflex' renders like 'sit' (see isSit / askGemini) but draws only reflex
-   prompts, and reflexes are kept OUT of the mix/3-ways pool (see pool()). */
-const KIND_PTYPES = ['vn', 'sit', 'reflex'];
+   'reflex' and 'expr' render like 'sit' (see isSit / askGemini) but each draws
+   only its own curated bank, and both are kept OUT of the mix/3-ways pool
+   (see pool()). 'expr' drills a fixed sentence PATTERN (e.g. "have no right
+   to ___") across different scenarios — the chunk is the pattern, not a
+   literal phrase to paste in verbatim. */
+const KIND_PTYPES = ['vn', 'sit', 'reflex', 'expr'];
 function renderTypeChips() {
   $('typeChips').innerHTML = PTYPES.map(
     (t) =>
@@ -629,13 +633,45 @@ async function loadReflexes() {
     /* offline → keep cache/fallback */
   }
 }
+/* Expression prompts (the "Expression" ptype): fixed sentence PATTERNS (nomad-
+   english style, e.g. "have no right to ___") paired with a scenario to apply
+   them in. Same hand-curated-bank pattern as REFLEXES, in its own /expressions.json
+   so a bank regen can't wipe it. A compact cold-start fallback lives here. */
+let EXPRESSIONS = [
+  { cat: 'social', kind: 'expr', text: "A friend snaps at you for showing up 10 minutes late to coffee.", sample: "Just because I'm late doesn't mean I don't care about our time together.", chunk: "just because ___ doesn't mean ___", note: 'Classic deflection pattern — pushes back without denying the fact.' },
+  { cat: 'work', kind: 'expr', text: 'A teammate keeps re-opening a decision the team already made without you.', sample: "You have no right to redo this without asking the team first.", chunk: 'you have no right to ___', note: 'Blunt boundary-setting — pairs well with a softer follow-up sentence.' },
+  { cat: 'daily', kind: 'expr', text: 'Your roommate borrowed your charger again without asking.', sample: "The least you could do is tell me before you take it.", chunk: 'the least you could do is ___', note: 'Signals a minimum expectation was not met.' },
+];
+async function loadExpressions() {
+  try {
+    const c = localStorage.getItem('blurt:expressions');
+    if (c) {
+      const arr = JSON.parse(c);
+      if (Array.isArray(arr) && arr.length) EXPRESSIONS = arr;
+    }
+  } catch (e) {}
+  try {
+    const r = await fetch(apiBase() + '/expressions.json', { cache: 'no-cache' });
+    if (r.ok) {
+      const arr = await r.json();
+      if (Array.isArray(arr) && arr.length) {
+        EXPRESSIONS = arr;
+        try {
+          localStorage.setItem('blurt:expressions', JSON.stringify(arr));
+        } catch (e) {}
+      }
+    }
+  } catch (e) {
+    /* offline → keep cache/fallback */
+  }
+}
 const CAT_IDS = CATS.map((c) => c.id);
 function cacheAiPrompt(p) {
   if (!p || !CAT_IDS.includes(p.cat) || !p.text || !p.sample || !p.chunk)
     return; /* only cache well-formed, categorized prompts */
   aiPrompts.push({
     cat: p.cat,
-    kind: ['vn', 'sit', 'reflex'].includes(p.kind) ? p.kind : 'sit',
+    kind: ['vn', 'sit', 'reflex', 'expr'].includes(p.kind) ? p.kind : 'sit',
     text: p.text,
     sample: p.sample,
     chunk: p.chunk,
@@ -650,12 +686,13 @@ function cacheAiPrompt(p) {
 /* ================= practice flow ================= */
 function pool() {
   const disliked = new Set((state.disliked || []).map(norm));
-  const byCat = PROMPTS.concat(aiPrompts, REFLEXES).filter(
+  const byCat = PROMPTS.concat(aiPrompts, REFLEXES, EXPRESSIONS).filter(
     (p) => state.cats.includes(p.cat) && !disliked.has(norm(p.text)),
   );
-  /* mix / 3-ways draw any kind — but NOT reflexes (a reflex is a focused drill,
-     and "say it 3 ways" makes no sense for a one-line reaction). */
-  if (!KIND_PTYPES.includes(state.ptype)) return byCat.filter((p) => p.kind !== 'reflex');
+  /* mix / 3-ways draw any kind — but NOT reflexes or expressions (both are
+     focused single-pattern drills; "say it 3 ways" makes no sense for either). */
+  if (!KIND_PTYPES.includes(state.ptype))
+    return byCat.filter((p) => p.kind !== 'reflex' && p.kind !== 'expr');
   const byKind = byCat.filter((p) => p.kind === state.ptype);
   /* never strand the learner: if this kind is empty for the chosen moods, fall back to all */
   return byKind.length ? byKind : byCat;
@@ -698,10 +735,18 @@ function nextRep() {
 function startRepWith(p) {
   current = { prompt: p };
   $('promptKind').textContent =
-    p.kind === 'vn' ? 'Say this in English' : p.kind === 'reflex' ? 'In the moment' : 'Situation';
+    p.kind === 'vn'
+      ? 'Say this in English'
+      : p.kind === 'reflex'
+        ? 'In the moment'
+        : p.kind === 'expr'
+          ? 'Apply this expression'
+          : 'Situation';
   $('promptText').textContent = p.text;
   const hint = $('chunkHint');
-  if (p.kind === 'sit' && p.chunk) {
+  /* 'sit' and 'expr' show the target up front — you're meant to consciously reach
+     for a known chunk/pattern, unlike 'reflex' where recall itself is the test. */
+  if ((p.kind === 'sit' || p.kind === 'expr') && p.chunk) {
     $('chunkHintText').textContent = p.chunk;
     hint.style.display = '';
   } else hint.style.display = 'none';
@@ -710,7 +755,7 @@ function startRepWith(p) {
   current.three = three ? { attempts: [], n: 1 } : null;
   renderThreeUI();
   /* "Not for me" only applies to real bank prompts (not AI-generated ones). */
-  const isBank = PROMPTS.concat(REFLEXES).some((x) => norm(x.text) === norm(p.text));
+  const isBank = PROMPTS.concat(REFLEXES, EXPRESSIONS).some((x) => norm(x.text) === norm(p.text));
   $('dislikeBtn').style.display = isBank ? '' : 'none';
   $('blurtInput').value = '';
   $('blurtInput').disabled = false;
@@ -835,7 +880,7 @@ async function finishRep() {
     : "You: (blank — that's okay, blank reps count too)";
   resetSaveBtn();
 
-  const isSit = (p.kind === 'sit' || p.kind === 'reflex') && !!p.chunk;
+  const isSit = (p.kind === 'sit' || p.kind === 'reflex' || p.kind === 'expr') && !!p.chunk;
   $('vnResult').style.display = isSit ? 'none' : '';
   $('sitResult').style.display = isSit ? '' : 'none';
 
@@ -922,6 +967,14 @@ async function askGemini(p, blurt) {
     task = 'The prompt was a Vietnamese sentence to express in English: "' + p.text + '"';
     instr =
       '{"natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (e.g. wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short encouraging coaching note (max 22 words) about the main gap between their version and the natural one. If their version was already natural, say so."}';
+  } else if (p.kind === 'expr') {
+    task =
+      'Scenario: "' +
+      p.text +
+      '"' +
+      (p.chunk ? '\nExpression pattern to apply: "' + p.chunk + '"' : '');
+    instr =
+      '{"fixedAnswer":"THEIR sentence, corrected. Keep their own wording and content; fix only what is grammatically wrong or unnatural, and make sure the pattern is actually used, filled in to fit the scenario — not the literal blank/underscore left in. This is their answer cleaned up, NOT a rewrite.","natural":"a different full sentence for the same scenario, built on the same pattern, filled in differently than fixedAnswer.","chunk":"the pattern, copied exactly as given","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say: one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short tip (max 20 words): did they apply the pattern correctly and naturally, and the key fix."}';
   } else {
     task =
       'Situation: "' +
@@ -942,9 +995,9 @@ ${instr}`;
     generationConfig: { responseMimeType: 'application/json' },
   });
   if (!obj || !obj.chunk) return null;
-  if (p.kind === 'sit' || p.kind === 'reflex') {
-    /* situation/reflex needs at least one answer field; fill the missing one from the
-       other so the renderer always has a real value to show. */
+  if (p.kind === 'sit' || p.kind === 'reflex' || p.kind === 'expr') {
+    /* situation/reflex/expression need at least one answer field; fill the missing
+       one from the other so the renderer always has a real value to show. */
     if (!obj.fixedAnswer && !obj.natural) return null;
     if (!obj.fixedAnswer) obj.fixedAnswer = obj.natural;
     if (!obj.natural) obj.natural = obj.fixedAnswer;
@@ -2793,6 +2846,7 @@ function doLogout() {
 async function boot() {
   loadPrompts(); /* fire-and-forget: hydrates from cache instantly, refreshes from /prompts.json in the background */
   loadReflexes(); /* same pattern for the curated /reflexes.json (Reflex ptype) */
+  loadExpressions(); /* same pattern for the curated /expressions.json (Expression ptype) */
   if (loggedIn()) {
     hideGate();
     await loadAll();
@@ -3234,6 +3288,13 @@ async function genPrompt() {
   )
     .slice(0, 3)
     .map((c) => c.chunk);
+  /* Expression mode locks the pattern (chunk) to one already in the curated bank —
+     the AI only invents a fresh scenario + sentence around it, so patterns stay
+     hand-curated while the same pattern gets drilled across varied content. */
+  const exprPattern =
+    state.ptype === 'expr' && EXPRESSIONS.length
+      ? EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)].chunk
+      : null;
   const kindInstr =
     state.ptype === 'vn'
       ? 'Use kind "vn": a natural everyday Vietnamese sentence for the learner to express in English.'
@@ -3241,14 +3302,26 @@ async function genPrompt() {
         ? 'Use kind "sit": an English-described situation for the learner to react to.'
         : state.ptype === 'reflex'
           ? 'Use kind "reflex": write "text" like a vivid beat from a movie scene — present tense, often another character\'s line in quotes (e.g. "Your friend\'s voice cracks: \'We had to put the dog down.\'"). The "sample" is the ONE short, snappy line a real native blurts back in that instant (a few words, not 1-2 sentences) — spoken and idiomatic, never textbook. "chunk" is the reusable phrase inside it.'
-          : 'Either kind "vn" (a natural everyday Vietnamese sentence to express in English) or kind "sit" (an English-described situation to react to).';
+          : state.ptype === 'expr'
+            ? 'Use kind "expr": the learner is drilling this fixed expression pattern — "' +
+              exprPattern +
+              '". Invent a NEW everyday scenario ("text") — different from ones already practiced — and write "sample" as ONE full natural sentence that fills in the pattern to fit that scenario. Return "chunk" as exactly this pattern, unchanged: "' +
+              exprPattern +
+              '".'
+            : 'Either kind "vn" (a natural everyday Vietnamese sentence to express in English) or kind "sit" (an English-described situation to react to).';
   const kindEnum =
-    state.ptype === 'reflex' ? 'reflex' : KIND_PTYPES.includes(state.ptype) ? state.ptype : 'vn|sit';
+    state.ptype === 'reflex'
+      ? 'reflex'
+      : state.ptype === 'expr'
+        ? 'expr'
+        : KIND_PTYPES.includes(state.ptype)
+          ? state.ptype
+          : 'vn|sit';
   const ctx = (state.settings.context || '').trim();
   const msg = `Generate ONE practice prompt for a Vietnamese software developer in Hanoi training spoken English fluency.
 Pick a category from: ${catNames}.
 ${ctx ? "Weave in this learner's real life when it fits naturally (use the names/details): " + ctx : ''}
-${target.length ? (forcing ? 'Design the situation so a good answer MUST naturally use one of these phrases the learner keeps avoiding: ' : 'If it fits naturally, design the situation so a good answer could reuse one of these phrases the learner is reviewing: ') + target.join(' | ') + '.' : ''}
+${target.length && state.ptype !== 'expr' ? (forcing ? 'Design the situation so a good answer MUST naturally use one of these phrases the learner keeps avoiding: ' : 'If it fits naturally, design the situation so a good answer could reuse one of these phrases the learner is reviewing: ') + target.join(' | ') + '.' : ''}
 ${kindInstr} Be creative and specific — local Hanoi flavor welcome, sometimes funny.
 Reply ONLY JSON: {"cat":"work|daily|social|opinion|story","kind":"${kindEnum}","text":"the prompt itself","sample":"a natural native-speaker answer, 1-2 sentences","chunk":"the most reusable multi-word phrase from sample","note":"short coaching note, max 20 words"}`;
   try {
