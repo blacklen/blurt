@@ -1328,7 +1328,7 @@ function drillAhead() {
    differences ("I don't know, man..." vs "I don't know, man —"). */
 const BLANK = '\u0000';
 function drillBlank(chunkStr, exampleStr) {
-  const segs = String(chunkStr).split(/\s*(?:\+|\/|\.{3}|…|\[[^\]]*\])\s*/);
+  const segs = String(chunkStr).split(/\s*(?:\+|\/|\.{3}|…|_+|\[[^\]]*\])\s*/);
   let out = String(exampleStr),
     hits = 0;
   const answers = [];
