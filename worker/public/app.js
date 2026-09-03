@@ -886,8 +886,10 @@ async function finishRep() {
 
   if (isSit) {
     $('suggestBlock').style.display = '';
-    $('fixedText').innerHTML = '<span class="spin"></span> Fixing your answer...';
-    $('suggestText').innerHTML = '<span class="spin"></span> Cooking up a suggestion...';
+    if (p.kind !== 'expr') {
+      $('fixedText').innerHTML = '<span class="spin"></span> Fixing your answer...';
+      $('suggestText').innerHTML = '<span class="spin"></span> Cooking up a suggestion...';
+    }
   } else {
     $('naturalText').innerHTML = '<span class="spin"></span> Getting the natural version...';
     $('chunkText').textContent = '...';
@@ -895,7 +897,9 @@ async function finishRep() {
   $('noteText').textContent = '';
 
   let result = null;
-  if (blurt) result = await askGemini(p, blurt);
+  /* expr has no AI judging — the curated sample IS the model answer, so there's
+     nothing for the AI to correct against. */
+  if (blurt && p.kind !== 'expr') result = await askGemini(p, blurt);
   if (!result)
     result = isSit
       ? { fixedAnswer: p.sample, natural: p.sample, chunk: p.chunk, note: p.note }
@@ -907,7 +911,7 @@ async function finishRep() {
   if (isSit) {
     const fixed = result.fixedAnswer || result.natural;
     const native = result.natural || fixed;
-    if (blurt) {
+    if (blurt && p.kind !== 'expr') {
       /* they actually wrote something → show the correction of THEIR answer,
          then a native version only if it's genuinely different. */
       $('fixedBlock').style.display = '';
@@ -921,10 +925,12 @@ async function finishRep() {
         $('suggestChunkText').textContent = result.chunk;
       }
     } else {
-      /* blank rep → nothing to fix, just show how a native would say it. */
+      /* blank rep, or expr (no AI judging of their attempt) → just show how the
+         pattern fills in. */
       $('fixedBlock').style.display = 'none';
       $('suggestBlock').style.display = '';
-      $('suggestEyebrow').textContent = 'How a native might say it';
+      $('suggestEyebrow').textContent =
+        p.kind === 'expr' ? 'How the pattern fills in' : 'How a native might say it';
       $('suggestText').textContent = native;
       $('suggestChunkText').textContent = result.chunk;
     }
@@ -967,14 +973,6 @@ async function askGemini(p, blurt) {
     task = 'The prompt was a Vietnamese sentence to express in English: "' + p.text + '"';
     instr =
       '{"natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (e.g. wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short encouraging coaching note (max 22 words) about the main gap between their version and the natural one. If their version was already natural, say so."}';
-  } else if (p.kind === 'expr') {
-    task =
-      'Scenario: "' +
-      p.text +
-      '"' +
-      (p.chunk ? '\nExpression pattern to apply: "' + p.chunk + '"' : '');
-    instr =
-      '{"fixedAnswer":"THEIR sentence, corrected. Keep their own wording and content; fix only what is grammatically wrong or unnatural, and make sure the pattern is actually used, filled in to fit the scenario — not the literal blank/underscore left in. This is their answer cleaned up, NOT a rewrite.","natural":"a different full sentence for the same scenario, built on the same pattern, filled in differently than fixedAnswer.","chunk":"the pattern, copied exactly as given","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say: one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short tip (max 20 words): did they apply the pattern correctly and naturally, and the key fix."}';
   } else {
     task =
       'Situation: "' +
