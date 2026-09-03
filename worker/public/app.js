@@ -638,9 +638,9 @@ async function loadReflexes() {
    them in. Same hand-curated-bank pattern as REFLEXES, in its own /expressions.json
    so a bank regen can't wipe it. A compact cold-start fallback lives here. */
 let EXPRESSIONS = [
-  { cat: 'social', kind: 'expr', text: "A friend snaps at you for showing up 10 minutes late to coffee.", sample: "Just because I'm late doesn't mean I don't care about our time together.", chunk: "just because ___ doesn't mean ___", note: 'Classic deflection pattern — pushes back without denying the fact.' },
-  { cat: 'work', kind: 'expr', text: 'A teammate keeps re-opening a decision the team already made without you.', sample: "You have no right to redo this without asking the team first.", chunk: 'you have no right to ___', note: 'Blunt boundary-setting — pairs well with a softer follow-up sentence.' },
-  { cat: 'daily', kind: 'expr', text: 'Your roommate borrowed your charger again without asking.', sample: "The least you could do is tell me before you take it.", chunk: 'the least you could do is ___', note: 'Signals a minimum expectation was not met.' },
+  { cat: 'social', kind: 'expr', text: "Trễ có vài phút thôi mà, đâu có nghĩa là mình không quý buổi này đâu.", sample: "Just because I'm late doesn't mean I don't care about our time together.", chunk: "just because ___ doesn't mean ___", note: 'Classic deflection pattern — pushes back without denying the fact.' },
+  { cat: 'work', kind: 'expr', text: 'Cậu không có quyền tự ý làm lại cái này mà không hỏi qua cả team đâu.', sample: "You have no right to redo this without asking the team first.", chunk: 'you have no right to ___', note: 'Blunt boundary-setting — pairs well with a softer follow-up sentence.' },
+  { cat: 'daily', kind: 'expr', text: 'Ít ra cậu cũng phải nói một tiếng trước khi lấy đồ của tớ chứ.', sample: "The least you could do is tell me before you take it.", chunk: 'the least you could do is ___', note: 'Signals a minimum expectation was not met.' },
 ];
 async function loadExpressions() {
   try {
