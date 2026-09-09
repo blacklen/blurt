@@ -2,10 +2,13 @@
   "name": "blurt-sync-worker",
   "version": "1.0.0",
   "private": true,
-  "description": "Cloudflare Worker + KV backend for Blurt cross-device sync",
+  "description": "Cloudflare Worker + D1 backend for Blurt cross-device sync",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create blurt",
+    "db:migrate": "wrangler d1 migrations apply blurt --remote",
+    "db:migrate:local": "wrangler d1 migrations apply blurt --local",
     "kv:create": "wrangler kv namespace create BLURT_KV"
   },
   "devDependencies": {

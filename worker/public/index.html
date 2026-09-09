@@ -6,18 +6,51 @@
 <title>Blurt — 60-second English reps</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260628">
+<link rel="stylesheet" href="styles.css?v=20260909">
 </head>
-<body>
+<body class="loading">
 <div id="timebar"></div>
 <div class="wrap">
   <header>
     <div class="logo">blurt<span>.</span></div>
     <div class="headRight">
+      <span class="syncState" id="syncState"></span>
+      <span class="sk sk-streak"></span>
       <div class="streak">🔥 <b id="streakNum">0</b> day streak · <span id="totalNum">0</span> reps</div>
       <button class="gear" id="gearBtn" onclick="toggleSettings()" aria-label="Settings" title="Settings">⚙️</button>
     </div>
   </header>
+
+  <!-- Shown when the app can't reach its data. There is no offline copy, so a
+       failed load has to be loud instead of looking like an empty chunk bank. -->
+  <div class="loadError" id="loadError" style="display:none"></div>
+
+  <!-- Stand-in for the whole page while the first load is in flight. It mirrors
+       the real layout — homework card, nav pills, practice card — so the app
+       doesn't reflow when the content arrives. Swapped out in setLoading(). -->
+  <div id="skeleton" aria-hidden="true">
+    <div class="sk sk-hw"></div>
+    <div class="sk-nav">
+      <span class="sk sk-pill"></span><span class="sk sk-pill"></span><span class="sk sk-pill"></span>
+      <span class="sk sk-pill"></span><span class="sk sk-pill"></span><span class="sk sk-pill"></span>
+    </div>
+    <div class="sk-card">
+      <div class="sk sk-line" style="width:42%;height:11px"></div>
+      <div class="sk sk-line" style="width:78%;height:26px;margin-top:14px"></div>
+      <div class="sk sk-line" style="width:96%;margin-top:16px"></div>
+      <div class="sk sk-line" style="width:88%"></div>
+      <div class="sk sk-line" style="width:34%;height:11px;margin-top:20px"></div>
+      <div class="sk-chips">
+        <span class="sk sk-chip"></span><span class="sk sk-chip"></span><span class="sk sk-chip"></span>
+      </div>
+      <div class="sk sk-line" style="width:34%;height:11px;margin-top:18px"></div>
+      <div class="sk-chips">
+        <span class="sk sk-chip"></span><span class="sk sk-chip"></span>
+        <span class="sk sk-chip"></span><span class="sk sk-chip"></span>
+      </div>
+      <div class="sk-row"><span class="sk sk-btn"></span><span class="sk sk-btn narrow"></span></div>
+    </div>
+  </div>
 
   <!-- ============ HOMEWORK ============ -->
   <div class="hw" id="hwCard"></div>
@@ -239,6 +272,6 @@
 
 <footer>homework done = streak earned · no freebies</footer>
 
-<script src="app.js?v=20260901"></script>
+<script src="app.js?v=20260909"></script>
 </body>
 </html>

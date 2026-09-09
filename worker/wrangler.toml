@@ -10,8 +10,18 @@ compatibility_date = "2025-01-01"
 [triggers]
 crons = ["0 * * * *"]
 
-# Create the namespace with `npm run kv:create`, then paste the printed id here.
-# (For `wrangler dev` the id can stay as-is — local dev uses a simulated KV store.)
+# App data (state + chunk bank) lives in D1. Create it with `npm run db:create`,
+# paste the printed database_id here, then apply the schema with `npm run db:migrate`.
+[[d1_databases]]
+binding = "BLURT_DB"
+database_name = "blurt"
+database_id = "294038a9-8877-45bb-aad7-52f0f52f5ee9"
+
+# KV is kept for exactly two throwaway counters — the login brute-force tally and
+# the "reminder already sent today" marker. Both want a TTL so they expire on
+# their own, which KV gives free and D1 would need a cleanup query for. Together
+# they are ~2 writes/day, nowhere near the free plan's 1,000/day write cap.
+# It also still holds the pre-D1 data, which the Worker reads once to migrate.
 [[kv_namespaces]]
 binding = "BLURT_KV"
 id = "bbd78c19aa154c148a0337ac3ce8501a"

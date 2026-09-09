@@ -16,6 +16,37 @@
   .streak{font-size:.85rem;color:var(--muted);font-weight:500}
   .streak b{color:var(--ink);font-size:1rem}
   .headRight{display:flex;align-items:center;gap:12px}
+  .syncState{font-size:.78rem;font-weight:600;color:var(--muted)}
+  /* ===== Loading skeleton (body.loading; see setLoading in app.js) =====
+     A stand-in for the whole page, not a shimmer sprinkled over half-rendered
+     content: at first paint the streak and chunk counts read 0 and the mood/type
+     chips haven't been built yet, so showing that shell is worse than covering
+     it. Geometry mirrors the real layout to keep the swap from reflowing. */
+  @keyframes skelSweep{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .sk{background:linear-gradient(90deg,var(--soft) 20%,var(--line) 40%,var(--soft) 62%);background-size:200% 100%;animation:skelSweep 1.5s linear infinite;border-radius:7px;display:block}
+  #skeleton,.sk-streak{display:none}
+  body.loading #skeleton{display:block}
+  body.loading .sk-streak{display:block;width:140px;height:16px;border-radius:5px}
+  body.loading .streak,body.loading #hwCard,body.loading nav,body.loading #practice{display:none}
+  .sk-hw{height:145px;border-radius:18px;margin-bottom:16px} /* measured against a filled homework card */
+  /* Pill widths trace the real tab labels, so the nav wraps the same way it does
+     once rendered ("Stats" onto a second row) and nothing shifts on the swap. */
+  .sk-nav{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+  .sk-pill{height:34px;width:87px;border-radius:999px}
+  .sk-pill:nth-child(2){width:88px}.sk-pill:nth-child(3){width:65px}
+  .sk-pill:nth-child(4){width:60px}.sk-pill:nth-child(5){width:123px}.sk-pill:nth-child(6){width:68px}
+  .sk-card{background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:24px;margin-bottom:16px}
+  .sk-line{height:13px;margin-top:9px}
+  .sk-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+  .sk-chip{height:31px;width:104px;border-radius:999px}
+  .sk-chip:nth-child(2){width:86px}.sk-chip:nth-child(3){width:120px}.sk-chip:nth-child(4){width:92px}
+  .sk-row{display:flex;gap:10px;margin-top:22px}
+  .sk-btn{height:45px;width:150px;border-radius:12px}
+  .sk-btn.narrow{width:122px}
+  .loadError{border:1.5px solid var(--bad);border-radius:14px;padding:14px 16px;margin-bottom:18px;font-size:.92rem;line-height:1.5}
+  .loadError b{display:block;margin-bottom:6px}
+  .loadError small{display:block;margin-top:8px;color:var(--muted);font-size:.8rem;word-break:break-word}
+  .loadError .btn{margin-top:4px}
   .gear{border:1.5px solid var(--line);background:transparent;border-radius:999px;width:38px;height:38px;font-size:1.05rem;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:none}
   .gear:hover{border-color:var(--ink)}
   .gear:focus-visible{outline:2px solid var(--pulse);outline-offset:2px}
@@ -153,4 +184,4 @@
   .addForm input{margin-top:10px}
   footer{position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:.75rem;color:var(--muted);padding:10px;background:linear-gradient(transparent,var(--paper) 40%);pointer-events:none}
 
-  @media (prefers-reduced-motion:reduce){#timebar.running{transition:none}.spin{animation-duration:1.4s}.btn.mic.live{animation:none}}
+  @media (prefers-reduced-motion:reduce){#timebar.running{transition:none}.spin{animation-duration:1.4s}.btn.mic.live{animation:none}.sk{animation:none;background:var(--soft)}}

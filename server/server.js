@@ -22,12 +22,25 @@ const NTFY_TOPIC = process.env.NTFY_TOPIC || '';
 
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
+// Same shape as the Worker's D1 schema (worker/migrations/0001_init.sql) so both
+// backends store data identically. `ord` is the chunk's creation position: the
+// practice engine addresses chunks[idx], so the array has to rebuild in a stable
+// order on every load.
 db.exec(`
   CREATE TABLE IF NOT EXISTS documents (
     key        TEXT PRIMARY KEY,
     value      TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS chunks (
+    id         TEXT PRIMARY KEY,
+    data       TEXT NOT NULL,
+    due        TEXT,
+    ord        INTEGER NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_chunks_due ON chunks(due);
+  CREATE INDEX IF NOT EXISTS idx_chunks_ord ON chunks(ord, id);
 `);
 
 const nowIso = () => new Date().toISOString();
@@ -75,12 +88,12 @@ app.use('/api', (req, res, next) => {
 
 app.get('/api/login', (req, res) => res.json({ ok: true }));
 
-app.get('/api/kv/:key', (req, res) => {
+app.get('/api/doc/:key', (req, res) => {
   const row = db.prepare('SELECT value, updated_at FROM documents WHERE key = ?').get(req.params.key);
   res.json(row ? { value: row.value, updated_at: row.updated_at } : { value: null, updated_at: null });
 });
 
-app.put('/api/kv/:key', (req, res) => {
+app.put('/api/doc/:key', (req, res) => {
   const value = req.body && req.body.value;
   if (typeof value !== 'string') return res.status(400).json({ error: 'value must be a string' });
   const ts = nowIso();
@@ -89,6 +102,57 @@ app.put('/api/kv/:key', (req, res) => {
      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
   ).run(req.params.key, value, ts);
   res.json({ ok: true, updated_at: ts });
+});
+
+app.delete('/api/doc/:key', (req, res) => {
+  db.prepare('DELETE FROM documents WHERE key = ?').run(req.params.key);
+  res.json({ ok: true });
+});
+
+/* ================= chunks ================= */
+
+// The whole bank in one query, ordered so chunks[idx] means the same thing on
+// every device. The Worker twin returns the identical shape.
+app.get('/api/chunks', (req, res) => {
+  const rows = db.prepare('SELECT id, data FROM chunks ORDER BY ord ASC, id ASC').all();
+  const chunks = [];
+  for (const row of rows) {
+    try {
+      const c = JSON.parse(row.data);
+      c.id = row.id;
+      chunks.push(c);
+    } catch (e) {
+      /* skip a corrupt row rather than failing the whole load */
+    }
+  }
+  res.json({ chunks });
+});
+
+// Batch upsert. ON CONFLICT leaves `ord` alone so editing a chunk never moves it.
+const upsertChunk = () =>
+  db.prepare(
+    `INSERT INTO chunks (id, data, due, ord, updated_at) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT(id) DO UPDATE SET
+       data = excluded.data, due = excluded.due, updated_at = excluded.updated_at`
+  );
+
+app.put('/api/chunks', (req, res) => {
+  const list = req.body && Array.isArray(req.body.chunks) ? req.body.chunks : null;
+  if (!list) return res.status(400).json({ error: 'chunks must be an array' });
+  if (list.some((c) => !c || typeof c.id !== 'string' || !c.id))
+    return res.status(400).json({ error: 'every chunk needs a string id' });
+  const ts = nowIso();
+  const base = Date.now();
+  const stmt = upsertChunk();
+  db.transaction(() => {
+    list.forEach((c, i) => stmt.run(c.id, JSON.stringify(c), c.due || null, base + i, ts));
+  })();
+  res.json({ ok: true, saved: list.length, updated_at: ts });
+});
+
+app.delete('/api/chunks/:id', (req, res) => {
+  db.prepare('DELETE FROM chunks WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
 });
 
 // Proxy a Gemini generateContent call, injecting the server-side key.

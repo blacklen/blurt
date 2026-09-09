@@ -10,8 +10,8 @@ const CATS = [
 // prettier-ignore
 let PROMPTS = [
  /* Compact cold-start fallback. The full ~100-prompt bank loads from /prompts.json
-    (cached in localStorage) via loadPrompts(); this keeps the app usable offline on
-    a first visit before that fetch lands. */
+    via loadPrompts(); this keeps something to practise on screen before that
+    fetch lands, or if it fails. */
  {cat:'work',kind:'vn', text:'Cái bug này khó chịu thật, mình tìm cả buổi sáng mà chưa ra.', sample:"This bug is driving me crazy — I've been digging into it all morning and still nothing.", chunk:'driving me crazy', note:'“Driving me crazy” is the natural way to vent about something annoying.'},
  {cat:'work',kind:'sit', text:'Your standup update: yesterday a bug fix, today a new task, no blockers.', sample:"Quick one from me — wrapped up the login bug yesterday, picking up the export task today. No blockers.", chunk:'wrapped up / picking up', note:'Standup verbs: wrap up, pick up, look into, follow up.'},
  {cat:'daily',kind:'vn', text:'Mình định nghỉ sớm hôm nay vì hơi mệt.', sample:"I'm thinking of heading out early today — feeling a bit off.", chunk:'feeling a bit off', note:'“A bit off” covers tired, sick-ish, weird — all of it.'},
@@ -62,13 +62,7 @@ let drillCurrent = null,
   micBtnId = 'micBtn',
   micOnFinal = null,
   lastShownEx = null;
-let aiPrompts = (function () {
-  try {
-    return JSON.parse(localStorage.getItem('blurt:aiPrompts')) || [];
-  } catch (e) {
-    return [];
-  }
-})(); /* generated prompts, cached for variety + offline */
+let aiPrompts = []; /* generated prompts, kept server-side so they follow you across devices */
 
 /* ================= sync config (optional server) ================= */
 let API_BASE =
@@ -139,73 +133,229 @@ async function aiObj(payload) {
   }
 }
 
-/* ================= storage (localStorage cache + optional sync server) ================= */
-/* Newest-timestamp-wins sync: we cache the server's updated_at per key as
-   '<k>:ts'. On get, if the server copy is older than our cached baseline we have
-   newer un-pushed local edits, so we keep local and push it up instead of being
-   clobbered. (Single-user: last-writer-by-clock, no field-level merge.) */
+/* ================= storage (online only — the server is the single source of truth) =================
+   There is no localStorage copy of your data and no offline mode: everything is
+   read from and written to the database. That removes the old timestamp-merge
+   dance (cache the server's updated_at per key, re-push whenever the server
+   looked older) which, on top of being fiddly, fired a write on every load
+   whenever the two clocks disagreed by a hair.
+
+   Writes don't go out one-per-edit though. They land in a queue keyed by
+   document name / chunk id, so a whole drill session — dozens of grades, each
+   touching the same chunk and the same state doc — collapses into one round of
+   requests. A failed flush keeps its payload and retries with backoff, and says
+   so on screen: online-only means a silently swallowed write is lost work, so
+   nothing here fails quietly. */
+
+const FLUSH_MS = 1500; // idle time before a queued write goes out
+const RETRY_MAX = 30000;
+const CHUNK_PAGE = 500; // must not exceed the server's MAX_ROWS_PER_REQUEST
+
+let dataLoaded = false; /* no write leaves the queue until a load has succeeded */
+const pendingDocs = new Map(); /* key -> latest value string */
+const pendingChunks = new Map(); /* id  -> latest chunk object */
+const pendingChunkDels = new Set();
+const pendingDocDels = new Set();
+let flushTimer = null,
+  flushing = false,
+  retryDelay = 0;
+
+function pendingCount() {
+  return pendingDocs.size + pendingChunks.size + pendingChunkDels.size + pendingDocDels.size;
+}
+function scheduleFlush(delay) {
+  if (flushTimer) clearTimeout(flushTimer);
+  flushTimer = setTimeout(flush, delay == null ? FLUSH_MS : delay);
+}
+function queueDoc(k, v) {
+  pendingDocs.set(k, v);
+  pendingDocDels.delete(k);
+  setSync('pending');
+  scheduleFlush();
+}
+function queueDocDel(k) {
+  pendingDocs.delete(k);
+  pendingDocDels.add(k);
+  setSync('pending');
+  scheduleFlush();
+}
+function queueChunk(c) {
+  if (!c || !c.id) return;
+  pendingChunks.set(c.id, c);
+  pendingChunkDels.delete(c.id);
+  setSync('pending');
+  scheduleFlush();
+}
+function queueChunkDel(id) {
+  pendingChunks.delete(id);
+  pendingChunkDels.add(id);
+  setSync('pending');
+  scheduleFlush();
+}
+
+/* Push everything queued. On failure the payload goes back on the queue — but
+   only where a newer edit hasn't already replaced it — and we back off and retry. */
+async function flush(opts) {
+  opts = opts || {};
+  if ((flushing && !opts.force) || !dataLoaded || !loggedIn()) return;
+  if (!pendingCount()) {
+    setSync('idle');
+    return;
+  }
+  flushing = true;
+  setSync('saving');
+
+  const docs = new Map(pendingDocs);
+  const chunkList = [...pendingChunks.values()];
+  const chunkDels = [...pendingChunkDels];
+  const docDels = [...pendingDocDels];
+  pendingDocs.clear();
+  pendingChunks.clear();
+  pendingChunkDels.clear();
+  pendingDocDels.clear();
+
+  const extra = opts.keepalive ? { keepalive: true } : {};
+  try {
+    for (const [k, v] of docs)
+      await api('/api/doc/' + encodeURIComponent(k), {
+        method: 'PUT',
+        body: JSON.stringify({ value: v }),
+        ...extra,
+      });
+    for (let i = 0; i < chunkList.length; i += CHUNK_PAGE)
+      await api('/api/chunks', {
+        method: 'PUT',
+        body: JSON.stringify({ chunks: chunkList.slice(i, i + CHUNK_PAGE) }),
+        ...extra,
+      });
+    for (const id of chunkDels)
+      await api('/api/chunks/' + encodeURIComponent(id), { method: 'DELETE', ...extra });
+    for (const k of docDels)
+      await api('/api/doc/' + encodeURIComponent(k), { method: 'DELETE', ...extra });
+    retryDelay = 0;
+    flushing = false;
+    if (pendingCount()) scheduleFlush(0);
+    else setSync('idle');
+  } catch (e) {
+    /* put the payload back, without clobbering anything edited while it was in flight */
+    for (const [k, v] of docs) if (!pendingDocs.has(k) && !pendingDocDels.has(k)) pendingDocs.set(k, v);
+    for (const c of chunkList)
+      if (!pendingChunks.has(c.id) && !pendingChunkDels.has(c.id)) pendingChunks.set(c.id, c);
+    chunkDels.forEach((id) => {
+      if (!pendingChunks.has(id)) pendingChunkDels.add(id);
+    });
+    docDels.forEach((k) => {
+      if (!pendingDocs.has(k)) pendingDocDels.add(k);
+    });
+    flushing = false;
+    retryDelay = Math.min(retryDelay ? retryDelay * 2 : 2000, RETRY_MAX);
+    setSync('error');
+    console.error('sync failed, retrying in ' + retryDelay + 'ms:', e);
+    scheduleFlush(retryDelay);
+  }
+}
+
+/* Last-gasp flush when the tab goes away. keepalive lets the requests outlive the
+   page. `force` gets past the in-flight guard — a normal flush already drained the
+   queue into its own snapshot before its first await, so this can only pick up
+   what was typed since, never send anything twice. */
+function flushOnExit() {
+  if (!pendingCount() || !dataLoaded || !loggedIn()) return;
+  if (flushTimer) clearTimeout(flushTimer);
+  flush({ keepalive: true, force: true });
+}
+window.addEventListener('pagehide', flushOnExit);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushOnExit();
+});
+window.addEventListener('online', () => {
+  if (pendingCount()) scheduleFlush(0);
+});
+
+/* The visible half of the contract: you can always see whether your reps are saved. */
+function setSync(s) {
+  const el = $('syncState');
+  if (!el) return;
+  const n = pendingCount();
+  if (s === 'error') {
+    el.textContent = '⚠ Not saved — retrying';
+    el.style.color = 'var(--bad)';
+  } else if (s === 'saving' || (s === 'pending' && n)) {
+    el.textContent = 'Saving…';
+    el.style.color = 'var(--muted)';
+  } else {
+    el.textContent = '';
+  }
+}
+
+/* While the first load is in flight the header would otherwise read "0 day
+   streak · 0 reps" and "My chunks (0)" — the same false alarm the error banner
+   exists to prevent. Placeholders sit in those spots instead, and the homework
+   card holds its height so nothing jumps when the real content lands. */
+function setLoading(on) {
+  if (document.body) document.body.classList.toggle('loading', !!on);
+}
+
+/* Load failures get a blocking banner rather than a console line: with no local
+   copy to fall back on, a silent failure looks exactly like "all my chunks are
+   gone". Writes stay locked (dataLoaded === false) until a retry succeeds. */
+function showLoadError(e) {
+  const el = $('loadError');
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML =
+    "<b>Couldn't load your data.</b> Nothing has been changed on the server — " +
+    'your chunks are safe. <button class="btn ghost" onclick="retryLoad()">Try again</button>' +
+    '<small>' +
+    esc(String((e && e.message) || e)) +
+    '</small>';
+}
+function hideLoadError() {
+  const el = $('loadError');
+  if (el) el.style.display = 'none';
+}
+function setLoadNote(msg) {
+  const el = $('loadError');
+  if (!el) return;
+  el.style.display = 'block';
+  el.innerHTML = '<b>' + esc(msg) + '</b>';
+}
+async function retryLoad() {
+  setLoadNote('Loading…');
+  await loadAll();
+}
+
 const store = {
   async get(k) {
-    if (loggedIn()) {
-      try {
-        const d = await api('/api/kv/' + encodeURIComponent(k));
-        if (d && d.value != null) {
-          const localTs = localStorage.getItem(k + ':ts'),
-            localVal = localStorage.getItem(k);
-          if (localVal != null && localTs && d.updated_at && d.updated_at < localTs) {
-            await store.set(k, localVal); /* server is stale → re-push our newer copy */
-            return { value: localVal };
-          }
-          try {
-            localStorage.setItem(k, d.value);
-            if (d.updated_at) localStorage.setItem(k + ':ts', d.updated_at);
-          } catch (e) {}
-          return { value: d.value };
-        }
-      } catch (e) {
-        /* offline → fall back to the local cache below */
-      }
-    }
-    try {
-      const v = localStorage.getItem(k);
-      return v !== null ? { value: v } : null;
-    } catch (e) {
-      return null;
-    }
+    const d = await api('/api/doc/' + encodeURIComponent(k));
+    return d && d.value != null ? { value: d.value } : null;
   },
   async set(k, v) {
-    try {
-      localStorage.setItem(k, v);
-    } catch (e) {} /* instant local cache */
-    if (loggedIn()) {
-      try {
-        const r = await api('/api/kv/' + encodeURIComponent(k), {
-          method: 'PUT',
-          body: JSON.stringify({ value: v }),
-        });
-        try {
-          localStorage.setItem(k + ':ts', (r && r.updated_at) || new Date().toISOString());
-        } catch (e) {}
-      } catch (e) {
-        /* offline → record a local baseline so a later get() won't clobber this un-pushed edit */
-        try {
-          localStorage.setItem(k + ':ts', new Date().toISOString());
-        } catch (e) {}
-      }
-    }
+    queueDoc(k, v);
+  },
+  async del(k) {
+    queueDocDel(k);
   },
 };
+/* Pull everything from the server. If this fails we must NOT fall through into
+   the defaulting below: that would leave the app holding an empty bank and then
+   happily save it over your real data. Instead: say so, keep writes locked, and
+   let you retry. */
 async function loadAll() {
+  dataLoaded = false;
+  setLoading(true);
   try {
-    const r = await store.get('blurt:state');
-    if (r) {
-      state = { ...state, ...JSON.parse(r.value) };
-    }
-  } catch (e) {}
-  try {
-    const r = await store.get('blurt:chunks');
-    if (r) chunks = JSON.parse(r.value);
-  } catch (e) {}
+    // These three read different things and don't depend on each other, so they
+    // go out together — the wait is one round trip, not three stacked up.
+    const [r] = await Promise.all([store.get('blurt:state'), loadAiPrompts(), loadChunks()]);
+    if (r) state = { ...state, ...JSON.parse(r.value) };
+  } catch (e) {
+    setLoading(false); /* uncover the page so the error banner is actually visible */
+    showLoadError(e);
+    return;
+  }
+  dataLoaded = true;
+  hideLoadError();
   if (!state.cats || !state.cats.length) state.cats = CATS.map((c) => c.id);
   if (!Array.isArray(state.disliked)) state.disliked = []; /* bank prompt texts to never re-serve */
   if (!['vn', 'sit', 'reflex', 'expr', 'mix', 'three'].includes(state.ptype)) state.ptype = 'vn';
@@ -216,11 +366,11 @@ async function loadAll() {
     state.warmup = { date: dayStr(0), done: false };
   // migrate old chunks into the schedule: anything without a due date is due today,
   // and anything still on the old step-ladder gets SM-2 fields (ef/interval/reps).
-  let migrated = false;
+  const migratedChunks = [];
   chunks.forEach((c) => {
-    if (migrateChunk(c)) migrated = true;
+    if (migrateChunk(c)) migratedChunks.push(c);
   });
-  if (migrated) persistChunks();
+  if (migratedChunks.length) chunkSaveMany(migratedChunks);
   // streak decay: missing a homework day resets you — unless banked freeze tokens
   // can cover the gap (one token per missed day, auto-spent).
   const today = dayStr(0);
@@ -239,18 +389,57 @@ async function loadAll() {
     state.ntfy.on = !!state.ntfy.topic; /* migrate old topic-based opt-in */
   delete state.ntfy.until; /* obsolete: the server now owns the schedule */
   renderAll();
+  setLoading(false); /* real numbers are on screen now — drop the placeholders */
   initNtfy();
   maybeWeeklyRecap();
 }
 async function saveState() {
-  try {
-    await store.set('blurt:state', JSON.stringify(state));
-  } catch (e) {}
+  await store.set('blurt:state', JSON.stringify(state));
 }
-async function persistChunks() {
-  try {
-    await store.set('blurt:chunks', JSON.stringify(chunks));
-  } catch (e) {}
+
+/* ================= chunk storage =================
+   One row per chunk in the `chunks` table, fetched as a single query. The bank
+   comes back in full because the practice engine genuinely needs it in memory —
+   capsule mode walks every chunk, Frankenstein picks a second one at random,
+   import de-dupes against every existing text, and the whole engine addresses
+   chunks by array position — but "the whole bank" costs one request, not one
+   per chunk. Writes go through the queue above, so grading ten chunks in a row
+   is one batched upsert rather than ten round trips. */
+function newChunkId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+}
+async function loadChunks() {
+  // The server imports anything left in the old KV store on first read; a bank
+  // too big for one invocation comes back in pages, so keep asking until done.
+  let guard = 0;
+  for (;;) {
+    const r = await api('/api/chunks');
+    if (!r || !r.migrating) {
+      chunks = (r && Array.isArray(r.chunks) ? r.chunks : []).filter((c) => c && c.id);
+      return;
+    }
+    setLoadNote('Moving your chunks to the new database… ' + r.imported + '/' + r.total);
+    if (++guard > 200) throw new Error('migration stalled at ' + r.imported + '/' + r.total);
+  }
+}
+function chunkSave(c) {
+  queueChunk(c);
+}
+function chunkSaveMany(list) {
+  list.forEach(queueChunk);
+}
+async function chunkAdd(c) {
+  if (!c.id) c.id = newChunkId();
+  queueChunk(c);
+}
+async function chunkAddMany(list) {
+  list.forEach((c) => {
+    if (!c.id) c.id = newChunkId();
+    queueChunk(c);
+  });
+}
+async function chunkRemove(id) {
+  queueChunkDel(id);
 }
 function dayStr(off) {
   const d = new Date();
@@ -575,31 +764,24 @@ function setPtype(id) {
 }
 
 /* ================= prompt bank loading ================= */
-/* The full bank lives in the static /prompts.json (served by the Worker, same as
-   index.html). Hydrate from the localStorage cache instantly so it works offline,
-   then refresh from the network in the background. */
-async function loadPrompts() {
+/* These three banks are static files shipped with the app, not user data, so
+   they're just fetched — the browser's own HTTP cache handles repeat loads, and
+   hand-rolling a localStorage copy on top of it bought nothing. Each keeps a
+   small in-file fallback so a failed fetch still leaves something to practise. */
+async function loadBank(file, apply) {
   try {
-    const c = localStorage.getItem('blurt:prompts');
-    if (c) {
-      const arr = JSON.parse(c);
-      if (Array.isArray(arr) && arr.length) PROMPTS = arr;
-    }
-  } catch (e) {}
-  try {
-    const r = await fetch(apiBase() + '/prompts.json', { cache: 'no-cache' });
-    if (r.ok) {
-      const arr = await r.json();
-      if (Array.isArray(arr) && arr.length) {
-        PROMPTS = arr;
-        try {
-          localStorage.setItem('blurt:prompts', JSON.stringify(arr));
-        } catch (e) {}
-      }
-    }
+    const r = await fetch(apiBase() + '/' + file);
+    if (!r.ok) return;
+    const arr = await r.json();
+    if (Array.isArray(arr) && arr.length) apply(arr);
   } catch (e) {
-    /* offline → keep cache/fallback */
+    console.error('could not load ' + file + ':', e);
   }
+}
+async function loadPrompts() {
+  await loadBank('prompts.json', (arr) => {
+    PROMPTS = arr;
+  });
 }
 /* Reflex prompts (the "Reflex" ptype): tiny everyday moments + the one short line a
    native fires off automatically. Kept in a SEPARATE hand-curated /reflexes.json so a
@@ -611,27 +793,9 @@ let REFLEXES = [
   { cat: 'work', kind: 'reflex', text: "Your manager freezes on the call, then: '...so can you take that?' You caught none of it.", sample: 'Sorry, you cut out — could you say that again?', chunk: 'you cut out', note: 'The exact phrase for bad audio. Everyone uses it.' },
 ];
 async function loadReflexes() {
-  try {
-    const c = localStorage.getItem('blurt:reflexes');
-    if (c) {
-      const arr = JSON.parse(c);
-      if (Array.isArray(arr) && arr.length) REFLEXES = arr;
-    }
-  } catch (e) {}
-  try {
-    const r = await fetch(apiBase() + '/reflexes.json', { cache: 'no-cache' });
-    if (r.ok) {
-      const arr = await r.json();
-      if (Array.isArray(arr) && arr.length) {
-        REFLEXES = arr;
-        try {
-          localStorage.setItem('blurt:reflexes', JSON.stringify(arr));
-        } catch (e) {}
-      }
-    }
-  } catch (e) {
-    /* offline → keep cache/fallback */
-  }
+  await loadBank('reflexes.json', (arr) => {
+    REFLEXES = arr;
+  });
 }
 /* Expression prompts (the "Expression" ptype): fixed sentence PATTERNS (nomad-
    english style, e.g. "have no right to ___") paired with a scenario to apply
@@ -643,29 +807,24 @@ let EXPRESSIONS = [
   { cat: 'daily', kind: 'expr', text: 'Ít ra cậu cũng phải nói một tiếng trước khi lấy đồ của tớ chứ.', sample: "The least you could do is tell me before you take it.", chunk: 'the least you could do is ___', note: 'Signals a minimum expectation was not met.' },
 ];
 async function loadExpressions() {
-  try {
-    const c = localStorage.getItem('blurt:expressions');
-    if (c) {
-      const arr = JSON.parse(c);
-      if (Array.isArray(arr) && arr.length) EXPRESSIONS = arr;
-    }
-  } catch (e) {}
-  try {
-    const r = await fetch(apiBase() + '/expressions.json', { cache: 'no-cache' });
-    if (r.ok) {
-      const arr = await r.json();
-      if (Array.isArray(arr) && arr.length) {
-        EXPRESSIONS = arr;
-        try {
-          localStorage.setItem('blurt:expressions', JSON.stringify(arr));
-        } catch (e) {}
-      }
-    }
-  } catch (e) {
-    /* offline → keep cache/fallback */
-  }
+  await loadBank('expressions.json', (arr) => {
+    EXPRESSIONS = arr;
+  });
 }
 const CAT_IDS = CATS.map((c) => c.id);
+/* AI-generated prompts accumulate into their own document, so the pool you've
+   built up follows you between devices instead of living on whichever machine
+   happened to generate it. */
+async function loadAiPrompts() {
+  const r = await store.get('blurt:aiPrompts');
+  if (!r) return;
+  try {
+    const arr = JSON.parse(r.value);
+    if (Array.isArray(arr)) aiPrompts = arr;
+  } catch (e) {
+    aiPrompts = [];
+  }
+}
 function cacheAiPrompt(p) {
   if (!p || !CAT_IDS.includes(p.cat) || !p.text || !p.sample || !p.chunk)
     return; /* only cache well-formed, categorized prompts */
@@ -678,9 +837,7 @@ function cacheAiPrompt(p) {
     note: p.note || '',
   });
   if (aiPrompts.length > 200) aiPrompts = aiPrompts.slice(-200);
-  try {
-    localStorage.setItem('blurt:aiPrompts', JSON.stringify(aiPrompts));
-  } catch (e) {}
+  store.set('blurt:aiPrompts', JSON.stringify(aiPrompts));
 }
 
 /* ================= practice flow ================= */
@@ -1383,7 +1540,7 @@ Reply with ONLY JSON: {"example":"the sentence"}`;
     c.examples = (c.examples || [])
       .concat(ex)
       .slice(-3); /* keep the 3 most recent grown sentences */
-    persistChunks();
+    chunkSave(c);
     return ex;
   } catch (err) {
     console.error('fresh example failed:', err);
@@ -1499,7 +1656,7 @@ function drillCheck() {
     scheduleAfter(c, 'again');
     hist().m++;
     saveState();
-    persistChunks();
+    chunkSave(c);
     creditStreakIfDone();
   }
   renderHeader();
@@ -1527,7 +1684,7 @@ function gradeDrill(grade) {
   scheduleAfter(c, grade);
   hist().h++;
   saveState();
-  persistChunks();
+  chunkSave(c);
   creditStreakIfDone();
   renderHeader();
   renderHW();
@@ -1541,7 +1698,7 @@ function drillReveal() {
       scheduleAfter(c, 'again');
       hist().m++;
       saveState();
-      persistChunks();
+      chunkSave(c);
     }
   }
   renderHW();
@@ -1805,7 +1962,7 @@ function dictCheck() {
   } else {
     c.rmisses = (c.rmisses || 0) + 1;
   }
-  persistChunks();
+  chunkSave(c);
   $('dictVerdict').innerHTML =
     '<p class="verdict ' +
     (ok ? 'good' : 'badv') +
@@ -2118,7 +2275,7 @@ function scoreRandom(c, ok) {
   if (ok) hd.rh = (hd.rh || 0) + 1;
   ok ? (c.rhits = (c.rhits || 0) + 1) : (c.rmisses = (c.rmisses || 0) + 1);
   saveState();
-  persistChunks();
+  chunkSave(c);
 }
 function rxRecord(idx, ok) {
   scoreRandom(chunks[idx], ok);
@@ -2595,13 +2752,14 @@ async function saveChunk(which) {
   }
   const example =
     which === 'fixed' ? lastResult.fixedAnswer || lastResult.natural : lastResult.natural;
-  chunks.unshift({
+  const newChunk = {
     ...newChunkBase(),
     chunk: lastResult.chunk,
     example,
     context: (current && current.prompt && current.prompt.text) || '',
-  });
-  await persistChunks();
+  };
+  chunks.unshift(newChunk);
+  await chunkAdd(newChunk);
   renderHeader();
   renderHW();
   if (b) {
@@ -2714,12 +2872,12 @@ async function applyReform(i) {
   ); /* bring it back sooner to re-cement it */
   c.due = dayStr(c.interval);
   delete reformPending[i];
-  await persistChunks();
+  await chunkSave(c);
   renderChunks();
 }
 async function delChunk(i) {
-  chunks.splice(i, 1);
-  await persistChunks();
+  const [removed] = chunks.splice(i, 1);
+  if (removed) await chunkRemove(removed.id);
   renderAll();
 }
 
@@ -2742,17 +2900,20 @@ async function importChunks() {
     const data = JSON.parse(raw);
     if (Array.isArray(data.chunks)) {
       const existing = new Set(chunks.map((c) => c.chunk.toLowerCase()));
+      const added = [];
       data.chunks.forEach((c) => {
         if (c.chunk && !existing.has(c.chunk.toLowerCase())) {
           migrateChunk(c);
+          delete c.id; /* imported backup ids aren't ours to reuse — assign fresh ones */
           chunks.push(c);
+          added.push(c);
         }
       });
       if (data.state) {
         state.total = Math.max(state.total, data.state.total || 0);
         state.streak = Math.max(state.streak, data.state.streak || 0);
       }
-      await persistChunks();
+      if (added.length) await chunkAddMany(added);
       await saveState();
       renderAll();
       $('backupToast').textContent = 'Imported ✓';
@@ -2831,7 +2992,23 @@ async function doLogin() {
     );
   }
 }
-function doLogout() {
+async function doLogout() {
+  // Push anything still queued first — logging out drops the credential the
+  // queue needs, so unsent reps would otherwise just evaporate.
+  if (pendingCount()) {
+    setSync('saving');
+    await flush({ force: true });
+    if (pendingCount() && !confirm('Some reps still haven’t saved. Log out anyway and lose them?')) {
+      setSync('error');
+      return;
+    }
+  }
+  dataLoaded = false;
+  pendingDocs.clear();
+  pendingChunks.clear();
+  pendingChunkDels.clear();
+  pendingDocDels.clear();
+  setSync('idle');
   secret = '';
   try {
     localStorage.removeItem('blurt:secret');
@@ -2840,16 +3017,31 @@ function doLogout() {
   setAcctStatus();
   showGate();
 }
+/* Drop everything the old offline-first design left behind: cached banks, the
+   mirrored state/chunk docs, and the '<key>:ts' merge baselines. Only the login
+   secret and the API base stay — those are credentials, not practice data. */
+function clearLegacyLocalData() {
+  try {
+    const keep = new Set(['blurt:secret', 'blurt:apiBase']);
+    for (const k of Object.keys(localStorage))
+      if (!keep.has(k) && (k.startsWith('blurt:') || k.startsWith('chunk:'))) localStorage.removeItem(k);
+  } catch (e) {}
+}
+
 /* Startup: straight to the app if a secret is stored, otherwise show the gate. */
 async function boot() {
-  loadPrompts(); /* fire-and-forget: hydrates from cache instantly, refreshes from /prompts.json in the background */
-  loadReflexes(); /* same pattern for the curated /reflexes.json (Reflex ptype) */
-  loadExpressions(); /* same pattern for the curated /expressions.json (Expression ptype) */
+  clearLegacyLocalData();
+  loadPrompts(); /* fire-and-forget: static bank, fetched straight from /prompts.json */
+  loadReflexes(); /* same for the curated /reflexes.json (Reflex ptype) */
+  loadExpressions(); /* same for the curated /expressions.json (Expression ptype) */
+  // body carries class="loading" from the markup, so the placeholders are in the
+  // very first paint — app.js runs at the end of <body>, too late to beat it.
   if (loggedIn()) {
     hideGate();
     await loadAll();
     setAcctStatus();
   } else {
+    setLoading(false); /* nothing to wait for; the gate owns the screen */
     showGate();
   }
 }
@@ -3004,8 +3196,9 @@ async function addManualChunk(btn) {
     btn.disabled = true;
     btn.textContent = 'Saving…';
   }
-  chunks.unshift({ ...newChunkBase(), chunk: t, example: ex });
-  await persistChunks();
+  const newChunk = { ...newChunkBase(), chunk: t, example: ex };
+  chunks.unshift(newChunk);
+  await chunkAdd(newChunk);
   $('addChunkText').value = '';
   $('addChunkEx').value = '';
   renderHeader();
@@ -3072,14 +3265,15 @@ async function saveCtxChunk(btn) {
     btn.disabled = true;
     btn.textContent = 'Saving…';
   }
-  chunks.unshift({
+  const newChunk = {
     ...newChunkBase(),
     chunk: ctxPending.chunk,
     example: ctxPending.example,
     context: ctxPending.context,
-  });
+  };
+  chunks.unshift(newChunk);
   ctxPending = null;
-  await persistChunks();
+  await chunkAdd(newChunk);
   $('ctxChunkText').value = '';
   $('ctxChunkPreview').innerHTML = '';
   renderHeader();
@@ -3150,8 +3344,12 @@ async function savePasteChunk(which, btn) {
     btn.disabled = true;
     btn.textContent = 'Saving…';
   }
+  const added = [];
   const add = (x) => {
-    if (x) chunks.unshift({ ...newChunkBase(), chunk: x.chunk, example: x.example });
+    if (!x) return;
+    const c = { ...newChunkBase(), chunk: x.chunk, example: x.example };
+    chunks.unshift(c);
+    added.push(c);
   };
   if (which === 'all') {
     pastePending.forEach(add);
@@ -3160,7 +3358,7 @@ async function savePasteChunk(which, btn) {
     add(pastePending[which]);
     pastePending[which] = null;
   }
-  await persistChunks();
+  await chunkAddMany(added);
   renderHeader();
   renderHW();
   renderChunks(); /* refresh the saved-chunk list so its onclick indices stay correct after unshift */
@@ -3233,14 +3431,17 @@ Reply with ONLY JSON: {"related":[{"chunk":"the phrase","example":"a short natur
 async function saveExpand(i, which) {
   const pend = expandPending[i];
   if (!pend) return;
+  const added = [];
   const add = (x) => {
-    if (x)
-      chunks.unshift({
-        ...newChunkBase(),
-        chunk: x.chunk,
-        example: x.example,
-        context: 'related to: ' + pend.src,
-      });
+    if (!x) return;
+    const c = {
+      ...newChunkBase(),
+      chunk: x.chunk,
+      example: x.example,
+      context: 'related to: ' + pend.src,
+    };
+    chunks.unshift(c);
+    added.push(c);
   };
   if (which === 'all') {
     pend.list.forEach(add);
@@ -3248,7 +3449,7 @@ async function saveExpand(i, which) {
     add(pend.list[which]);
   }
   delete expandPending[i];
-  await persistChunks();
+  await chunkAddMany(added);
   renderHeader();
   renderHW();
   renderChunks(); /* collapses the box and refreshes indices */
