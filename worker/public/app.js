@@ -901,9 +901,10 @@ function startRepWith(p) {
           : 'Situation';
   $('promptText').textContent = p.text;
   const hint = $('chunkHint');
-  /* 'sit' and 'expr' show the target up front — you're meant to consciously reach
-     for a known chunk/pattern, unlike 'reflex' where recall itself is the test. */
-  if ((p.kind === 'sit' || p.kind === 'expr') && p.chunk) {
+  /* 'sit' shows the target up front — you're meant to consciously reach
+     for a known chunk/pattern, unlike 'reflex' where recall itself is the test.
+     'expr' already gives the expression in promptText, so no separate hint. */
+  if (p.kind === 'sit' && p.chunk) {
     $('chunkHintText').textContent = p.chunk;
     hint.style.display = '';
   } else hint.style.display = 'none';
