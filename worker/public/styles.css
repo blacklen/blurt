@@ -1,6 +1,10 @@
   :root{
     --ink:#1B1D30; --paper:#FBFAF6; --card:#fff; --pulse:#FF5C39; --mint:#1FA97C;
     --soft:#EFEDF6; --line:#DDDAE8; --muted:#6E6C84; --bad:#D6453A; --gold:#E8A013;
+    /* Fixed dark-surface pair for elements that are always a dark card with
+       light text (homework hero, settings sheet header) — unlike --ink/--paper
+       these don't flip in dark mode, so those surfaces don't go bright. */
+    --heroBg:#1B1D30; --heroFg:#FBFAF6;
   }
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
@@ -66,8 +70,8 @@
   .overlay{position:fixed;inset:0;background:rgba(27,29,48,.45);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
   .sheet{width:100%;max-width:520px}
   .sheetHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .sheetHead .logo{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.25rem;color:var(--paper)}
-  .sheetClose{border:none;background:rgba(255,255,255,.15);color:var(--paper);width:34px;height:34px;border-radius:999px;font-size:1rem;cursor:pointer}
+  .sheetHead .logo{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.25rem;color:var(--heroFg)}
+  .sheetClose{border:none;background:rgba(255,255,255,.15);color:var(--heroFg);width:34px;height:34px;border-radius:999px;font-size:1rem;cursor:pointer}
   .sheetClose:hover{background:rgba(255,255,255,.28)}
   .sheetClose:focus-visible{outline:2px solid var(--pulse);outline-offset:2px}
 
@@ -89,7 +93,7 @@
   .dueBadge{display:inline-block;background:var(--pulse);color:#fff;border-radius:999px;font-size:.7rem;padding:1px 7px;margin-left:5px;font-weight:700}
 
   /* homework card */
-  .hw{background:var(--ink);color:var(--paper);border-radius:18px;padding:20px 24px;margin-bottom:16px}
+  .hw{background:var(--heroBg);color:var(--heroFg);border-radius:18px;padding:20px 24px;margin-bottom:16px}
   .hw .eyebrow{color:#A9A7C2}
   .hwItem{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:1rem;font-weight:500}
   .hwItem .box{width:22px;height:22px;border-radius:7px;border:2px solid #4B4D66;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;flex:none}
