@@ -6,7 +6,8 @@
 <title>Blurt — 60-second English reps</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260909">
+<link rel="stylesheet" href="styles.css?v=20260910">
+<script>(function(){try{var t=localStorage.getItem('blurt:theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 </head>
 <body class="loading">
 <div id="timebar"></div>
@@ -17,6 +18,7 @@
       <span class="syncState" id="syncState"></span>
       <span class="sk sk-streak"></span>
       <div class="streak">🔥 <b id="streakNum">0</b> day streak · <span id="totalNum">0</span> reps</div>
+      <button class="gear" id="themeBtn" onclick="toggleTheme()" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
       <button class="gear" id="gearBtn" onclick="toggleSettings()" aria-label="Settings" title="Settings">⚙️</button>
     </div>
   </header>
@@ -272,6 +274,6 @@
 
 <footer>homework done = streak earned · no freebies</footer>
 
-<script src="app.js?v=20260909"></script>
+<script src="app.js?v=20260910"></script>
 </body>
 </html>

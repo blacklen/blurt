@@ -1384,6 +1384,23 @@ if (SR) {
     $('micBtn').style.display = '';
   });
 }
+
+/* ================= theme ================= */
+function currentTheme() {
+  return document.documentElement.getAttribute('data-theme')
+    || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+}
+function updateThemeBtn() {
+  const btn = $('themeBtn');
+  if (btn) btn.textContent = currentTheme() === 'dark' ? '☀️' : '🌙';
+}
+function toggleTheme() {
+  const next = currentTheme() === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('blurt:theme', next); } catch (e) {}
+  updateThemeBtn();
+}
+document.addEventListener('DOMContentLoaded', updateThemeBtn);
 function toggleMic() {
   micLive ? stopMic() : startMic();
 }
