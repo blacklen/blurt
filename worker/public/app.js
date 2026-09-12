@@ -5,7 +5,20 @@ const CATS = [
   {id:'daily',  label:'☀️ Daily life'},
   {id:'social', label:'💬 Small talk'},
   {id:'opinion',label:'🧠 Opinions'},
-  {id:'story',  label:'📖 Storytelling'}
+  {id:'story',  label:'📖 Storytelling'},
+  {id:'travel', label:'🧳 Travel'},
+  {id:'health', label:'🩺 Health & body'},
+  {id:'money',  label:'💸 Money & shopping'},
+  {id:'career', label:'🎯 Interviews & career'},
+  {id:'conflict',label:'💥 Conflict & pushback'},
+  {id:'feelings',label:'🫂 Feelings & venting'},
+  {id:'meeting',label:'🎤 Meetings & presenting'},
+  {id:'admin',  label:'☎️ Calls & admin'},
+  {id:'food',   label:'🍜 Food & eating out'},
+  {id:'family', label:'❤️ Family & relationships'},
+  {id:'learning',label:'🎓 Learning & self-study'},
+  {id:'tech',   label:'📱 Tech & gadgets'},
+  {id:'plans',  label:'📅 Plans & scheduling'}
 ];
 // prettier-ignore
 let PROMPTS = [

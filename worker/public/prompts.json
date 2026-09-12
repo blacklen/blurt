@@ -7998,5 +7998,5205 @@
   "sample": "I believe kindness is a kind of strength.",
   "chunk": "a kind of strength",
   "note": "Value statement."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Chuyến bay của mình bị hoãn hai tiếng rồi.",
+  "sample": "My flight's been delayed two hours.",
+  "chunk": "my flight's been delayed",
+  "note": "Passive + duration. No “they delayed my flight” — the flight is the subject."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Cho mình hỏi ra cổng B12 đi lối nào ạ?",
+  "sample": "Sorry, how do I get to gate B12?",
+  "chunk": "how do I get to ___",
+  "note": "The one direction-asking frame you need. Works for gates, exits, streets, anything."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình bị lỡ chuyến nối rồi.",
+  "sample": "I missed my connection.",
+  "chunk": "missed my connection",
+  "note": "“Connection” alone means the connecting flight. Don’t say “connecting plane”."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Vali mình không thấy ra băng chuyền.",
+  "sample": "My bag didn't make it.",
+  "chunk": "didn't make it",
+  "note": "Airline speak for luggage that stayed behind. Also used for people who couldn’t come."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình muốn đổi sang chuyến sớm hơn.",
+  "sample": "I'd like to switch to an earlier flight.",
+  "chunk": "switch to an earlier ___",
+  "note": "Switch = change between two options. Works for flights, seats, dates, slots."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Cho mình gửi hành lý ở đây một lúc được không?",
+  "sample": "Can I leave my bags here for a bit?",
+  "chunk": "can I leave ___ here",
+  "note": "“For a bit” makes it sound temporary and reasonable."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Khách sạn có cho nhận phòng sớm không ạ?",
+  "sample": "Is early check-in possible?",
+  "chunk": "early check-in",
+  "note": "Hotel vocabulary: check-in, checkout, late checkout — all hyphenated as nouns."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Phòng mình ồn quá, đổi phòng được không?",
+  "sample": "The room's pretty noisy — any chance I could move?",
+  "chunk": "any chance I could ___",
+  "note": "The politest way to ask for a favour. Softens a complaint into a request."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Đi tới đó mất bao lâu?",
+  "sample": "How long does it take to get there?",
+  "chunk": "how long does it take to ___",
+  "note": "“Take” is the verb for duration. Not “how long do I go”."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Đi bộ được không hay phải bắt xe?",
+  "sample": "Is it walkable or should I grab a cab?",
+  "chunk": "grab a cab",
+  "note": "Grab = get casually. Grab a cab, grab a coffee, grab a bite."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình xuống ở trạm nào ạ?",
+  "sample": "Which stop do I get off at?",
+  "chunk": "get off at",
+  "note": "Get off a train/bus, get out of a car. Different vehicles, different verbs."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Tàu này có đi vào trung tâm không?",
+  "sample": "Does this train go into the city centre?",
+  "chunk": "does this go to ___",
+  "note": "Point at the vehicle and ask. Shortest useful travel question there is."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình đi sai đường rồi.",
+  "sample": "I've gone the wrong way.",
+  "chunk": "gone the wrong way",
+  "note": "More natural than “I am lost” when you know roughly where you are."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Cho mình xin cái hoá đơn nhé.",
+  "sample": "Could I get a receipt?",
+  "chunk": "could I get ___",
+  "note": "The all-purpose polite request. Restaurants, shops, hotels, anywhere."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Giá đó có bao gồm ăn sáng không?",
+  "sample": "Does that include breakfast?",
+  "chunk": "does that include ___",
+  "note": "Check what’s bundled before you agree to a price."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình có đặt phòng rồi, tên Jane ạ.",
+  "sample": "I've got a booking under Jane.",
+  "chunk": "under the name ___",
+  "note": "“Under” is the preposition for reservations. Under Jane, under my name."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mật khẩu wifi là gì ạ?",
+  "sample": "What's the wifi password?",
+  "chunk": "what's the ___ password",
+  "note": "Ask it in the first ten seconds anywhere you’ll sit down."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình muốn ở thêm một đêm nữa.",
+  "sample": "I'd like to stay one more night.",
+  "chunk": "one more night",
+  "note": "“One more ___” extends anything: one more night, one more day, one more round."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mấy giờ phải trả phòng ạ?",
+  "sample": "What time's checkout?",
+  "chunk": "what time's checkout",
+  "note": "Contracted “what time’s” sounds far more native than “what time is”."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Chỗ đó có đáng đi không?",
+  "sample": "Is it worth the trip?",
+  "chunk": "is it worth ___",
+  "note": "Worth + noun or worth + -ing: worth the trip, worth going, worth a look."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình mới tới hôm qua.",
+  "sample": "I just got in yesterday.",
+  "chunk": "got in",
+  "note": "“Got in” = arrived. Native travellers almost never say “I arrived”."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình ở đây một tuần.",
+  "sample": "I'm here for a week.",
+  "chunk": "I'm here for ___",
+  "note": "Duration answer for border control, hotels and small talk alike."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình đi du lịch một mình.",
+  "sample": "I'm travelling solo.",
+  "chunk": "travelling solo",
+  "note": "Solo sounds deliberate and confident; “alone” can sound sad."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình vẫn còn lệch múi giờ.",
+  "sample": "I'm still pretty jet-lagged.",
+  "chunk": "jet-lagged",
+  "note": "Adjective, always hyphenated. The noun is “jet lag”, no hyphen."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Chuyến bị huỷ, họ xếp mình sang chuyến mai.",
+  "sample": "The flight got cancelled and they rebooked me on tomorrow's.",
+  "chunk": "rebooked me on ___",
+  "note": "Airline vocabulary you’ll need at exactly the worst moment."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình để quên hộ chiếu ở khách sạn.",
+  "sample": "I left my passport back at the hotel.",
+  "chunk": "left ___ back at ___",
+  "note": "“Back at” signals the place you came from. Adds the distance for free."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Xe muộn khoảng hai mươi phút.",
+  "sample": "The bus is running about twenty minutes late.",
+  "chunk": "running ___ minutes late",
+  "note": "Transport “runs” late, people “are” late. Slot the number straight in."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Gần đây có chỗ nào đổi tiền không ạ?",
+  "sample": "Is there somewhere around here to change money?",
+  "chunk": "somewhere around here",
+  "note": "Vaguer and more natural than “where is the nearest…”."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Xin lỗi, mình không biết nhiều tiếng ở đây.",
+  "sample": "Sorry, I don't speak much Japanese.",
+  "chunk": "I don't speak much ___",
+  "note": "“Much” is the humble version and usually gets you help instead of a lecture."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Cho mình chỗ cạnh cửa sổ nhé.",
+  "sample": "Could I get a window seat?",
+  "chunk": "window seat",
+  "note": "Window seat / aisle seat. There is no “middle seat” request, for good reason."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Vali mình chắc quá cân rồi.",
+  "sample": "I think my bag's over the limit.",
+  "chunk": "over the limit",
+  "note": "Works for weight, budget, time — anything with a cap."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Đi taxi từ sân bay vào trung tâm khoảng bao nhiêu?",
+  "sample": "Roughly how much is a taxi from the airport into town?",
+  "chunk": "roughly how much",
+  "note": "“Roughly” tells them you want a ballpark, not a commitment."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Bay mất bao lâu?",
+  "sample": "How long's the flight?",
+  "chunk": "how long's the ___",
+  "note": "Contract it. “How long is the flight” is correct but sounds like a textbook."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Mình định đi lang thang thôi, không có kế hoạch gì.",
+  "sample": "I'm just going to wander around — no real plan.",
+  "chunk": "wander around",
+  "note": "Wander = walk with no destination. The whole point of a good trip."
+ },
+ {
+  "cat": "travel",
+  "kind": "vn",
+  "text": "Chỗ này đông khách du lịch quá.",
+  "sample": "This place is crawling with tourists.",
+  "chunk": "crawling with",
+  "note": "Vivid and slightly negative. Crawling with tourists, with ants, with cops."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "You're at the airport and your connecting flight leaves in 25 minutes. Ask staff for the fastest way to the gate.",
+  "sample": "Sorry — my connection boards in twenty-five minutes, what's the quickest way to B12?",
+  "chunk": "what’s the quickest way to ___",
+  "note": "Lead with the deadline; it turns a question into a priority."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "Your hotel room smells of smoke. Ask to change rooms without being aggressive.",
+  "sample": "Hi — the room smells quite strongly of smoke. Would it be possible to move?",
+  "chunk": "would it be possible to ___",
+  "note": "The most formal polite request. Reach for it with staff you don’t know."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "A stranger asks you how to get to the train station and you know the way. Explain it.",
+  "sample": "Yeah, go straight down here, take the second left, and it's right in front of you — five minutes, tops.",
+  "chunk": "five minutes, tops",
+  "note": "“Tops” = at most. Native, casual, and reassuring."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "Your luggage didn't arrive. Report it at the baggage desk.",
+  "sample": "Hi, my bag didn't come out — it was checked through from Hanoi. What do I need to do?",
+  "chunk": "what do I need to do",
+  "note": "Hands the problem to the person who owns it, without blaming them."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "Check into a hotel: you have a booking, you want a quiet room, and you need to know about breakfast.",
+  "sample": "Hi, I've got a booking under Jane. If there's anything away from the road that'd be great — and what time's breakfast?",
+  "chunk": "if there's anything ___ that'd be great",
+  "note": "Soft-requests a preference without demanding it."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "You're on a bus and not sure it goes where you need. Ask the driver.",
+  "sample": "Sorry, does this one stop near the old quarter?",
+  "chunk": "does this one stop near ___",
+  "note": "“This one” is how locals refer to the bus they’re standing on."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "Get in a taxi, tell the driver where you want to go, then ask roughly what it will cost.",
+  "sample": "Central station, please. Roughly what will that run me?",
+  "chunk": "what will that run me",
+  "note": "Casual way to ask a price. Slightly street, very natural."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "Negotiate a late checkout — your flight isn't until 9pm.",
+  "sample": "My flight's not until nine tonight — is there any way I could keep the room a bit longer?",
+  "chunk": "is there any way I could ___",
+  "note": "The strongest polite ask in English. Leaves them room to say yes."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "You've been overcharged for a tour. Push back politely.",
+  "sample": "Sorry, I think there's been a mix-up — the site said thirty, and this is forty-five. Could you check?",
+  "chunk": "there's been a mix-up",
+  "note": "Blames the situation, not the person. Keeps everyone’s face intact."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "A local asks why you chose their city. Answer in two sentences.",
+  "sample": "Honestly, a friend wouldn't stop talking about the food. Two days in, I get it.",
+  "chunk": "wouldn't stop talking about",
+  "note": "Story-shaped answer. Far better than “because it is beautiful”."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "You need a pharmacy while abroad. Explain to a stranger what you're looking for.",
+  "sample": "Sorry, is there a pharmacy near here? I need something for a headache.",
+  "chunk": "something for a ___",
+  "note": "How you ask for medicine without knowing any drug names."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "Your flight is cancelled. Ask the desk what your options are and what the airline will cover.",
+  "sample": "So where does that leave me? Is there anything tonight, and do you cover the hotel if there isn't?",
+  "chunk": "where does that leave me",
+  "note": "Asks for options and responsibility in five words."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "Someone's sitting in your assigned seat on the train. Sort it out.",
+  "sample": "Sorry, I think that might be my seat — 14A? Let me double-check my ticket.",
+  "chunk": "I think that might be ___",
+  "note": "Triple-hedged. Defuses it before it becomes a confrontation."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "Recommend your hometown to a tourist — three sentences, make them want to go.",
+  "sample": "It's not on most people's lists, which is exactly why you should go. Get there early, eat at the market, and don't plan anything else. You'll thank me.",
+  "chunk": "which is exactly why",
+  "note": "Turns a weakness into the selling point. Persuasion in four words."
+ },
+ {
+  "cat": "travel",
+  "kind": "sit",
+  "text": "You're at passport control: say why you're visiting and how long you'll stay.",
+  "sample": "Just a holiday — I'm here for ten days, then flying home from Osaka.",
+  "chunk": "just a holiday",
+  "note": "“Just” keeps it small and uninteresting, which is what you want here."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình thấy hơi mệt, chắc nghỉ sớm.",
+  "sample": "I'm feeling a bit run down — I might call it a day.",
+  "chunk": "run down",
+  "note": "Run down = worn out and slightly ill. The everyday way to say “not right”."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình đau đầu từ sáng đến giờ.",
+  "sample": "I've had a headache since this morning.",
+  "chunk": "I've had a ___ since ___",
+  "note": "Present perfect for a symptom that is still going. Not “I had”."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình bị cảm nhẹ.",
+  "sample": "I've got a bit of a cold.",
+  "chunk": "a bit of a ___",
+  "note": "Downgrades anything: a bit of a cold, a bit of a problem, a bit of a mess."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình ngủ không đủ.",
+  "sample": "I didn't get enough sleep.",
+  "chunk": "get enough sleep",
+  "note": "Sleep is uncountable here. Never “enough sleeps”."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mấy hôm nay mình khó ngủ.",
+  "sample": "I haven't been sleeping well lately.",
+  "chunk": "I haven't been ___ing lately",
+  "note": "Present perfect continuous for an ongoing stretch. Very high-frequency."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Ngồi cả ngày nên lưng mình đau nhức.",
+  "sample": "My back's killing me from sitting all day.",
+  "chunk": "my ___'s killing me",
+  "note": "Hyperbole, but completely standard. Back, feet, head, shoulders."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình cần đi khám cái này.",
+  "sample": "I should get it looked at.",
+  "chunk": "get it looked at",
+  "note": "Passive causative. You don’t look — you get it looked at."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Chiều nay mình có hẹn bác sĩ.",
+  "sample": "I've got a doctor's appointment this afternoon.",
+  "chunk": "a doctor's appointment",
+  "note": "Possessive apostrophe is fixed here. Also dentist’s, optician’s."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình bị dị ứng hải sản.",
+  "sample": "I'm allergic to shellfish.",
+  "chunk": "I'm allergic to ___",
+  "note": "Allergic takes “to”, always. Worth memorising before you travel."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Thuốc này ngày uống mấy lần ạ?",
+  "sample": "How many times a day do I take this?",
+  "chunk": "how many times a day",
+  "note": "You “take” medicine in English — never drink or eat it."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình đang uống kháng sinh.",
+  "sample": "I'm on antibiotics.",
+  "chunk": "I'm on ___",
+  "note": "“On” + medication. Same shape as on painkillers, on the pill."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình hơi sốt.",
+  "sample": "I've got a bit of a temperature.",
+  "chunk": "a temperature",
+  "note": "British English uses “a temperature” to mean a fever. Countable, oddly."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình đỡ nhiều rồi.",
+  "sample": "I'm feeling much better, thanks.",
+  "chunk": "feeling much better",
+  "note": "Add “thanks” and it closes the topic politely."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình bị đau bụng.",
+  "sample": "My stomach's a bit off.",
+  "chunk": "my stomach's off",
+  "note": "“Off” for food and stomachs alike. Vague on purpose."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình tập gym ba buổi một tuần.",
+  "sample": "I go to the gym three times a week.",
+  "chunk": "three times a week",
+  "note": "Frequency formula: number + times + a + period."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Hôm nay tập chân, mai chắc đi không nổi.",
+  "sample": "I did legs today — I won't be walking tomorrow.",
+  "chunk": "I won't be ___ing tomorrow",
+  "note": "Future continuous used as a joke about consequences."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình đang cố giảm cân.",
+  "sample": "I'm trying to lose a bit of weight.",
+  "chunk": "lose weight",
+  "note": "“A bit of” softens it so nobody feels they must comment."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình bỏ cà phê buổi chiều rồi.",
+  "sample": "I've cut out afternoon coffee.",
+  "chunk": "cut out",
+  "note": "Cut out = remove entirely. Cut back = reduce. Two different promises."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình cần vận động nhiều hơn.",
+  "sample": "I need to be more active.",
+  "chunk": "be more active",
+  "note": "Broader and more natural than “do more exercise”."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Nhìn màn hình cả ngày nên mắt mình mỏi.",
+  "sample": "My eyes are strained from staring at a screen all day.",
+  "chunk": "staring at a screen",
+  "note": "Stare = look fixedly. The exact verb for screen fatigue."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình hay bị cứng cổ.",
+  "sample": "I get a stiff neck a lot.",
+  "chunk": "a stiff neck",
+  "note": "Habitual “get” + symptom. Not “I have a stiff neck a lot”."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Tuần trước mình mới khỏi covid.",
+  "sample": "I got over covid last week.",
+  "chunk": "get over",
+  "note": "Get over an illness, a breakup, a shock. Recovery, all senses."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Từ sáng đến giờ mình chưa ăn gì.",
+  "sample": "I haven't eaten anything since breakfast.",
+  "chunk": "haven't eaten since ___",
+  "note": "Present perfect + since. The window is still open."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Leo cầu thang thôi mà mình đã hụt hơi.",
+  "sample": "I'm out of breath just going up the stairs.",
+  "chunk": "just going up the stairs",
+  "note": "“Just” marks how little it took. Adds the self-deprecation for free."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình cố đi mười nghìn bước mỗi ngày.",
+  "sample": "I try to hit ten thousand steps a day.",
+  "chunk": "hit ___ steps",
+  "note": "“Hit” a target or number. Also hit a deadline, hit a goal."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Người mình đau nhức khắp cả.",
+  "sample": "I ache all over.",
+  "chunk": "ache all over",
+  "note": "Ache is the verb here. Short, complete sentence — no object needed."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Đứng lên nhanh là mình bị chóng mặt.",
+  "sample": "I get dizzy when I stand up too fast.",
+  "chunk": "get dizzy",
+  "note": "Get + adjective for a change of state. Get dizzy, get tired, get cold."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình cứ quên uống nước.",
+  "sample": "I keep forgetting to drink water.",
+  "chunk": "keep forgetting to ___",
+  "note": "Keep + -ing for a repeated failure. Useful and very honest."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình stress quá nên ngủ không ngon.",
+  "sample": "I've been too stressed to sleep properly.",
+  "chunk": "too ___ to ___",
+  "note": "Too + adjective + infinitive. The blocked-by-a-state pattern."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình phải đi khám định kỳ.",
+  "sample": "I'm due for a check-up.",
+  "chunk": "I'm due for ___",
+  "note": "Due for = it is time. Works for haircuts, dentists, pay rises."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình hắt hơi suốt, chắc dị ứng phấn hoa.",
+  "sample": "I can't stop sneezing — must be hay fever.",
+  "chunk": "must be ___",
+  "note": "“Must be” = my best guess. Deduction without any hedging words."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Chân mình bị chuột rút.",
+  "sample": "I got a cramp in my leg.",
+  "chunk": "a cramp in my ___",
+  "note": "Cramp is countable in this frame. Add the body part with “in”."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình bị bong gân mắt cá.",
+  "sample": "I twisted my ankle.",
+  "chunk": "twisted my ankle",
+  "note": "Twisted for ankles and wrists; “sprained” is the medical upgrade."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Mình đang ăn ít tinh bột hơn.",
+  "sample": "I'm cutting back on carbs.",
+  "chunk": "cutting back on carbs",
+  "note": "Cut back = reduce, cut out = quit entirely. Two different promises."
+ },
+ {
+  "cat": "health",
+  "kind": "vn",
+  "text": "Bác sĩ nói mình cần nghỉ ngơi.",
+  "sample": "The doctor told me to take it easy.",
+  "chunk": "take it easy",
+  "note": "Also a goodbye and a calm-down. Three meanings, one phrase."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "Describe your symptoms to a doctor: headache for three days, worse in the evenings, no fever.",
+  "sample": "It's been about three days now — worse in the evenings, and no temperature. Painkillers help for an hour or so.",
+  "chunk": "it's been about ___ now",
+  "note": "Duration, pattern, then what you tried. The order doctors want."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "Cancel a gym session with a friend because your back hurts.",
+  "sample": "Going to have to skip today — my back's playing up again. Rain check?",
+  "chunk": "my back's playing up",
+  "note": "Playing up = acting up, misbehaving. Backs, knees, laptops, kids."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "A colleague looks awful. Ask if they are okay without prying.",
+  "sample": "You doing okay? You don't have to say, just checking.",
+  "chunk": "you don't have to say",
+  "note": "Offers care and an exit in the same breath."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "Tell a pharmacist you need something for a sore throat, and that you are allergic to penicillin.",
+  "sample": "Have you got anything for a sore throat? Just so you know, I can't take penicillin.",
+  "chunk": "just so you know",
+  "note": "Flags critical information without making it a big announcement."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "Tell your manager you need the afternoon off for a medical appointment, without giving details.",
+  "sample": "I've got an appointment this afternoon so I'll be offline from two — nothing to worry about.",
+  "chunk": "nothing to worry about",
+  "note": "Pre-empts the follow-up question and closes the topic."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "A friend says they cannot sleep. Give one piece of advice without lecturing.",
+  "sample": "What worked for me was leaving my phone in the other room. Might be rubbish advice for you, though.",
+  "chunk": "what worked for me was ___",
+  "note": "Frames advice as your experience, so it can’t sound like an order."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "Decline a drink because you are on medication.",
+  "sample": "I'll sit this one out — I'm on antibiotics. Next time, though.",
+  "chunk": "sit this one out",
+  "note": "Declines once, not forever. Keeps you in the group."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "You feel unwell at a dinner party and need to leave early. Excuse yourself.",
+  "sample": "I'm so sorry to do this, but I'm not feeling great — I think I need to head off.",
+  "chunk": "I'm sorry to do this, but ___",
+  "note": "The standard apologetic exit. Works for any early departure."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "Someone asks about your fitness routine. Answer in two sentences.",
+  "sample": "Nothing clever — gym three times a week and a long walk at the weekend. The walk is the bit I actually enjoy.",
+  "chunk": "nothing clever",
+  "note": "Undersells the routine, which makes it sound sustainable rather than smug."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "Reassure your mum on the phone that your cough is nothing serious.",
+  "sample": "Honestly, it's just a cough — I've been sleeping fine and eating properly. I'll go in if it's still here next week.",
+  "chunk": "I'll ___ if it's still ___",
+  "note": "Gives a condition and a plan, which is what worried people need."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "Ask a receptionist for the earliest available appointment.",
+  "sample": "What's the soonest you've got? Any day works, morning if possible.",
+  "chunk": "what's the soonest you've got",
+  "note": "Asks for their best offer instead of proposing times yourself."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "A friend recommends an extreme diet. Push back gently.",
+  "sample": "I can see why that works for you — I don't think I'd last a week on it, though.",
+  "chunk": "I can see why ___, though ___",
+  "note": "Validates first, declines second. Nobody gets defensive."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "Describe what a burnout week feels like — three sentences.",
+  "sample": "You're at your desk for ten hours and somehow nothing gets done. Everything small feels enormous. By Friday I'm not tired, I'm just flat.",
+  "chunk": "I'm not tired, I'm just ___",
+  "note": "Corrects an assumption to land a more precise feeling."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "Ask a trainer at the gym to check your form.",
+  "sample": "Have you got a second to watch my form on this? I don't want to wreck my back.",
+  "chunk": "have you got a second to ___",
+  "note": "The smallest possible ask. Very hard to refuse."
+ },
+ {
+  "cat": "health",
+  "kind": "sit",
+  "text": "Tell a friend you have decided to stop drinking, and why — two sentences.",
+  "sample": "I've knocked it on the head for a while — my sleep was a mess. Ask me again in three months.",
+  "chunk": "knocked it on the head",
+  "note": "Idiom for stopping something. Casual, and skips the whole lecture."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Cái này bao nhiêu tiền ạ?",
+  "sample": "How much is this one?",
+  "chunk": "how much is ___",
+  "note": "The first sentence to have ready in any shop, anywhere."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Đắt quá, giảm chút được không?",
+  "sample": "That's a bit steep — any chance of a discount?",
+  "chunk": "a bit steep",
+  "note": "Steep = overpriced. Softer and more British than “too expensive”."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình chỉ xem thôi, cảm ơn.",
+  "sample": "I'm just browsing, thanks.",
+  "chunk": "I'm just browsing",
+  "note": "Gets a shop assistant to leave you alone, politely."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Cái này có size lớn hơn không ạ?",
+  "sample": "Have you got this in a bigger size?",
+  "chunk": "have you got this in ___",
+  "note": "Works for size, colour, another material. Shop workhorse."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình muốn đổi cái này.",
+  "sample": "I'd like to exchange this.",
+  "chunk": "exchange this",
+  "note": "Exchange = swap for another item. Refund = get money back."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình muốn trả lại và lấy lại tiền.",
+  "sample": "I'd like a refund, please.",
+  "chunk": "a refund",
+  "note": "Say the word early — it changes which staff member you get."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình có giữ hoá đơn đây.",
+  "sample": "I've still got the receipt.",
+  "chunk": "I've still got ___",
+  "note": "“Still” signals you came prepared. Strengthens any return."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Có trả bằng thẻ được không ạ?",
+  "sample": "Can I pay by card?",
+  "chunk": "pay by card",
+  "note": "By card, by bank transfer — but “in cash”. Prepositions differ."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Cho mình chia hoá đơn nhé.",
+  "sample": "Could we split the bill?",
+  "chunk": "split the bill",
+  "note": "The restaurant essential. “Go halves” is the casual version."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Để mình trả lần này.",
+  "sample": "I'll get this one.",
+  "chunk": "I'll get this one",
+  "note": "Claims the bill without mentioning money at all. Very natural."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Tháng này mình hơi cạn tiền.",
+  "sample": "I'm a bit short this month.",
+  "chunk": "a bit short",
+  "note": "Short = not enough money. Understated and face-saving."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình đang tiết kiệm để mua nhà.",
+  "sample": "I'm saving up for a flat.",
+  "chunk": "saving up for ___",
+  "note": "Save up = accumulate over time. The “up” matters."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Cái đó ngoài tầm của mình.",
+  "sample": "That's out of my price range.",
+  "chunk": "out of my price range",
+  "note": "Blames the price, not your wallet. Ends the conversation cleanly."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình đã huỷ mấy cái đăng ký không dùng.",
+  "sample": "I've cancelled a few subscriptions I wasn't using.",
+  "chunk": "I wasn't using",
+  "note": "Past continuous for the habit you ended. Justifies the decision."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Tiền nhà tăng từ tháng sau.",
+  "sample": "The rent's going up next month.",
+  "chunk": "going up",
+  "note": "Prices go up and come down. Never “increase” in casual speech."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình trả góp mười hai tháng không lãi.",
+  "sample": "I'm paying it off over twelve months, interest-free.",
+  "chunk": "pay it off",
+  "note": "Pay off = clear a debt completely. Also pays off = brings reward."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Cái này đáng tiền lắm.",
+  "sample": "It's good value for money.",
+  "chunk": "value for money",
+  "note": "The fixed phrase for worth-the-price. Don’t drop the “for”."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mua hai tặng một đấy.",
+  "sample": "It's buy one get one free.",
+  "chunk": "buy one get one free",
+  "note": "Fixed offer phrase, often shortened to BOGOF in the UK."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình đang thắt lưng buộc bụng.",
+  "sample": "I'm tightening the belt a bit at the moment.",
+  "chunk": "tighten the belt",
+  "note": "Same metaphor as Vietnamese. Rare and satisfying when that happens."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Lương mình chưa về.",
+  "sample": "I haven't been paid yet.",
+  "chunk": "been paid",
+  "note": "Passive: you get paid, the company pays. Almost always passive here."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình bị trừ phí không rõ lý do.",
+  "sample": "I've been charged a fee I don't recognise.",
+  "chunk": "I've been charged",
+  "note": "Bank-speak. Passive keeps it factual rather than accusing."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Cuối tháng mình mới rảnh tiền.",
+  "sample": "I'll have a bit more cash at the end of the month.",
+  "chunk": "a bit more cash",
+  "note": "Vague amounts sound relaxed. Exact numbers sound anxious."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình cân đối chi tiêu mỗi tháng một lần.",
+  "sample": "I go through my budget once a month.",
+  "chunk": "go through",
+  "note": "Go through = review item by item. Budget, inbox, list, notes."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Cái đó đắt gấp đôi ở chỗ khác.",
+  "sample": "It's twice the price everywhere else.",
+  "chunk": "twice the price",
+  "note": "Multiplier + noun. Also half the price, three times the size."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình mua cũ cho rẻ.",
+  "sample": "I bought it second-hand.",
+  "chunk": "second-hand",
+  "note": "Hyphenated before a noun. “Used” is the American default."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Phí giao hàng bao nhiêu ạ?",
+  "sample": "How much is delivery?",
+  "chunk": "how much is delivery",
+  "note": "Uncountable here — never “how much are deliveries”."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình chuyển khoản cho bạn nhé.",
+  "sample": "I'll transfer it to you.",
+  "chunk": "transfer it to you",
+  "note": "Bank transfers “go to” people. Simple and unambiguous."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình nợ bạn hai trăm.",
+  "sample": "I owe you two hundred.",
+  "chunk": "I owe you ___",
+  "note": "Owe takes two objects. No preposition needed at all."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Bạn trả trước rồi mình gửi lại sau nhé.",
+  "sample": "Can you cover me and I'll sort you out later?",
+  "chunk": "cover me",
+  "note": "Cover = pay temporarily for someone. Extremely common among friends."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Đồ này giảm bảy mươi phần trăm.",
+  "sample": "It's seventy percent off.",
+  "chunk": "___ percent off",
+  "note": "“Off” is the discount word. Not “reduced by” in speech."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình tiêu hơi quá tay cuối tuần rồi.",
+  "sample": "I went a bit overboard at the weekend.",
+  "chunk": "go overboard",
+  "note": "Overboard = too far. Spending, decorating, apologising, anything."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Thôi mình không mua nữa.",
+  "sample": "I think I'll leave it, thanks.",
+  "chunk": "I'll leave it",
+  "note": "The graceful in-shop no. Nobody loses face."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Giá này có bao gồm thuế chưa ạ?",
+  "sample": "Is that price with tax included?",
+  "chunk": "tax included",
+  "note": "Ask before you agree. The answer varies by country."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Mình tìm được cái rẻ hơn trên mạng.",
+  "sample": "I found it cheaper online.",
+  "chunk": "found it cheaper",
+  "note": "Comparative after the object. Also: found it faster, found it easier."
+ },
+ {
+  "cat": "money",
+  "kind": "vn",
+  "text": "Đầu tư thì mình không dám mạo hiểm.",
+  "sample": "I'm pretty risk-averse when it comes to investing.",
+  "chunk": "when it comes to ___",
+  "note": "Narrows a claim to one area. Sounds considered and precise."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "A market seller quotes you double the normal price. Negotiate without being rude.",
+  "sample": "Come on — I saw it for half that down the road. Meet me in the middle?",
+  "chunk": "meet me in the middle",
+  "note": "Names a fair outcome instead of just rejecting their number."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "Return a jacket you wore once because a seam split. You have the receipt.",
+  "sample": "I bought this last week and the seam's already gone. I've got the receipt here — can I get a refund?",
+  "chunk": "the seam's already gone",
+  "note": "“Already” carries the whole complaint. No anger required."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "A friend has owed you money for two months. Ask for it back without damaging the friendship.",
+  "sample": "Hey, no rush at all — but could you send over that two hundred when you get a chance?",
+  "chunk": "when you get a chance",
+  "note": "Removes urgency from a request that is, in fact, urgent."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "A colleague suggests an expensive restaurant and you cannot afford it this month. Redirect.",
+  "sample": "I'm being careful this month — could we do the noodle place instead? Just as good, half the damage.",
+  "chunk": "half the damage",
+  "note": "Playful word for cost. Keeps money talk light."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "You have been charged twice for the same order. Write to customer support in three sentences.",
+  "sample": "I've been charged twice for order 4471 — once on the 3rd and again on the 4th. The second charge wasn't authorised. Could you refund it and confirm by email?",
+  "chunk": "could you ___ and confirm",
+  "note": "Asks for the action and the proof together. Halves the thread length."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "Ask your manager for a pay rise. Two sentences, no apologising.",
+  "sample": "I've taken on the release process and the on-call rota since January. I'd like to talk about bringing my salary in line with that.",
+  "chunk": "bring ___ in line with ___",
+  "note": "Frames the rise as a correction, not a favour."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "A salesperson is pushing an extended warranty you do not want. Decline three times, escalating politely.",
+  "sample": "No, I'm alright, thanks. Honestly, I'd rather not. I'll take it as it is — thank you though.",
+  "chunk": "I'll take it as it is",
+  "note": "Final-sounding without being rude. Ends the pitch."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "Explain to a friend why you stopped buying coffee out every day.",
+  "sample": "It was four quid a day, which is eighty a month, which is a flight. Once I did the maths I couldn't unsee it.",
+  "chunk": "once I did the maths",
+  "note": "The number-cascade argument. Persuasive without any preaching."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "Split a group bill where you drank nothing and two people had cocktails. Raise it fairly.",
+  "sample": "Shall we just do it by what we had? I only had the food, so it's easier that way.",
+  "chunk": "shall we just do it by ___",
+  "note": "Proposes the method, not the grievance. Nobody feels accused."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "Your landlord raises the rent by fifteen percent. Push back in three sentences.",
+  "sample": "Fifteen percent is a big jump in one go. I've paid on time for two years and looked after the place — could we land somewhere nearer five? I'd much rather stay than move.",
+  "chunk": "a big jump in one go",
+  "note": "Objects to the size, not the principle. Leaves room to settle."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "Turn down an expensive wedding invitation abroad without mentioning money directly.",
+  "sample": "I'd absolutely love to, but the timing just doesn't work for me this year. I'll take you out properly when you're back.",
+  "chunk": "the timing just doesn't work",
+  "note": "The universal decline. Nobody ever asks a follow-up question."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "Teach a ten-year-old the difference between saving and spending in three sentences.",
+  "sample": "Money you spend is gone, and money you save turns into choices later. The trick isn't earning more, it's noticing where it leaks. Start with one thing you'd rather have in a year.",
+  "chunk": "the trick isn't ___, it's ___",
+  "note": "Correction structure. Makes advice sound like insight."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "Ask for the price of a taxi before getting in, then agree.",
+  "sample": "How much to the old quarter? ... Yeah, that's fine — let's go.",
+  "chunk": "that's fine — let's go",
+  "note": "Accept and move. Long agreement sounds like second thoughts."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "A relative asks how much you earn. Deflect without lying.",
+  "sample": "Enough to keep the lights on, not enough to be interesting. How's the new job treating you?",
+  "chunk": "enough to ___, not enough to ___",
+  "note": "Answers in shape, not numbers, then hands the question back."
+ },
+ {
+  "cat": "money",
+  "kind": "sit",
+  "text": "Explain to a shop that an online discount code did not apply at checkout.",
+  "sample": "The code SPRING20 was still live when I ordered but it hasn't come off the total. Could you apply it retroactively?",
+  "chunk": "come off the total",
+  "note": "Discounts “come off”. Precise and immediately understood."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình làm lập trình viên được năm năm rồi.",
+  "sample": "I've been a developer for about five years now.",
+  "chunk": "I've been a ___ for ___",
+  "note": "Present perfect for a job you still hold. Never the past simple."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Hiện tại mình đang làm ở một công ty fintech.",
+  "sample": "I'm at a fintech company at the moment.",
+  "chunk": "I'm at ___ at the moment",
+  "note": "“At” + company name. Simpler and more native than “working in”."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình phụ trách phần backend.",
+  "sample": "I look after the backend.",
+  "chunk": "look after",
+  "note": "Look after = own and maintain. Warmer than “I am responsible for”."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình đang tìm việc mới.",
+  "sample": "I'm looking for something new.",
+  "chunk": "I'm looking for something new",
+  "note": "Deliberately vague. Signals a search without naming any targets."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình muốn đổi hướng sang làm sản phẩm.",
+  "sample": "I'm looking to move into product.",
+  "chunk": "move into ___",
+  "note": "Move into = change field. The standard career-change verb."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình nghỉ việc cũ từ tháng trước.",
+  "sample": "I left my last job in March.",
+  "chunk": "left my last job",
+  "note": "“Left” is neutral. “Quit” sounds dramatic; “was let go” means fired."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình bị cắt giảm nhân sự.",
+  "sample": "I was made redundant.",
+  "chunk": "made redundant",
+  "note": "British phrasing, and it clearly isn’t your fault. Useful distinction."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình có phỏng vấn vòng hai tuần sau.",
+  "sample": "I've got a second-round interview next week.",
+  "chunk": "second-round interview",
+  "note": "Rounds, stages, final. The vocabulary of every hiring process."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Cho mình hỏi quy trình tuyển gồm mấy vòng ạ?",
+  "sample": "How many stages are there in the process?",
+  "chunk": "how many stages",
+  "note": "Ask early. It tells you how much time to commit."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình quan tâm đến vị trí này vì công ty làm về giáo dục.",
+  "sample": "What drew me to the role is that you're working in education.",
+  "chunk": "what drew me to ___ is ___",
+  "note": "Cleft sentence. Sounds prepared without sounding rehearsed."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Điểm mạnh của mình là xử lý vấn đề khó.",
+  "sample": "I'm at my best when something's broken and nobody knows why.",
+  "chunk": "I'm at my best when ___",
+  "note": "Answers “strengths” with a scene instead of an adjective."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Điểm yếu của mình là hay nhận quá nhiều việc.",
+  "sample": "I take on too much — I’m learning to say no earlier.",
+  "chunk": "I'm learning to ___",
+  "note": "Weakness plus the fix. Never leave the first half alone."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình mong muốn mức lương khoảng ba mươi.",
+  "sample": "I'm looking for somewhere around thirty.",
+  "chunk": "somewhere around ___",
+  "note": "Gives a range without committing to a number. Keeps room to move."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mức đó hơi thấp so với thị trường.",
+  "sample": "That's a little under market for this role.",
+  "chunk": "under market",
+  "note": "Uses data, not feelings. Very hard to argue against."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình có thể bắt đầu sau hai tuần.",
+  "sample": "I could start in two weeks.",
+  "chunk": "I could start in ___",
+  "note": "“Could” is softer than “can” and leaves the date negotiable."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình cần thời gian suy nghĩ về đề nghị này.",
+  "sample": "Could I have a couple of days to think it over?",
+  "chunk": "think it over",
+  "note": "Buys time without signalling doubt. Completely standard."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình muốn biết thêm về đội nhóm.",
+  "sample": "I'd love to hear more about the team.",
+  "chunk": "I'd love to hear more about ___",
+  "note": "Turns an interview into a conversation. Interviewers relax."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Công ty có hỗ trợ làm việc từ xa không ạ?",
+  "sample": "What's the setup around remote work?",
+  "chunk": "what's the setup around ___",
+  "note": "Asks about reality, not policy. You get a much better answer."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình đã dẫn dắt một nhóm bốn người.",
+  "sample": "I led a team of four.",
+  "chunk": "led a team of ___",
+  "note": "Past simple for a finished responsibility. “Led”, not “leaded”."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình học được nhiều nhất từ dự án thất bại đó.",
+  "sample": "I learnt more from that failed project than anything else.",
+  "chunk": "learnt more from ___ than ___",
+  "note": "Failure framed as education. Interviewers love this shape."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình đang muốn học thêm về kiến trúc hệ thống.",
+  "sample": "I want to get deeper into system design.",
+  "chunk": "get deeper into ___",
+  "note": "Shows direction. Better than “I want to learn more”."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình chưa làm cái đó nhưng học nhanh.",
+  "sample": "I haven't worked with it directly, but I pick things up quickly.",
+  "chunk": "pick things up quickly",
+  "note": "Admits the gap and closes it in the same sentence."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình được thăng chức lên senior năm ngoái.",
+  "sample": "I was promoted to senior last year.",
+  "chunk": "promoted to ___",
+  "note": "Passive: you get promoted, they promote you. Passive is the norm."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình muốn xin nghỉ phép hai tuần.",
+  "sample": "I'd like to take two weeks off in July.",
+  "chunk": "take ___ off",
+  "note": "Take time off, take a day off. The “off” is doing the work."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình muốn nói chuyện về lộ trình phát triển.",
+  "sample": "I'd like to talk about where I'm heading here.",
+  "chunk": "where I'm heading",
+  "note": "Forward-looking and non-confrontational. Opens a career chat."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Công việc hiện tại không còn thử thách nữa.",
+  "sample": "I've stopped being stretched in this role.",
+  "chunk": "being stretched",
+  "note": "Stretched = challenged and growing. Positive way to say bored."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình muốn cảm ơn vì cơ hội này.",
+  "sample": "Thanks so much for taking the time today.",
+  "chunk": "taking the time",
+  "note": "The standard interview close. Say it and then stop talking."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Khi nào mình biết kết quả ạ?",
+  "sample": "When should I expect to hear back?",
+  "chunk": "hear back",
+  "note": "Hear back = receive a reply. Asking it shows confidence."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình được nhận rồi!",
+  "sample": "I got the job!",
+  "chunk": "got the job",
+  "note": "Three words. Don’t over-decorate good news."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình vừa trượt vòng cuối.",
+  "sample": "I didn't get it — final round.",
+  "chunk": "I didn't get it",
+  "note": "Plain and dignified. No excuses, no explanation needed."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình có thể giới thiệu bạn với chị ấy.",
+  "sample": "I could put you in touch with her.",
+  "chunk": "put you in touch with ___",
+  "note": "The networking phrase. Offers an introduction, not a promise."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình theo dõi công việc của anh khá lâu rồi.",
+  "sample": "I've been following your work for a while.",
+  "chunk": "I've been following ___",
+  "note": "Opens any networking message. Flattering and specific."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình muốn xin lời khuyên về hướng đi.",
+  "sample": "I'd really value your take on something.",
+  "chunk": "I'd value your take on ___",
+  "note": "Asks for advice by flattering their judgement. Rarely refused."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình đang cân nhắc giữa hai lời mời.",
+  "sample": "I'm weighing up two offers at the moment.",
+  "chunk": "weigh up",
+  "note": "Weigh up = compare carefully. Also signals you have options."
+ },
+ {
+  "cat": "career",
+  "kind": "vn",
+  "text": "Mình muốn xin phản hồi để lần sau tốt hơn.",
+  "sample": "Any feedback you can share would really help.",
+  "chunk": "any ___ you can share",
+  "note": "Low-pressure request. Makes it easy for them to say yes."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "Introduce yourself in an interview in three sentences: what you do, what you are good at, why you are here.",
+  "sample": "I'm a backend developer — five years, mostly payments. The part I'm best at is untangling systems nobody wants to touch. I'm here because you're doing that at a scale I haven't seen yet.",
+  "chunk": "the part I'm best at is ___",
+  "note": "Three beats: role, edge, motive. Never ramble past the third."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "Answer 'tell me about a time you failed' honestly, in three sentences.",
+  "sample": "I shipped a migration without a rollback plan and took checkout down for an hour. I fixed it, then wrote the runbook we still use. I've never shipped anything irreversible since.",
+  "chunk": "I've never ___ since",
+  "note": "Failure, repair, permanent change. The third sentence is the point."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "The interviewer asks your salary expectations first, before naming a range. Deflect once, then answer.",
+  "sample": "What range have you got budgeted for this? ... Then we're in the same area — I'm looking at around thirty-five.",
+  "chunk": "what range have you got budgeted",
+  "note": "Asks for their number first. Costs nothing, often gains a lot."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "You are asked about a two-year gap on your CV. Explain in two sentences.",
+  "sample": "I took two years out to look after my father. I kept my hand in with freelance work, and I'm fully available now.",
+  "chunk": "kept my hand in",
+  "note": "Fills the gap with continuity. Ends on availability."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "Negotiate an offer that is ten percent below what you wanted, without threatening to walk.",
+  "sample": "I'm really keen on this. The one thing standing between us is the number — could you get to thirty-eight? I'd sign today.",
+  "chunk": "the one thing standing between us is ___",
+  "note": "Names a single obstacle. Makes saying yes feel like closing."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "Resign from a job you like, to your manager, in three sentences.",
+  "sample": "I've accepted an offer elsewhere, so I'm giving my notice today. This isn't about the team — the role is closer to where I want to end up. I'll do whatever makes the handover painless.",
+  "chunk": "giving my notice",
+  "note": "Decision, reason, handover. In that order, always."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "Ask a stranger on LinkedIn for twenty minutes of their time.",
+  "sample": "I've been following your work on payment reliability for a while. I'm moving in that direction and I'd value twenty minutes of your take — happy to work around your calendar.",
+  "chunk": "happy to work around ___",
+  "note": "Removes every obstacle to a yes, including scheduling."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "The interviewer asks why you are leaving your current job. Answer without criticising anyone.",
+  "sample": "I've learnt a lot there, but the problems have stopped getting harder. I'm after something that stretches me again.",
+  "chunk": "the problems have stopped getting harder",
+  "note": "Diplomatic truth. Frames the move as growth, not escape."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "Give a colleague honest feedback that their code reviews are too harsh.",
+  "sample": "Your reviews are the most thorough on the team — that's genuinely valuable. The tone lands harder than I think you mean it to, though. Could we try leading with the question instead of the verdict?",
+  "chunk": "lands harder than you mean it to",
+  "note": "Separates intent from impact. Lets them save face and change."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "You are asked a technical question you cannot answer. Handle it in two sentences.",
+  "sample": "I don't know that one off the top of my head. Here's how I'd find out, though — and here's what I'd guess, if you want the reasoning.",
+  "chunk": "here's how I'd find out",
+  "note": "Admits the gap, then demonstrates the thinking anyway."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "Turn down a job offer you have decided against, keeping the relationship warm.",
+  "sample": "I've decided to go another way, and I wanted to tell you properly rather than by email template. I'd genuinely like to stay in touch — this was the closest call I've had.",
+  "chunk": "go another way",
+  "note": "Soft, final, and flattering. They will answer your next message."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "Ask your manager for a promotion, citing evidence, in three sentences.",
+  "sample": "Since January I've owned the release process, mentored two juniors and cut our incident count by half. That's the scope of a senior role. I'd like us to make the title match it.",
+  "chunk": "make the title match ___",
+  "note": "Puts the work first and the ask last. Very hard to refuse."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "Explain a career change from teaching to software in three sentences.",
+  "sample": "I taught maths for six years, which is mostly debugging other people's reasoning. I started automating my own marking and never stopped. Now I do it full-time, and the explaining part still comes in useful.",
+  "chunk": "which is mostly ___",
+  "note": "Reframes the old job as relevant. Turns a risk into an asset."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "Follow up on an interview after a week of silence, without sounding desperate.",
+  "sample": "Just following up on last Tuesday — still very interested, and happy to answer anything else. If the timeline has shifted, no problem at all, I'd just like to know where things stand.",
+  "chunk": "where things stand",
+  "note": "Asks for a status, not a decision. Easy for them to reply to."
+ },
+ {
+  "cat": "career",
+  "kind": "sit",
+  "text": "Answer: where do you see yourself in five years? Two sentences, no clichés.",
+  "sample": "Doing the hardest technical work in the room, and being the reason two or three other people are better at it. Whether that has a manager title on it, I genuinely don't mind.",
+  "chunk": "whether that has ___, I don't mind",
+  "note": "Commits to substance, stays flexible on form. Sounds mature."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình không đồng ý với cách làm này.",
+  "sample": "I'm not sure I agree with that approach.",
+  "chunk": "I'm not sure I agree",
+  "note": "Hedged disagreement. Says no while leaving everyone room."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình hiểu ý bạn, nhưng mình thấy khác.",
+  "sample": "I see what you mean, but I see it differently.",
+  "chunk": "I see it differently",
+  "note": "Acknowledge, then diverge. The safest disagreement shape there is."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Cái này mình phải nói thẳng.",
+  "sample": "I'll be straight with you.",
+  "chunk": "I'll be straight with you",
+  "note": "Warns them that honesty is coming. Softens the blow in advance."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình nghĩ bạn hiểu sai ý mình rồi.",
+  "sample": "I think that came across differently to how I meant it.",
+  "chunk": "came across",
+  "note": "Blames the delivery, not the listener. Defuses instantly."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Bạn nói vậy mình thấy hơi tổn thương.",
+  "sample": "That stung a bit, to be honest.",
+  "chunk": "that stung a bit",
+  "note": "Names the hurt lightly. Harder to dismiss than an accusation."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình không nhận thêm việc nữa được.",
+  "sample": "I can't take anything else on right now.",
+  "chunk": "take anything else on",
+  "note": "Take on = accept work. Full and final without being rude."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình cần bạn tôn trọng thời gian của mình.",
+  "sample": "I need you to respect my time on this.",
+  "chunk": "I need you to ___",
+  "note": "Direct request with a subject. The core boundary sentence."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Đây không phải lỗi của mình.",
+  "sample": "That one wasn't on me.",
+  "chunk": "that wasn't on me",
+  "note": "“On me” = my responsibility. Rejects blame without a speech."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình xin lỗi, mình sai.",
+  "sample": "I got that wrong — sorry.",
+  "chunk": "I got that wrong",
+  "note": "Owns it in four words. Faster and stronger than a long apology."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình không muốn tranh luận chuyện này nữa.",
+  "sample": "I'd rather leave this one here.",
+  "chunk": "leave this one here",
+  "note": "Ends a topic without declaring a winner. Very useful."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Nói chuyện này sau nhé, giờ mình đang nóng.",
+  "sample": "Can we come back to this? I'm a bit wound up.",
+  "chunk": "wound up",
+  "note": "Wound up = agitated. Admitting it lowers the temperature."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Bạn cắt lời mình suốt.",
+  "sample": "You keep cutting me off.",
+  "chunk": "cut me off",
+  "note": "The exact verb for interrupting. Short and unmistakable."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Cho mình nói hết đã.",
+  "sample": "Let me finish, then it’s yours.",
+  "chunk": "let me finish",
+  "note": "Claims the floor and promises to give it back."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình đã nói chuyện này ba lần rồi.",
+  "sample": "This is the third time we've had this conversation.",
+  "chunk": "the third time we've ___",
+  "note": "Counting is the most powerful move in any complaint."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình thấy không công bằng.",
+  "sample": "That doesn't feel fair to me.",
+  "chunk": "that doesn't feel fair",
+  "note": "“Feel” makes it your perception. Almost impossible to argue with."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình không thoải mái với chuyện đó.",
+  "sample": "I'm not comfortable with that.",
+  "chunk": "I'm not comfortable with ___",
+  "note": "The professional red line. No justification required."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình cần bạn xin lỗi vì chuyện đó.",
+  "sample": "I'd like an apology for that, honestly.",
+  "chunk": "I'd like an apology",
+  "note": "Asks for repair explicitly. Rare, and very effective."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Bạn nói vậy là quá lời.",
+  "sample": "I think that’s going a bit far.",
+  "chunk": "going a bit far",
+  "note": "Marks an overstep without matching their escalation."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Chuyện này không liên quan đến bạn.",
+  "sample": "With respect, this one isn’t yours to decide.",
+  "chunk": "isn't yours to ___",
+  "note": "Boundary phrasing. Firm, formal, and hard to dispute."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình chỉ muốn làm rõ, không phải bắt lỗi.",
+  "sample": "I'm not having a go — I just want to understand.",
+  "chunk": "having a go",
+  "note": "British for attacking someone. Denying it early prevents defensiveness."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình nghĩ cả hai đều có phần đúng.",
+  "sample": "I think we're both half right.",
+  "chunk": "both half right",
+  "note": "Concedes and claims simultaneously. A quick exit from a stalemate."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Thôi bỏ đi, không đáng.",
+  "sample": "Let's not — it's not worth falling out over.",
+  "chunk": "fall out over ___",
+  "note": "Fall out = have a rift. Names the real stake."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình không thích cách bạn nói chuyện với mình.",
+  "sample": "I don't like being spoken to like that.",
+  "chunk": "being spoken to like that",
+  "note": "Passive keeps the focus on the behaviour, not the person."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Bạn hứa rồi mà không làm.",
+  "sample": "You said you would, and then it didn’t happen.",
+  "chunk": "and then it didn’t happen",
+  "note": "States the gap between words and reality. No adjectives needed."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình cần biết lý do thật.",
+  "sample": "What's the real reason?",
+  "chunk": "what's the real reason",
+  "note": "Five words that end most evasions. Use sparingly."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình không định làm to chuyện.",
+  "sample": "I don't want to make a thing of it.",
+  "chunk": "make a thing of it",
+  "note": "Downgrades the conflict while still raising it."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình nghĩ mình nợ bạn một lời giải thích.",
+  "sample": "I think I owe you an explanation.",
+  "chunk": "owe you an explanation",
+  "note": "Opens a difficult conversation from a position of humility."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình đã cố hết sức rồi.",
+  "sample": "I've done what I can with this.",
+  "chunk": "I've done what I can",
+  "note": "Closes your responsibility without conceding fault."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình từ chối lần này nhé.",
+  "sample": "I'm going to pass on this one.",
+  "chunk": "pass on this one",
+  "note": "A no that sounds like a choice, not a refusal."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Bạn có thể góp ý nhẹ hơn không?",
+  "sample": "Could you say that a bit more kindly?",
+  "chunk": "a bit more kindly",
+  "note": "Requests a change in tone directly. Surprisingly well received."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình thấy mình bị gạt ra ngoài.",
+  "sample": "I felt left out of that decision.",
+  "chunk": "left out of ___",
+  "note": "Passive feeling + the specific event. Precise, not accusatory."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình không giận, chỉ là thất vọng.",
+  "sample": "I'm not angry, just disappointed.",
+  "chunk": "I'm not ___, just ___",
+  "note": "Downgrade-and-name. Lands far harder than shouting."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình cần thời gian bình tĩnh lại.",
+  "sample": "I need ten minutes to cool off.",
+  "chunk": "cool off",
+  "note": "Names the pause and its purpose. Nobody can refuse it."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình sẽ không nhắc lại chuyện này nữa.",
+  "sample": "I won't bring it up again.",
+  "chunk": "bring it up",
+  "note": "Bring up = raise a topic. A promise that ends a conflict properly."
+ },
+ {
+  "cat": "conflict",
+  "kind": "vn",
+  "text": "Mình muốn hoà, không muốn thắng.",
+  "sample": "I'd rather sort this out than win it.",
+  "chunk": "sort this out",
+  "note": "Reframes the whole argument. Often ends it on the spot."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "A colleague takes credit for your work in a meeting. Address it afterwards in three sentences.",
+  "sample": "Quick one about the meeting — the migration plan was mine, and it landed as though it was yours. I don't think you meant it that way. Could you flag it in the thread so the record's straight?",
+  "chunk": "so the record's straight",
+  "note": "Names the harm, offers an excuse, requests one specific fix."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "Your flatmate has left the kitchen a mess for the fourth time. Raise it without a row.",
+  "sample": "I'm going to sound like your mum, but the kitchen's been like this four days running. What's a system that actually works for you?",
+  "chunk": "four days running",
+  "note": "“Running” = consecutively. The count carries the complaint."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "Someone jumps the queue in front of you. Say something.",
+  "sample": "Sorry — I think there's a queue, mate.",
+  "chunk": "I think there's a queue",
+  "note": "Hedged, but unmistakable. British conflict in six words."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "Your manager gives you an unreasonable deadline. Push back with an alternative.",
+  "sample": "If it has to be Friday, something has to come off the list. I can do the API by Friday or all three by Wednesday — your call.",
+  "chunk": "something has to come off the list",
+  "note": "Trades scope for time instead of refusing outright."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "A friend repeatedly cancels plans last minute. Tell them how it lands.",
+  "sample": "I'm not cross, but I've stopped making plans around you and I don't like that. Can we only book things you actually want to do?",
+  "chunk": "I've stopped ___ and I don't like that",
+  "note": "Reports the consequence, not the crime. Very hard to dismiss."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "Someone makes a joke at your expense in front of others. Respond in the moment.",
+  "sample": "Ha — bit close to the bone, that one.",
+  "chunk": "close to the bone",
+  "note": "Marks the overstep with a smile. Nobody escalates."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "A client keeps adding work outside the agreed scope. Hold the line in three sentences.",
+  "sample": "Happy to do it — it's outside what we agreed, so it'd be a change to the estimate. Want me to price it up? Otherwise it goes in the next phase.",
+  "chunk": "want me to price it up?",
+  "note": "Says yes to the work and no to doing it free."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "You were wrong in a heated argument yesterday. Apologise properly, in three sentences.",
+  "sample": "I've had a think, and you were right. I got defensive because I was embarrassed, which isn't your problem. Sorry — I'll do better next time.",
+  "chunk": "which isn't your problem",
+  "note": "Explains without excusing. The hallmark of a real apology."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "A relative makes a remark about your life choices at dinner. Deflect without a scene.",
+  "sample": "You know what, let's not do this over dinner. Ask me properly another time and I'll tell you the whole thing.",
+  "chunk": "let's not do this over ___",
+  "note": "Defers rather than refuses. Protects the room and the relationship."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "Tell a teammate their constant Slack pings are wrecking your focus.",
+  "sample": "I'm going heads-down between ten and one — I'll miss your pings in that window. Anything urgent, just call me.",
+  "chunk": "anything urgent, just call me",
+  "note": "States the boundary and the escape hatch in one breath. Zero friction."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "A neighbour plays music loudly at midnight. Knock and ask, politely but firmly.",
+  "sample": "Sorry to knock this late — the music's coming straight through the wall. Any chance you could drop it after eleven?",
+  "chunk": "it's coming straight through the wall",
+  "note": "Describes the effect on you, not their behaviour."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "Someone blames you for a production outage that was not your fault. Correct the record calmly.",
+  "sample": "That deploy wasn't mine — it went out from the release branch on Tuesday. Happy to help fix it, but I'd like that bit clear.",
+  "chunk": "I'd like that bit clear",
+  "note": "Facts, cooperation, then one firm sentence. In that order."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "A friend asks to borrow money and you want to say no. Refuse in two sentences.",
+  "sample": "I'm going to say no, and it's nothing to do with you. Lending to mates is the one thing I've learnt not to do.",
+  "chunk": "it's nothing to do with you",
+  "note": "Removes the personal sting from a refusal."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "You are being talked over repeatedly in a video call. Reclaim the floor.",
+  "sample": "Hang on — I hadn't finished. Thirty seconds and then I'm done.",
+  "chunk": "I hadn't finished",
+  "note": "Past perfect asserts a fact. The time limit makes it reasonable."
+ },
+ {
+  "cat": "conflict",
+  "kind": "sit",
+  "text": "Someone apologises to you but you are not ready to accept it. Respond honestly.",
+  "sample": "I appreciate you saying that. I'm not quite there yet, but I will be — give me a bit.",
+  "chunk": "I'm not quite there yet",
+  "note": "Refuses to fake forgiveness without rejecting the person."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Dạo này mình thấy hơi tuột mood.",
+  "sample": "I've been a bit flat lately.",
+  "chunk": "a bit flat",
+  "note": "Flat = low energy, not quite sad. The most useful mood word in English."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình lo quá không ngủ được.",
+  "sample": "My head wouldn’t switch off last night.",
+  "chunk": "switch off",
+  "note": "Metaphor for stopping thought. Everyone recognises it instantly."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy quá tải.",
+  "sample": "I'm completely swamped.",
+  "chunk": "completely swamped",
+  "note": "Buried in work. Stronger than busy, shorter than overwhelmed."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy tội lỗi vì đã không giúp.",
+  "sample": "I feel bad that I didn’t help.",
+  "chunk": "I feel bad that ___",
+  "note": "The everyday guilt frame. “Feel guilty” sounds much heavier."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình hơi chạnh lòng.",
+  "sample": "It got to me a bit, that.",
+  "chunk": "it got to me",
+  "note": "Got to me = affected me emotionally. Understated and very natural."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình đang cần người nói chuyện.",
+  "sample": "I could do with a chat, honestly.",
+  "chunk": "I could do with ___",
+  "note": "Softest possible way to ask for support. Almost never refused."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy nhẹ cả người.",
+  "sample": "That's a weight off, honestly.",
+  "chunk": "a weight off",
+  "note": "Relief after a burden lifts. Fixed metaphor, hugely common."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình hơi ngợp với mọi thứ.",
+  "sample": "It's all a bit much at the moment.",
+  "chunk": "a bit much",
+  "note": "Overwhelm, stated mildly. Very British, very useful."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình vui thật sự vì bạn.",
+  "sample": "I'm genuinely happy for you.",
+  "chunk": "happy for you",
+  "note": "“For” not “about”. Happy about a thing, happy for a person."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy trống rỗng sau khi xong dự án.",
+  "sample": "I felt a bit empty once it was finished.",
+  "chunk": "a bit empty",
+  "note": "Post-achievement flatness. Adding “a bit” keeps it conversational."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình đang cố giữ bình tĩnh.",
+  "sample": "I'm trying to keep a lid on it.",
+  "chunk": "keep a lid on it",
+  "note": "Containing a feeling or situation. Vivid and idiomatic."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thất vọng về bản thân.",
+  "sample": "I'm annoyed at myself, mostly.",
+  "chunk": "annoyed at myself",
+  "note": "Self-directed frustration. Lighter and truer than “I hate myself”."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình cảm thấy không thuộc về nơi này.",
+  "sample": "I feel like I don’t quite fit in here.",
+  "chunk": "don't quite fit in",
+  "note": "“Quite” softens it. The classic expat and new-job feeling."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy tự hào về mình hôm nay.",
+  "sample": "I'm quietly proud of that one.",
+  "chunk": "quietly proud",
+  "note": "Pride without boasting. Almost impossible to dislike."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình đang bực nhưng không muốn nói ra.",
+  "sample": "I'm fine — I'm just chewing on something.",
+  "chunk": "chewing on something",
+  "note": "Admits preoccupation without opening the topic."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình nhớ nhà.",
+  "sample": "I'm a bit homesick.",
+  "chunk": "a bit homesick",
+  "note": "One word carries the whole feeling. “A bit” keeps it conversational."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy cô đơn dù xung quanh đông người.",
+  "sample": "I can feel lonely in a room full of people.",
+  "chunk": "a room full of people",
+  "note": "Concrete image beats any abstract explanation."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình hồi hộp quá.",
+  "sample": "I've got butterflies.",
+  "chunk": "butterflies",
+  "note": "Nervous excitement in the stomach. Positive or neutral, never negative."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình sợ mình làm không nổi.",
+  "sample": "I'm scared I'm not up to it.",
+  "chunk": "up to it",
+  "note": "Up to it = capable enough. Very common in self-doubt."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình cảm ơn bạn thật lòng.",
+  "sample": "That meant a lot to me.",
+  "chunk": "meant a lot to me",
+  "note": "Past tense makes it about a specific act. More sincere than “thank you”."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy khó chịu mà không rõ vì sao.",
+  "sample": "I'm out of sorts and I can't tell you why.",
+  "chunk": "out of sorts",
+  "note": "Slightly off, physically or emotionally. Beautifully vague."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình đang vui, đừng làm mình tụt mood.",
+  "sample": "I'm in a good mood — don't ruin it.",
+  "chunk": "in a good mood",
+  "note": "In a good/bad mood. Always “in”, never “on”."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy tủi thân.",
+  "sample": "I felt a bit sorry for myself, if I’m honest.",
+  "chunk": "sorry for myself",
+  "note": "Self-pity, admitted with humour. Disarms any judgement."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình xúc động khi đọc thư đó.",
+  "sample": "That letter got me right in the chest.",
+  "chunk": "got me right in the ___",
+  "note": "Physical location for an emotional hit. Vivid and modern."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình chán không muốn làm gì.",
+  "sample": "I can't be bothered with anything today.",
+  "chunk": "can't be bothered",
+  "note": "The single most British phrase for apathy. Learn it."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình đỡ hơn khi nói ra.",
+  "sample": "Saying it out loud helped, actually.",
+  "chunk": "out loud",
+  "note": "Marks the shift from thinking to speaking. Small phrase, big meaning."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy mình vô dụng.",
+  "sample": "I feel like I'm not contributing anything.",
+  "chunk": "I'm not contributing",
+  "note": "Specific and workplace-safe. Better than a global self-judgement."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình đang phấn khích quá.",
+  "sample": "I'm buzzing.",
+  "chunk": "buzzing",
+  "note": "High energy and delight. One word, extremely current."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy tim đập nhanh vì lo.",
+  "sample": "My heart was going before I even started.",
+  "chunk": "my heart was going",
+  "note": "Continuous for a racing heart. Idiomatic and physical."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình không sao, chỉ là mệt.",
+  "sample": "I'm alright, just tired.",
+  "chunk": "I'm alright, just ___",
+  "note": "The most-used deflection in English. Also sometimes true."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy tội cho bạn ấy.",
+  "sample": "I felt for him, honestly.",
+  "chunk": "felt for ___",
+  "note": "Feel for = sympathise with. No “sorry” required."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình đang bị cuốn vào suy nghĩ.",
+  "sample": "I'm overthinking it again.",
+  "chunk": "overthinking it",
+  "note": "One verb for the whole spiral. Instantly relatable."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy được an ủi nhiều.",
+  "sample": "That helped more than you know.",
+  "chunk": "more than you know",
+  "note": "Gratitude with a hidden depth. Quietly powerful."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình cần ở một mình chút.",
+  "sample": "I just need a bit of space today.",
+  "chunk": "a bit of space",
+  "note": "Requests solitude without rejecting anybody."
+ },
+ {
+  "cat": "feelings",
+  "kind": "vn",
+  "text": "Mình thấy ổn hơn nhiều rồi.",
+  "sample": "I'm in a much better place than I was.",
+  "chunk": "a better place",
+  "note": "Metaphor for emotional recovery. Gentle and common."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "A friend messages that their parent has died. Reply in two sentences.",
+  "sample": "I'm so sorry. I'm not going to fill this with words — tell me what would actually help, or nothing at all, and I'll just be around.",
+  "chunk": "tell me what would actually help",
+  "note": "Refuses cliché and offers presence. What people remember."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "You have been anxious for weeks. Tell a close friend in three sentences.",
+  "sample": "I've been in a bit of a hole for a few weeks. Nothing's happened, which somehow makes it harder to explain. I'm not after advice, I just wanted one person to know.",
+  "chunk": "I'm not after advice",
+  "note": "Sets the terms of the support you want. Prevents unhelpful fixing."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "A colleague is visibly upset at their desk. Say something in the moment.",
+  "sample": "Hey — do you want company or space? Either's fine.",
+  "chunk": "company or space?",
+  "note": "Offers two options and accepts both. Zero pressure."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "Congratulate a friend whose success makes you a little jealous. Be honest and warm.",
+  "sample": "I'm thrilled for you, and mildly sick with envy, which is how you know it's real. Genuinely well done.",
+  "chunk": "which is how you know it’s real",
+  "note": "Admits the envy to prove the sincerity. Very charming."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "Your partner asks what is wrong and you do not know. Answer honestly.",
+  "sample": "Nothing I can point at. I'm just off today, and I'd rather sit next to you than talk about it.",
+  "chunk": "nothing I can point at",
+  "note": "Names the vagueness instead of denying the feeling."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "Comfort someone who failed an exam, without minimising it.",
+  "sample": "That's genuinely rubbish, and you're allowed to be gutted about it. It's also not the end of the road — but that's for tomorrow.",
+  "chunk": "you're allowed to ___",
+  "note": "Permission-giving. Far better than “don’t be sad”."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "Tell your manager you are close to burning out. Three sentences, professional.",
+  "sample": "I want to flag something before it becomes a problem: I'm running close to empty. I'd like to look at what comes off my plate for the next month. I'm not asking to drop anything permanently.",
+  "chunk": "what comes off my plate",
+  "note": "Frames it as planning, not collapse. Keeps you in control."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "A friend keeps apologising for being a burden. Reassure them.",
+  "sample": "You're not a burden, you're a friend having a hard month. Stop apologising — it's the one thing I'll actually get annoyed about.",
+  "chunk": "you're not ___, you're ___",
+  "note": "Corrects the self-description with warmth and a joke."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "Describe the feeling after finishing a huge project — three sentences.",
+  "sample": "For about an hour it's pure relief. Then it goes very quiet, and you realise the thing that organised your whole year has gone. I never know what to do with that week.",
+  "chunk": "the thing that organised my ___",
+  "note": "Names an unusual feeling precisely. Memorable and true."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "Someone asks how you really are, and you decide to tell the truth.",
+  "sample": "Honestly? Not great. Tired, a bit low, nothing dramatic — but thanks for asking properly.",
+  "chunk": "thanks for asking properly",
+  "note": "Rewards a real question. Encourages people to ask again."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "Cheer up a friend who did not get a job they wanted, in three sentences.",
+  "sample": "You wanted that one, so of course it hurts. You also got to the final round out of two hundred people. Give it two days, then send me your next three.",
+  "chunk": "give it two days, then ___",
+  "note": "Allows the feeling and sets a gentle deadline."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "Explain to a friend why you have been quiet for a month.",
+  "sample": "I went a bit underground — nothing happened, I just didn't have the energy to be good company. I'm back, and I'm sorry for the silence.",
+  "chunk": "went a bit underground",
+  "note": "Explains withdrawal without drama. Easy to forgive."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "Tell someone you are proud of them, specifically.",
+  "sample": "I'm proud of you — not for the result, for the fact you did it scared. That's the bit nobody sees.",
+  "chunk": "you did it scared",
+  "note": "Praises the courage, not the outcome. Lands much deeper."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "A friend says something that upset you but they clearly did not mean it. Raise it kindly.",
+  "sample": "I know you didn't mean it like that, and it still sat badly with me. I'd rather tell you than let it go weird.",
+  "chunk": "let it go weird",
+  "note": "Protects the friendship as the reason for speaking up."
+ },
+ {
+  "cat": "feelings",
+  "kind": "sit",
+  "text": "You are nervous before something big. Talk yourself through it out loud, three sentences.",
+  "sample": "Right — I'm nervous, which is just my body taking this seriously. I've done the work, and I don't need it to be perfect. Start talking and the rest follows.",
+  "chunk": "just my body taking this seriously",
+  "note": "Reframes fear as readiness. Genuinely calming to say aloud."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Cho mình xin phép nói một chút.",
+  "sample": "Can I jump in here?",
+  "chunk": "jump in",
+  "note": "The standard polite interruption. Short enough to fit any gap."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình bổ sung thêm một ý nhé.",
+  "sample": "Just to add to that —",
+  "chunk": "just to add to that",
+  "note": "Builds on someone instead of competing. Very well received."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình chưa hiểu rõ ý đó.",
+  "sample": "Sorry, I'm not quite following.",
+  "chunk": "I'm not quite following",
+  "note": "Admits confusion without blaming the speaker."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Bạn nói lại phần đó được không?",
+  "sample": "Could you go over that last bit again?",
+  "chunk": "go over ___ again",
+  "note": "Go over = review. Standard in meetings and lessons alike."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình muốn quay lại ý trước đó.",
+  "sample": "Can we go back to what Minh said?",
+  "chunk": "go back to ___",
+  "note": "Rescues a dropped point. Also makes you look attentive."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình nghĩ chúng ta đang đi lệch chủ đề.",
+  "sample": "I think we're drifting a bit.",
+  "chunk": "drifting",
+  "note": "Names the derail gently. Nobody feels blamed."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Để mình tóm lại nhé.",
+  "sample": "So, to sum up —",
+  "chunk": "to sum up",
+  "note": "Signals the ending. Buys you the floor for one final minute."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình sẽ chia sẻ màn hình.",
+  "sample": "I'll share my screen.",
+  "chunk": "share my screen",
+  "note": "The most-used sentence in modern working life."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mọi người nghe rõ mình không?",
+  "sample": "Can everyone hear me okay?",
+  "chunk": "hear me okay",
+  "note": "Ask once at the start, never again. Short and standard."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình bị mất tiếng lúc đó.",
+  "sample": "Sorry, you cut out for a second.",
+  "chunk": "you cut out for a second",
+  "note": "The fixed phrase for dropped audio. Exactly the right verb."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình sẽ gửi lại phần này sau.",
+  "sample": "I'll follow up on that after the call.",
+  "chunk": "follow up on ___",
+  "note": "Parks a detail without dropping it. Very professional."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình xin phép ghi lại ý đó.",
+  "sample": "Let me note that down.",
+  "chunk": "note that down",
+  "note": "Signals you took it seriously. Small phrase, big effect."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Ai phụ trách phần này ạ?",
+  "sample": "Who's picking this one up?",
+  "chunk": "picking this up",
+  "note": "Assigns ownership without pointing at anyone yet."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình chốt lại là thứ Sáu nhé.",
+  "sample": "So we're agreed: Friday.",
+  "chunk": "so we're agreed",
+  "note": "Closes a decision out loud. Prevents a repeat meeting."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình hết thời gian rồi.",
+  "sample": "We're coming up on time.",
+  "chunk": "coming up on time",
+  "note": "Warns without cutting anyone off. The meeting-chair classic."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Phần này để bàn riêng nhé.",
+  "sample": "Shall we take this one offline?",
+  "chunk": "take it offline",
+  "note": "Moves a two-person debate out of a ten-person room."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình đồng ý với ý kiến của Hương.",
+  "sample": "I'm with Huong on this.",
+  "chunk": "I'm with ___ on this",
+  "note": "Backs someone explicitly. Builds alliances fast."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Cho mình một phút chuẩn bị.",
+  "sample": "Give me a second to pull it up.",
+  "chunk": "pull it up",
+  "note": "Pull up = open on screen. Standard in demos."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình sẽ trình bày trong mười phút.",
+  "sample": "I'll keep this to ten minutes.",
+  "chunk": "I'll keep this to ___",
+  "note": "Promising brevity earns instant goodwill."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Trước khi bắt đầu, mình nói nhanh về bối cảnh.",
+  "sample": "Quick bit of context before I start.",
+  "chunk": "quick bit of context",
+  "note": "Frames the talk. Prevents every early question."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Cuối buổi mình sẽ nhận câu hỏi.",
+  "sample": "I'll take questions at the end.",
+  "chunk": "take questions",
+  "note": "Controls the shape of your own presentation."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Câu hỏi hay, để mình trả lời.",
+  "sample": "Good question — so the short answer is no.",
+  "chunk": "the short answer is ___",
+  "note": "Answers before explaining. Respects everyone’s time."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình chưa có số liệu đó, sẽ kiểm tra lại.",
+  "sample": "I haven't got that number to hand — I'll check and come back.",
+  "chunk": "to hand",
+  "note": "Admits the gap and commits to a fix. Never bluff a number."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình muốn nghe ý kiến của mọi người.",
+  "sample": "What's everyone thinking?",
+  "chunk": "what's everyone thinking",
+  "note": "Opens the floor without singling anybody out."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Bạn nghĩ sao về cái này?",
+  "sample": "Where do you land on this?",
+  "chunk": "where do you land on ___",
+  "note": "Asks for a position, not a monologue. Gets sharper answers."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình nói hơi dài, xin lỗi.",
+  "sample": "Sorry, I've talked for too long.",
+  "chunk": "I've talked for too long",
+  "note": "Self-correcting out loud is disarming and buys forgiveness."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình sẽ gửi biên bản sau.",
+  "sample": "I'll send round the notes afterwards.",
+  "chunk": "send round",
+  "note": "Distribute to a group. Standard British office usage."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình nghĩ ta cần một buổi riêng cho việc này.",
+  "sample": "This probably needs its own meeting.",
+  "chunk": "needs its own meeting",
+  "note": "Recognising scope openly saves an hour of drift."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Cảm ơn mọi người đã dành thời gian.",
+  "sample": "Thanks, everyone — useful session.",
+  "chunk": "useful session",
+  "note": "Two-word sign-off that closes a call warmly."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình xin phép rời sớm mười phút.",
+  "sample": "I'll have to drop off a bit early.",
+  "chunk": "drop off",
+  "note": "Leaving a call. Say it at the start, not as you vanish."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Ý mình là ngược lại.",
+  "sample": "I'd actually argue the opposite.",
+  "chunk": "I'd argue the opposite",
+  "note": "Frames disagreement as reasoning. Sounds confident, not combative."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Chúng ta quyết luôn được không?",
+  "sample": "Can we make a call on this today?",
+  "chunk": "make a call on ___",
+  "note": "Pushes for a decision. The phrase that ends circular meetings."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình cần làm rõ một điểm.",
+  "sample": "Just to be clear on one thing —",
+  "chunk": "just to be clear",
+  "note": "Prefaces a correction politely. Very high-frequency."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mình sẽ nói ngắn thôi.",
+  "sample": "I'll be brief.",
+  "chunk": "I'll be brief",
+  "note": "Two words. Then actually be brief, or you lose the room."
+ },
+ {
+  "cat": "meeting",
+  "kind": "vn",
+  "text": "Mọi người có bổ sung gì không?",
+  "sample": "Anything I’ve missed?",
+  "chunk": "anything I’ve missed",
+  "note": "Invites correction while showing you already did the work."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Open a fifteen-minute demo of a feature nobody has seen. Three sentences.",
+  "sample": "Quick context: this is the export flow people kept complaining about. I'll show it working, then the one thing that's still rough. Hold questions till the end if you can.",
+  "chunk": "hold questions till the end",
+  "note": "Context, promise, ground rules. Every good demo starts here."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Interrupt a colleague who has been talking for ten minutes, politely.",
+  "sample": "Sorry to cut across you — can I check something before we go further?",
+  "chunk": "cut across you",
+  "note": "Apologise, name the act, give a reason. Interruption made acceptable."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "You are asked a question you cannot answer in front of fifteen people. Handle it in two sentences.",
+  "sample": "I don't want to guess at that in front of everyone. Let me get you the actual number by this afternoon.",
+  "chunk": "I don't want to guess at that",
+  "note": "Refusing to bluff reads as competence, not weakness."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Two people are arguing in your meeting and time is running out. Intervene.",
+  "sample": "You two clearly need twenty minutes on this, and it isn't now. Can you take it away and come back with a recommendation?",
+  "chunk": "come back with a recommendation",
+  "note": "Ends a debate by assigning it as homework."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Your screen share is frozen and everyone is waiting. Fill the silence.",
+  "sample": "Bear with me — while that sorts itself out, the short version is that load times dropped by half.",
+  "chunk": "while that sorts itself out",
+  "note": "Buys time gracefully and keeps delivering value meanwhile."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Present bad news to stakeholders: the project will slip by three weeks. Three sentences.",
+  "sample": "We're going to be three weeks late, and I'd rather tell you now than at the deadline. The cause was the migration, not the team. Here's what I'm changing so it doesn't happen twice.",
+  "chunk": "I'd rather tell you now than ___",
+  "note": "Owns the delay, explains, then pivots to action."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Someone repeats a point you made earlier as if it were theirs. Reclaim it without friction.",
+  "sample": "Yes — that's exactly the point I was making earlier, so it sounds like we agree.",
+  "chunk": "that's exactly the point I was making",
+  "note": "Reclaims credit while appearing generous. Very effective."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Wrap up a meeting that has achieved nothing, in three sentences.",
+  "sample": "Right — we haven't landed this, so let's not pretend we have. I'll write up the two options and we'll decide by Thursday on email. Thanks all.",
+  "chunk": "let's not pretend we have",
+  "note": "Honesty plus a plan. Far better than a vague “great chat”."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Ask a silent colleague for their view without putting them on the spot.",
+  "sample": "Linh, you've been closest to this — anything we're missing, even half-formed?",
+  "chunk": "even half-formed",
+  "note": "Lowers the bar so a quiet person can speak safely."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Disagree with your manager in front of the team, respectfully.",
+  "sample": "I see it differently, and I might be wrong. My worry is we're optimising the bit users don't touch. Happy to be talked out of it.",
+  "chunk": "happy to be talked out of it",
+  "note": "Stakes a position while staying genuinely open. Disarms hierarchy."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Introduce yourself in a meeting with a new client. Two sentences.",
+  "sample": "I'm Jane, I look after the backend side of this. If something breaks at two in the morning, I'm the one who gets the call.",
+  "chunk": "I'm the one who gets the call",
+  "note": "Memorable self-introduction. Concrete beats job titles."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Handle a hostile question at the end of your presentation.",
+  "sample": "That's a fair challenge. You're right that the sample was small — here's why I still think the direction holds.",
+  "chunk": "that's a fair challenge",
+  "note": "Concedes the valid part first. Removes all the heat."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Chair a meeting back on track after ten minutes of tangent.",
+  "sample": "We've drifted a fair way from the agenda — can we park the pricing chat and finish the launch date?",
+  "chunk": "park the ___ chat",
+  "note": "Parks without killing. The chair’s most useful phrase."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Explain a technical problem to a non-technical audience in three sentences.",
+  "sample": "Think of it like a motorway with one lane closed. Everything still gets through, just slowly, and at rush hour it stops entirely. We're reopening the lane, which takes about two weeks.",
+  "chunk": "think of it like ___",
+  "note": "Analogy first, detail second. Non-technical rooms follow this easily."
+ },
+ {
+  "cat": "meeting",
+  "kind": "sit",
+  "text": "Volunteer for an action item and set expectations in two sentences.",
+  "sample": "I'll take that one. Realistically it'll be Wednesday rather than Monday — shout if that's a problem.",
+  "chunk": "shout if that's a problem",
+  "note": "Commits, sets a real date, invites objection. Fully professional."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Cho mình hỏi đây có phải phòng khám không ạ?",
+  "sample": "Hello, is that the surgery?",
+  "chunk": "is that ___",
+  "note": "On the phone, use “that” for the other end. Never “is this”."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình gọi về cái đơn hàng tuần trước.",
+  "sample": "I'm calling about an order I placed last week.",
+  "chunk": "I'm calling about ___",
+  "note": "State your business in sentence one. Saves five minutes."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình chờ được, không sao.",
+  "sample": "That's fine, I'll hold.",
+  "chunk": "I'll hold",
+  "note": "The phone-queue phrase. Two words, endlessly needed."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Cho mình nói với người phụ trách được không?",
+  "sample": "Could I speak to whoever handles billing?",
+  "chunk": "whoever handles ___",
+  "note": "Gets you past the wrong person without knowing any names."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình bị chuyển máy ba lần rồi.",
+  "sample": "I've been transferred three times already.",
+  "chunk": "I've been transferred ___",
+  "note": "Passive plus a count. Applies pressure without any rudeness."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình xin số tham chiếu ạ.",
+  "sample": "Could I take a reference number for this?",
+  "chunk": "take a reference number",
+  "note": "Always ask. It makes the next call ten times easier."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình đã gửi giấy tờ tuần trước rồi.",
+  "sample": "I sent the documents over last Tuesday.",
+  "chunk": "sent ___ over",
+  "note": "“Over” adds the sense of delivery to another party."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình cần gia hạn hộ chiếu.",
+  "sample": "I need to renew my passport.",
+  "chunk": "renew",
+  "note": "Renew a passport, a visa, a subscription, a licence."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình muốn hẹn lịch sớm nhất có thể.",
+  "sample": "I'd like to book the earliest slot you've got.",
+  "chunk": "book a slot",
+  "note": "Slot = available appointment time. Extremely common."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình muốn đổi lịch hẹn.",
+  "sample": "I need to rearrange an appointment.",
+  "chunk": "rearrange",
+  "note": "Rearrange = move to another time. Cancel means don’t rebook."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình chưa nhận được thư nào cả.",
+  "sample": "I haven't had anything through yet.",
+  "chunk": "had anything through",
+  "note": "Post, emails and payments all “come through”. Very idiomatic."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình cần xác nhận bằng email.",
+  "sample": "Could you confirm that in writing?",
+  "chunk": "in writing",
+  "note": "The three words that protect you in any dispute."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình đọc số tài khoản cho bạn nhé.",
+  "sample": "I'll read the account number out to you.",
+  "chunk": "read it out",
+  "note": "Read out = say aloud. The “out” is not optional."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Bạn nhắc lại giúp mình chậm hơn được không?",
+  "sample": "Sorry, could you say that a bit slower?",
+  "chunk": "a bit slower",
+  "note": "Never pretend you caught a number. Always ask."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình đánh vần tên cho bạn.",
+  "sample": "I'll spell it for you.",
+  "chunk": "I'll spell it",
+  "note": "Offer before they ask. Saves the whole exchange."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình muốn khiếu nại.",
+  "sample": "I'd like to make a complaint.",
+  "chunk": "make a complaint",
+  "note": "The formal trigger phrase. It changes how you are handled."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Chuyện này bao giờ giải quyết xong ạ?",
+  "sample": "What's the timeframe on this?",
+  "chunk": "what's the timeframe",
+  "note": "Asks for a date without sounding aggressive."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình cần nói chuyện với cấp trên của bạn.",
+  "sample": "Could you put me through to your manager?",
+  "chunk": "put me through to ___",
+  "note": "Put through = connect a call. The escalation phrase."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình đã trả tiền rồi mà vẫn bị nhắc.",
+  "sample": "I've already paid and I'm still getting reminders.",
+  "chunk": "I'm still getting ___",
+  "note": "Present continuous for an ongoing annoyance. Very clear."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình muốn huỷ dịch vụ này.",
+  "sample": "I'd like to cancel my account, please.",
+  "chunk": "cancel my account",
+  "note": "Say it plainly. Hedging invites a retention script."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình mất giấy tờ đó rồi.",
+  "sample": "I've lost the paperwork, I'm afraid.",
+  "chunk": "I'm afraid",
+  "note": "Softens bad news about yourself. Very British, very useful."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình cần cái đó gấp.",
+  "sample": "It's fairly urgent, if possible.",
+  "chunk": "fairly urgent",
+  "note": "Understated urgency works better than shouting on the phone."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Bạn có thể gửi lại cho mình không?",
+  "sample": "Could you send it through again?",
+  "chunk": "send it through",
+  "note": "Through = via a channel. Email, post, portal, anything."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình sẽ gọi lại sau ạ.",
+  "sample": "I'll try again later, thanks.",
+  "chunk": "I'll try again later",
+  "note": "Ends a dead-end call politely and keeps the door open."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Tên mình là Jane, J-A-N-E.",
+  "sample": "It's Jane — that's J for Juliet, A for Alpha.",
+  "chunk": "J for Juliet",
+  "note": "Spelling with words, not letters. The only reliable method on a phone line."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình cần chứng minh địa chỉ.",
+  "sample": "They want proof of address.",
+  "chunk": "proof of ___",
+  "note": "Proof of address, of income, of identity. The bureaucratic trio."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình điền sai một ô.",
+  "sample": "I've filled one box in wrong.",
+  "chunk": "fill in",
+  "note": "Fill in a form, fill out a form. Both are correct."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Giấy này cần công chứng không ạ?",
+  "sample": "Does this need to be certified?",
+  "chunk": "certified",
+  "note": "Certified = officially verified. Ask before you queue."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình đã đặt lịch trực tuyến rồi.",
+  "sample": "I booked it online, under Jane Pham.",
+  "chunk": "booked it online",
+  "note": "Past simple plus your name. Everything they need at once."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Đường dây bị nhiễu quá.",
+  "sample": "The line's really bad — can you hear me?",
+  "chunk": "the line's bad",
+  "note": "Names the problem before repeating yourself. Saves both of you."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình muốn biết tình trạng đơn của mình.",
+  "sample": "I'm just chasing an application I submitted in June.",
+  "chunk": "chasing",
+  "note": "Chase = politely pursue a slow response. Hugely useful at work too."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình cần hoá đơn có tên công ty.",
+  "sample": "Could I get an invoice with the company name on it?",
+  "chunk": "with ___ on it",
+  "note": "Specifies a requirement casually. Sounds far more natural than a clause."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình đã chờ hai mươi phút rồi.",
+  "sample": "I've been on hold for twenty minutes.",
+  "chunk": "on hold",
+  "note": "Fixed phrase. Never “in hold” or “waiting the line”."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Mình sẽ đợi thư của bạn.",
+  "sample": "I'll wait to hear from you.",
+  "chunk": "hear from you",
+  "note": "Ends a call by handing them the next action."
+ },
+ {
+  "cat": "admin",
+  "kind": "vn",
+  "text": "Cảm ơn bạn đã giúp ạ.",
+  "sample": "You've been really helpful, thank you.",
+  "chunk": "you've been really helpful",
+  "note": "Say it when it is true. Phone staff remember it."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "Call your bank about a charge you do not recognise. Three sentences.",
+  "sample": "There's a charge on my account from the 14th I don't recognise — forty pounds, something called NXT Ltd. I haven't authorised anything like that. Can you tell me what it is and freeze the card if not?",
+  "chunk": "I don't recognise",
+  "note": "Facts, denial, two clear requests. The template for every bank call."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "You have been on hold for twenty-five minutes and someone finally answers. Open the call.",
+  "sample": "Hi — I've been holding a while, so I'll be quick. It's about a refund from the 3rd, reference 88412.",
+  "chunk": "so I'll be quick",
+  "note": "Mentions the wait once, then gets straight to it. Wins them over."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "Cancel a subscription while the agent pushes a discount. Hold the line in three sentences.",
+  "sample": "I appreciate the offer, but I've made the decision. I'd just like it cancelled today, please. Could you email me confirmation?",
+  "chunk": "I've made the decision",
+  "note": "Closed sentence with no opening for a counter-offer."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "Explain to a landlord over the phone that the boiler has failed. Two sentences.",
+  "sample": "The boiler's stopped completely — no heating and no hot water since last night. What's the soonest someone can come out?",
+  "chunk": "come out",
+  "note": "For tradespeople visiting. “Come out” is the standard phrasal verb."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "A delivery has gone to the wrong address. Sort it out on a call.",
+  "sample": "The tracking says delivered, but nothing's arrived here. Can you check the address it actually went to, and resend or refund?",
+  "chunk": "the tracking says ___",
+  "note": "Cites their own evidence. Very hard to argue with."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "Ring a clinic to book an appointment for a specific date and time.",
+  "sample": "Morning — I'd like to book an appointment, ideally Thursday afternoon. Any time after two works for me.",
+  "chunk": "any time after ___ works for me",
+  "note": "Gives a window rather than a single slot. Gets booked faster."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "Chase a slow visa application politely, by phone.",
+  "sample": "I'm just chasing an application from the 2nd of June, reference VS4419. It's past the stated processing time — is there anything I can do from my end?",
+  "chunk": "from my end",
+  "note": "Offers to help rather than complain. Often unlocks real information."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "Dispute a parking fine over the phone, in three sentences.",
+  "sample": "I've had a fine for the 12th, but I had a valid ticket that day and I've still got it. I'd like to appeal. What do you need from me?",
+  "chunk": "what do you need from me",
+  "note": "Skips the argument and moves straight to the process."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "You reach an automated menu with no option matching your problem. Explain to the human at the end.",
+  "sample": "None of the menu options really covered it, so I've ended up with you — hopefully you can point me the right way.",
+  "chunk": "point me the right way",
+  "note": "Apologetic and disarming. The human almost always helps."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "Leave a voicemail asking for a callback. Three sentences.",
+  "sample": "Hi, it's Jane Pham, calling about invoice 2214. Best number is 0790 double-two, three-one. Any time before six is fine — thanks.",
+  "chunk": "best number is ___",
+  "note": "Name, reason, number, window. The complete voicemail formula."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "Report a lost bank card over the phone, urgently.",
+  "sample": "I need to report a card lost, straight away please. Last transaction I made was a coffee this morning — anything after that isn't me.",
+  "chunk": "anything after that isn't me",
+  "note": "Draws a clear line for the fraud team. Extremely practical."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "A company insists you already signed something you did not. Push back on the call.",
+  "sample": "I haven't signed anything to that effect, and I'd like to see whatever you're looking at. Can you email me a copy today?",
+  "chunk": "to that effect",
+  "note": "Formal, precise, and slightly legal. Changes the tone of the call."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "Ask an official what documents you need to bring, and write them down as they speak.",
+  "sample": "Let me write this down — passport, proof of address, and the original certificate. Anything else, or is that the lot?",
+  "chunk": "is that the lot?",
+  "note": "Confirms completeness in four words. Prevents a second trip."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "You need to correct a misspelling of your name on an official record.",
+  "sample": "My surname's been recorded as Phan rather than Pham — P-H-A-M. What's the process for getting that corrected?",
+  "chunk": "what's the process for ___",
+  "note": "Asks about the system rather than blaming the person. Gets results."
+ },
+ {
+  "cat": "admin",
+  "kind": "sit",
+  "text": "Close a long, frustrating call on a positive note.",
+  "sample": "Look, I know none of this was your doing — thanks for actually sorting it. Have a good afternoon.",
+  "chunk": "none of this was your doing",
+  "note": "Separates the person from the institution. They will remember you."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Cho mình gọi món này nhé.",
+  "sample": "I'll have the beef pho, please.",
+  "chunk": "I'll have ___, please",
+  "note": "The ordering formula. Present simple “I have” would sound wrong."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Cho mình xem menu ạ.",
+  "sample": "Could we see the menu, please?",
+  "chunk": "see the menu",
+  "note": "“Could we” for a table, “could I” alone. Small but noticed."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Món này có gì trong đó ạ?",
+  "sample": "What's in this one?",
+  "chunk": "what's in ___",
+  "note": "Four words that prevent every allergy disaster."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Món nào ngon nhất ở đây ạ?",
+  "sample": "What's good here?",
+  "chunk": "what's good here",
+  "note": "Trusts the staff. Almost always gets you the best dish."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình không ăn được đồ cay.",
+  "sample": "I can't really handle spicy food.",
+  "chunk": "handle spicy food",
+  "note": "Handle = tolerate. Sounds like a preference, not a complaint."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Cho mình ít cay thôi nhé.",
+  "sample": "Could you go easy on the chilli?",
+  "chunk": "go easy on ___",
+  "note": "Go easy on = use less. Works for salt, ice, garlic, everything."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình ăn chay.",
+  "sample": "I'm vegetarian.",
+  "chunk": "I'm vegetarian",
+  "note": "No article. “I am a vegetarian” is correct but sounds formal."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình dị ứng đậu phộng.",
+  "sample": "I've got a peanut allergy.",
+  "chunk": "a ___ allergy",
+  "note": "Stronger and clearer than “I don’t eat peanuts”. Use this one."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Cho mình thêm một bát nữa.",
+  "sample": "Could we get another bowl?",
+  "chunk": "another ___",
+  "note": "“Another” already means one more. Don’t add “one more”."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Món này ngon quá.",
+  "sample": "This is really good.",
+  "chunk": "this is really good",
+  "note": "Simple and sincere. Over-describing food sounds odd in English."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình no rồi.",
+  "sample": "I'm stuffed.",
+  "chunk": "stuffed",
+  "note": "Cheerfully very full. The most-used word at the end of a meal."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình ăn không hết.",
+  "sample": "I can't finish this.",
+  "chunk": "I can't finish ___",
+  "note": "No shame in it. Follow with “could I take it away?”"
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Cho mình gói mang về ạ.",
+  "sample": "Could we get this to take away?",
+  "chunk": "to take away",
+  "note": "British; Americans say “to go”. Both are understood anywhere."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Món này hơi mặn.",
+  "sample": "It's a bit on the salty side.",
+  "chunk": "on the ___ side",
+  "note": "Softens any criticism of food. Very diplomatic."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Món của mình chưa ra.",
+  "sample": "I think my order got missed.",
+  "chunk": "got missed",
+  "note": "Passive with “got”. Blames the process, not the waiter."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình gọi món khác cơ.",
+  "sample": "I actually ordered the chicken.",
+  "chunk": "I actually ordered ___",
+  "note": "“Actually” marks the correction gently. Essential word here."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Cho mình tính tiền nhé.",
+  "sample": "Could we have the bill, please?",
+  "chunk": "the bill",
+  "note": "British. Americans say “the check”. Don’t say “the money”."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Quán này đông lắm, phải đặt trước.",
+  "sample": "You need to book — it gets packed.",
+  "chunk": "gets packed",
+  "note": "“Packed” for crowded places. Short, vivid, current."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình muốn đặt bàn cho bốn người.",
+  "sample": "I'd like to book a table for four, please.",
+  "chunk": "a table for ___",
+  "note": "The fixed reservation phrase. Number only, no “people”."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình đói lắm rồi.",
+  "sample": "I'm starving.",
+  "chunk": "starving",
+  "note": "Hyperbole, but standard. “I have hunger” does not exist."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình ăn sáng ở nhà rồi.",
+  "sample": "I've already eaten, thanks.",
+  "chunk": "I've already eaten",
+  "note": "Present perfect for the recent past. Declines food politely."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Món này ăn kèm với gì ạ?",
+  "sample": "What does it come with?",
+  "chunk": "come with",
+  "note": "Asks about sides. Prevents ordering rice twice."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Cho mình nước lọc thôi ạ.",
+  "sample": "Just tap water for me, thanks.",
+  "chunk": "tap water",
+  "note": "The free option, named without embarrassment."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình thử một miếng được không?",
+  "sample": "Can I try a bit?",
+  "chunk": "try a bit",
+  "note": "Sharing food, stated casually. Very natural among friends."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình tự nấu cho tiết kiệm.",
+  "sample": "I've been cooking more to save money.",
+  "chunk": "cooking more",
+  "note": "Comparative adverb. Implies a change of habit."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình nấu dở lắm.",
+  "sample": "I'm a terrible cook.",
+  "chunk": "a terrible cook",
+  "note": "Self-deprecating and completely idiomatic. Always gets a laugh."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Cái này để lâu chưa chắc còn ăn được.",
+  "sample": "I think this has gone off.",
+  "chunk": "gone off",
+  "note": "Gone off = spoiled. Milk, meat, and occasionally people."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình đặt đồ ăn giao đến nhé.",
+  "sample": "Shall we just get a delivery?",
+  "chunk": "get a delivery",
+  "note": "The modern default. “Order in” also works perfectly."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Quán này giá phải chăng.",
+  "sample": "It's pretty reasonable, actually.",
+  "chunk": "pretty reasonable",
+  "note": "Reasonable = fairly priced. Never say “cheap” about a restaurant you like."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình không thích rau mùi.",
+  "sample": "I can't stand coriander.",
+  "chunk": "I can't stand ___",
+  "note": "Strong dislike, stated lightly. Extremely common with coriander."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Ăn xong mình buồn ngủ quá.",
+  "sample": "That's sent me straight to sleep.",
+  "chunk": "that's sent me ___",
+  "note": "Food as the agent. Vivid and very natural."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình ăn ngoài nhiều quá.",
+  "sample": "I've been eating out far too much.",
+  "chunk": "eating out",
+  "note": "Eat out = eat at restaurants. Not “eat outside”."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Món này mẹ mình nấu ngon hơn.",
+  "sample": "My mum does a better version, honestly.",
+  "chunk": "does a better version",
+  "note": "Warm and slightly boastful. Works for any family dish."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Mình để dành phần cho bạn.",
+  "sample": "I've saved you some.",
+  "chunk": "I've saved you some",
+  "note": "Small kindness, perfectly phrased. Learn it exactly."
+ },
+ {
+  "cat": "food",
+  "kind": "vn",
+  "text": "Bữa này mình mời.",
+  "sample": "Put your wallet away.",
+  "chunk": "put your wallet away",
+  "note": "Claims the bill without mentioning money at all. Warm and very natural."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "Order for the table at a restaurant where nobody can decide. Three sentences.",
+  "sample": "Shall I just order a few things to share? I'll get the pho, the spring rolls and the grilled pork — shout if you want anything else.",
+  "chunk": "a few things to share",
+  "note": "Takes charge without overruling anyone. Everybody is relieved."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "Your food arrives cold. Send it back politely.",
+  "sample": "Sorry — I think this has come out a bit cold. Would you mind warming it through?",
+  "chunk": "come out cold",
+  "note": "Describes the food, not the kitchen’s failure. Nobody gets defensive."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "Explain your dietary requirement to a waiter who seems unsure. Two sentences.",
+  "sample": "I've got a peanut allergy, so I have to be a bit annoying about it. Could you check with the kitchen whether the sauce has any in?",
+  "chunk": "a bit annoying about it",
+  "note": "Pre-apologising makes staff take it seriously rather than resent it."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "Recommend your favourite local dish to a visitor — three sentences.",
+  "sample": "You have to try bun cha. It's grilled pork in a broth you dip noodles into, and it sounds wrong until you eat it. Go at lunch, never dinner.",
+  "chunk": "it sounds wrong until you eat it",
+  "note": "Handles the scepticism before the listener raises it."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "Decline a second helping without offending your host.",
+  "sample": "It was genuinely lovely — I couldn't manage another bite, though.",
+  "chunk": "I couldn't manage another bite",
+  "note": "Praise first, refusal second. The order matters enormously."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "The bill has an item you did not order. Raise it with the waiter.",
+  "sample": "Sorry, could we check the bill? I don't think we had the second bottle.",
+  "chunk": "I don't think we had ___",
+  "note": "Hedged, polite, and impossible to take badly."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "You are cooking for a friend and burn the main dish. Improvise out loud.",
+  "sample": "Right — that's not happening. Give me ten minutes and we're having very good eggs instead.",
+  "chunk": "that's not happening",
+  "note": "Announces failure with confidence. Far funnier than apologising."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "Ask a waiter to describe a dish you cannot picture.",
+  "sample": "Sorry, what is the sea bass like? Is it something and something, or more of a light dish?",
+  "chunk": "is it more of a ___",
+  "note": "Gives them a frame to answer within. Gets a useful reply."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "Compliment a home cook properly, in two sentences.",
+  "sample": "That was genuinely one of the best things I've eaten this year. I want the recipe, and I want to know what you did to the aubergine.",
+  "chunk": "what did you do to ___",
+  "note": "Specific curiosity is the highest compliment a cook can get."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "Split a shared dinner order fairly with two friends over the bill.",
+  "sample": "Easiest thing is just thirds — we all had a bit of everything. Anyone unhappy with that?",
+  "chunk": "just thirds",
+  "note": "Proposes the simplest fair method and invites objection."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "Tell a friend you cannot eat at the place they chose, and suggest another.",
+  "sample": "I'd be eating chips all night at that one — any chance we do the Vietnamese place instead?",
+  "chunk": "I'd be eating ___ all night",
+  "note": "Explains the problem with a joke. Nobody feels criticised."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "A waiter asks how everything was, and it was mediocre. Answer honestly but kindly.",
+  "sample": "The starter was lovely. The main was a bit much for me, honestly — but no complaints about the service.",
+  "chunk": "a bit much for me",
+  "note": "Honest, specific, and generous where it can be."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "Teach someone to make your simplest home dish in three sentences.",
+  "sample": "Fry the garlic until it just turns gold, not brown. Add the greens and a splash of fish sauce, thirty seconds, no more. That's it — anything else and you've ruined it.",
+  "chunk": "that's it — anything else and ___",
+  "note": "Ends with the warning. The most memorable part of any recipe."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "You have been waiting fifty minutes for food. Ask about it without being rude.",
+  "sample": "Sorry to chase — any idea how far off our food is? We're not in a rush, just wondering.",
+  "chunk": "how far off ___ is",
+  "note": "Asks for information, not an apology. Always works better."
+ },
+ {
+  "cat": "food",
+  "kind": "sit",
+  "text": "Explain to a visitor why breakfast in your country is different — three sentences.",
+  "sample": "Breakfast here is a proper meal, usually soup or rice, eaten standing up on a plastic stool. Nobody has cereal. You'll be full by seven and hungry again by eleven.",
+  "chunk": "nobody has ___",
+  "note": "Blunt contrast. Funnier and clearer than any explanation."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình có một anh trai và một em gái.",
+  "sample": "I've got an older brother and a younger sister.",
+  "chunk": "older brother",
+  "note": "English has no built-in age words. You must add older or younger."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Bố mẹ mình sống ở Hà Nội.",
+  "sample": "My parents are based in Hanoi.",
+  "chunk": "based in ___",
+  "note": "Based in = live and work there. Slightly more adult than “live”."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình là con một.",
+  "sample": "I'm an only child.",
+  "chunk": "an only child",
+  "note": "Fixed phrase. Never “I am the only son” unless that is the point."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình giống mẹ hơn.",
+  "sample": "I take after my mum.",
+  "chunk": "take after ___",
+  "note": "Take after = resemble in looks or character. Family-specific verb."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình với chị hợp nhau lắm.",
+  "sample": "My sister and I get on really well.",
+  "chunk": "get on with ___",
+  "note": "British for getting along. Most-used relationship verb there is."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình đã cưới rồi.",
+  "sample": "I'm married.",
+  "chunk": "I'm married",
+  "note": "State, not event. “I married” needs an object to make sense."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình có bạn gái ba năm rồi.",
+  "sample": "I've been with my girlfriend for three years.",
+  "chunk": "been with ___ for ___",
+  "note": "“Been with” for relationships. Present perfect, always."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Bọn mình chia tay rồi.",
+  "sample": "We split up a few months ago.",
+  "chunk": "split up",
+  "note": "Split up = break up. Neutral, and easier to say."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình vừa lên chức chú.",
+  "sample": "I've just become an uncle.",
+  "chunk": "become an uncle",
+  "note": "Present perfect for news. Announce it exactly like this."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Bà mình tám mươi tuổi rồi.",
+  "sample": "My grandmother's eighty this year.",
+  "chunk": "___'s eighty this year",
+  "note": "Age without “years old” — normal when a year is mentioned."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình về nhà mỗi Tết.",
+  "sample": "I go home every Tet.",
+  "chunk": "go home",
+  "note": "No preposition. “Go to home” is the classic mistake."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình nhớ bố mẹ.",
+  "sample": "I miss my parents.",
+  "chunk": "miss ___",
+  "note": "Miss takes a direct object. No “miss to” or “miss about”."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Bố mình nghiêm lắm.",
+  "sample": "My dad was pretty strict with us.",
+  "chunk": "strict with ___",
+  "note": "Strict with people, strict about rules. Two prepositions."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mẹ mình gọi mình mỗi ngày.",
+  "sample": "My mum rings me every single day.",
+  "chunk": "rings me",
+  "note": "Ring = phone, in British English. Warmer than “calls”."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Nhà mình đông người.",
+  "sample": "We were a big household.",
+  "chunk": "a big household",
+  "note": "Household = everyone under one roof. Fits Vietnamese families well."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình lớn lên ở quê.",
+  "sample": "I grew up in the countryside.",
+  "chunk": "grew up",
+  "note": "Grow up = spend your childhood. Not “raised up”."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Vợ mình làm giáo viên.",
+  "sample": "My wife teaches primary school.",
+  "chunk": "teaches ___",
+  "note": "Jobs as verbs when possible. Sounds more natural than “is a teacher”."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Bọn mình sắp có em bé.",
+  "sample": "We're expecting.",
+  "chunk": "expecting",
+  "note": "One word, complete announcement. Everyone understands it."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Con mình hai tuổi.",
+  "sample": "My son's two.",
+  "chunk": "my ___'s two",
+  "note": "Age with no noun. Adding “years old” here sounds heavy."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình chăm bố mẹ già.",
+  "sample": "I look after my parents now.",
+  "chunk": "look after my parents",
+  "note": "Look after = care for. The right verb for family duty."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Bọn mình họp gia đình mỗi Chủ nhật.",
+  "sample": "The whole family gets together on Sundays.",
+  "chunk": "gets together on Sundays",
+  "note": "Get together = meet socially. The noun is “a get-together”."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình cãi nhau với em trai.",
+  "sample": "I had a row with my brother.",
+  "chunk": "had a row",
+  "note": "Row rhymes with “now”. Very British word for an argument."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Bọn mình đã làm hoà.",
+  "sample": "We've made up since.",
+  "chunk": "made up since",
+  "note": "Make up = reconcile. “Since” carries the whole story."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình giống bố ở tính cách.",
+  "sample": "I'm my father's son, for better or worse.",
+  "chunk": "for better or worse",
+  "note": "Ironic self-awareness. A very English way to admit heredity."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình sống một mình từ mười tám tuổi.",
+  "sample": "I've lived on my own since I was eighteen.",
+  "chunk": "on my own",
+  "note": "On my own = alone, by choice. Warmer than “alone”."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình là cháu lớn nhất.",
+  "sample": "I'm the eldest of the grandchildren.",
+  "chunk": "the eldest of ___",
+  "note": "Eldest for people, oldest for things. British distinction."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Bọn mình không hợp nhau.",
+  "sample": "We've never really seen eye to eye.",
+  "chunk": "see eye to eye",
+  "note": "Idiom for agreeing. Usually used in the negative, as here."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Anh ấy là bạn thân từ nhỏ.",
+  "sample": "We've been mates since we were seven.",
+  "chunk": "mates",
+  "note": "British for close friends. Extremely common and warm."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình coi bạn ấy như em ruột.",
+  "sample": "She's basically a sister to me.",
+  "chunk": "basically a ___ to me",
+  "note": "Upgrades a friendship to family. Very affectionate."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình sắp cưới tháng sau.",
+  "sample": "I'm getting married next month.",
+  "chunk": "getting married",
+  "note": "Present continuous for a fixed plan. Never “I will marry”."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Bố mẹ mình ly hôn từ lúc mình nhỏ.",
+  "sample": "My parents divorced when I was small.",
+  "chunk": "when I was small",
+  "note": "Small = young, for children. Common and gentle."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình ít nói chuyện với họ hàng.",
+  "sample": "I'm not that close to the extended family.",
+  "chunk": "the extended family",
+  "note": "Aunts, uncles, cousins. One phrase covers all of them."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Anh mình nuôi mình ăn học.",
+  "sample": "My brother put me through university.",
+  "chunk": "put me through ___",
+  "note": "Paid for your education. Enormously respectful phrasing."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Mình biết ơn bố mẹ nhiều.",
+  "sample": "I owe my parents more than I can say.",
+  "chunk": "more than I can say",
+  "note": "Gratitude that admits its own limits. Very moving."
+ },
+ {
+  "cat": "family",
+  "kind": "vn",
+  "text": "Bọn mình vẫn giữ liên lạc.",
+  "sample": "We're still in touch.",
+  "chunk": "in touch",
+  "note": "Keep in touch, stay in touch, get in touch. Learn all three."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Phone home after three months of silence. Open the call in three sentences.",
+  "sample": "Hi Mum — I know, it's been ages, I'm sorry. Work ate the whole spring. Tell me everything, starting with Dad's knee.",
+  "chunk": "tell me everything",
+  "note": "Apologise briefly, then hand them the floor. Very disarming."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Introduce your partner to your parents for the first time.",
+  "sample": "Mum, Dad — this is Linh. She's heard a frankly unreasonable amount about both of you.",
+  "chunk": "a frankly unreasonable amount",
+  "note": "Light joke that warms the room instantly."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Tell your parents you are moving abroad. Three sentences.",
+  "sample": "I've been offered something in Berlin, and I'm going to take it. It's two years, not forever, and I'll be back for Tet every year. I need you to be pleased for me, even if you're not yet.",
+  "chunk": "even if you're not yet",
+  "note": "Asks for support honestly. Acknowledges their feelings without waiting."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Decline a family wedding you cannot attend, to your aunt, kindly.",
+  "sample": "I'm so sorry — I genuinely can't get there for the 14th. I'll ring them on the day, and I'd love to see the photos.",
+  "chunk": "I genuinely can't",
+  "note": "“Genuinely” does the work that a long excuse would do badly."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "A relative asks when you are getting married. Deflect warmly.",
+  "sample": "You'll be the second to know, I promise. How's your garden this year?",
+  "chunk": "you'll be the second to know",
+  "note": "Charming non-answer plus a change of subject. Works every time."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Apologise to your sibling for something from years ago. Three sentences.",
+  "sample": "I've been meaning to say this for about ten years: I was horrible to you the summer you moved. I was jealous, which isn't an excuse. I'm sorry, properly.",
+  "chunk": "I've been meaning to say this for ___",
+  "note": "Names the delay. Makes the apology land as genuine."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Ask your parents about their life before you were born.",
+  "sample": "What were you actually like at my age? Not the version you tell at dinner — the real one.",
+  "chunk": "not the version you tell at ___",
+  "note": "Asks for honesty playfully. Often unlocks real stories."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Explain your family to a foreign colleague in three sentences.",
+  "sample": "There are four of us, and somehow eleven people at every meal. My grandmother lives with us, which is normal here and apparently not in Sweden. Nobody knocks.",
+  "chunk": "nobody knocks",
+  "note": "One concrete detail beats three sentences of explanation."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Console a friend whose relationship just ended, in three sentences.",
+  "sample": "You don't have to be okay about it yet. Come over, bring nothing, we'll order too much food. You can tell me the whole thing twice if you want.",
+  "chunk": "bring nothing",
+  "note": "Removes every obstacle to accepting comfort."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Set a boundary with a parent who keeps commenting on your job.",
+  "sample": "I know it comes from worry, and I need you to stop asking about it every call. Ask me about anything else and I'll talk for an hour.",
+  "chunk": "it comes from worry",
+  "note": "Names their good intention before refusing the behaviour."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Tell a close friend you are proud of them, in two sentences.",
+  "sample": "I've watched you build that from nothing while everyone told you not to. I don't say it enough, but I'm quietly proud of you.",
+  "chunk": "I don't say it enough",
+  "note": "Admitting the gap makes the compliment more credible."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Describe your grandmother in three sentences, without adjectives like nice.",
+  "sample": "She's four foot eleven and rules the house from a plastic chair. She has fed everyone who has ever walked through the door, including the postman. She thinks I'm too thin, which she has thought since 1996.",
+  "chunk": "which she has thought since ___",
+  "note": "A specific date makes a portrait funny and real."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Ask a friend for a big favour — looking after your flat for a month.",
+  "sample": "This is a proper ask, so say no freely: could you keep an eye on the flat in August? Water the plants, nothing else, and I'll bring you something good back.",
+  "chunk": "so say no freely",
+  "note": "Giving explicit permission to refuse makes people more likely to accept."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Reconnect with an old friend after years apart. Write the first message.",
+  "sample": "This is going to be out of nowhere, but I walked past our old place today and thought of you. How are you? Genuinely, how are you?",
+  "chunk": "out of nowhere",
+  "note": "Explains the randomness, which makes it charming rather than odd."
+ },
+ {
+  "cat": "family",
+  "kind": "sit",
+  "text": "Tell your family about a decision they will not like, at dinner. Three sentences.",
+  "sample": "I want to tell you all together rather than one at a time: I'm leaving the company. I've thought about it for months and I'm not asking permission. I am asking you to trust me on it.",
+  "chunk": "I'm not asking permission",
+  "note": "Clear, respectful, and impossible to misread."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình đang học tiếng Anh mỗi ngày.",
+  "sample": "I'm working on my English every day.",
+  "chunk": "work on ___",
+  "note": "Work on = improve steadily. Sounds more active than “study”."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình học được hai năm rồi.",
+  "sample": "I've been learning for about two years.",
+  "chunk": "I've been learning for ___",
+  "note": "Present perfect continuous. The tense for an unfinished effort."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình chưa hiểu phần này.",
+  "sample": "I haven't got my head round this bit yet.",
+  "chunk": "get my head round ___",
+  "note": "Understand something difficult. Very idiomatic British English."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Bạn giải thích lại giúp mình nhé.",
+  "sample": "Could you explain that another way?",
+  "chunk": "another way",
+  "note": "Asks for a different angle, not a repetition. Much more useful."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình học kiểu tự học.",
+  "sample": "I'm mostly self-taught.",
+  "chunk": "self-taught",
+  "note": "One hyphenated word. A quiet point of pride in tech."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình hay quên từ vựng.",
+  "sample": "Vocabulary just doesn't stick for me.",
+  "chunk": "stick",
+  "note": "Stick = stay in memory. The exact verb learners need."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình luyện nói mỗi tối mười lăm phút.",
+  "sample": "I do fifteen minutes of speaking practice every evening.",
+  "chunk": "speaking practice",
+  "note": "Noun + noun. Simpler than “practice of speaking”."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình nghe hiểu tốt hơn nói.",
+  "sample": "My listening is way ahead of my speaking.",
+  "chunk": "way ahead of ___",
+  "note": "“Way” intensifies the gap. Very natural and current."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình sợ nói sai.",
+  "sample": "I'm scared of making mistakes out loud.",
+  "chunk": "making mistakes out loud",
+  "note": "Names the real fear precisely. Most learners recognise it."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình cần luyện phát âm.",
+  "sample": "I need to work on my pronunciation.",
+  "chunk": "pronunciation",
+  "note": "Note the spelling — no “pronounciation”. Very common error."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình học qua phim nhiều.",
+  "sample": "I've picked up a lot from films.",
+  "chunk": "pick up ___",
+  "note": "Pick up = learn informally. The verb for absorbed knowledge."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình bị kẹt ở trình độ này lâu rồi.",
+  "sample": "I've plateaued a bit.",
+  "chunk": "plateaued",
+  "note": "Fixed metaphor for stalled progress. One word does it all."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình học theo nhóm cho có động lực.",
+  "sample": "I study with a group to keep myself honest.",
+  "chunk": "keep myself honest",
+  "note": "Accountability, stated with humour. Very likeable phrasing."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình đang học khoá lập trình trên mạng.",
+  "sample": "I'm doing an online course at the moment.",
+  "chunk": "doing a course",
+  "note": "You “do” a course, never “learn” a course."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình bỏ dở khoá đó rồi.",
+  "sample": "I never finished that one, if I’m honest.",
+  "chunk": "never finished",
+  "note": "Honest admission. Everyone has an abandoned course."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình học tốt nhất vào buổi sáng.",
+  "sample": "I take things in best in the morning.",
+  "chunk": "take things in",
+  "note": "Take in = absorb information. Very common phrasal verb."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình cần ôn lại từ tuần trước.",
+  "sample": "I need to go back over last week’s material.",
+  "chunk": "go back over ___",
+  "note": "Go back over = revise. Implies a second pass."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình thi tuần sau.",
+  "sample": "I've got an exam next week.",
+  "chunk": "I've got an exam",
+  "note": "Have got for possession. British and conversational."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình ôn thi cả đêm.",
+  "sample": "I crammed the whole night before.",
+  "chunk": "crammed",
+  "note": "Cram = study intensively at the last minute. Universally understood."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình thi trượt môn đó.",
+  "sample": "I failed that one, twice actually.",
+  "chunk": "failed",
+  "note": "Plain and unashamed. Adding a number owns it completely."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình học lại từ đầu.",
+  "sample": "I'm starting again from scratch.",
+  "chunk": "starting again from scratch",
+  "note": "From the very beginning. Fixed idiom, never “from zero”."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình học được nhiều từ việc dạy lại.",
+  "sample": "I learn most when I have to explain it to someone.",
+  "chunk": "I learn most when ___",
+  "note": "Names your own best method. Useful and self-aware."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình mất tập trung nhanh.",
+  "sample": "My concentration goes after about twenty minutes.",
+  "chunk": "concentration goes",
+  "note": "“Goes” for something that fails. Simple and idiomatic."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình ghi chép bằng tay.",
+  "sample": "I take notes by hand — it sticks better.",
+  "chunk": "take notes",
+  "note": "Take notes, not write notes. Fixed collocation."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình đọc chậm nhưng hiểu sâu.",
+  "sample": "I'm a slow reader, but it goes in properly.",
+  "chunk": "it goes in",
+  "note": "Go in = be absorbed. Learner-friendly and very natural."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình cần phản hồi để tiến bộ.",
+  "sample": "I can't improve without someone correcting me.",
+  "chunk": "I can't ___ without ___ing",
+  "note": "States a requirement clearly. Invites the help you need."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình học vì thích, không vì bằng.",
+  "sample": "I'm doing it out of interest, not for a certificate.",
+  "chunk": "out of interest",
+  "note": "“Out of” for motivation. Out of interest, out of habit, out of spite."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình hay so sánh mình với người khác.",
+  "sample": "I compare myself to other people far too much.",
+  "chunk": "compare myself to ___",
+  "note": "Reflexive verb plus “to”. The grammar of self-criticism."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình tiến bộ chậm mà chắc.",
+  "sample": "It's slow, but it's going in the right direction.",
+  "chunk": "in the right direction",
+  "note": "Optimism that stays honest. Very reusable."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình quên hết những gì học hồi đại học.",
+  "sample": "I've forgotten nearly everything from university.",
+  "chunk": "I've forgotten nearly everything",
+  "note": "Present perfect for a current state of loss."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình học tiếng Anh để đi làm nước ngoài.",
+  "sample": "I'm learning English to work abroad.",
+  "chunk": "to work abroad",
+  "note": "Infinitive of purpose. Simplest way to state a goal."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình luyện tập mỗi ngày một ít.",
+  "sample": "A little bit every day beats three hours on Sunday.",
+  "chunk": "a little bit every day",
+  "note": "The whole philosophy of practice in one line."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình hỏi thầy sau giờ học.",
+  "sample": "I asked the teacher afterwards, one to one.",
+  "chunk": "one to one",
+  "note": "Private, individual. Also spelled one-to-one when used as an adjective."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình chưa dám nói với người bản xứ.",
+  "sample": "I haven't worked up the courage to speak to a native speaker yet.",
+  "chunk": "work up the courage",
+  "note": "Build courage gradually. Vivid and very honest."
+ },
+ {
+  "cat": "learning",
+  "kind": "vn",
+  "text": "Mình sẽ không bỏ lần này.",
+  "sample": "I'm not quitting this time.",
+  "chunk": "I'm not quitting this time",
+  "note": "Simple, present, and said out loud. That is the point."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Ask a teacher to explain something again, without feeling stupid. Two sentences.",
+  "sample": "Can I check I've got this right — you're saying the tense changes because of the time reference? Sorry, I'd rather ask now than guess for a week.",
+  "chunk": "I'd rather ask now than guess",
+  "note": "Reframes the question as efficiency, not weakness."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Explain your English learning routine to someone who asks. Three sentences.",
+  "sample": "Fifteen minutes of speaking out loud every night, even when it's rubbish. I read one article and steal three phrases from it. The trick isn't the hours, it's not skipping days.",
+  "chunk": "steal three phrases",
+  "note": "Concrete and slightly funny. Memorable as advice."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "A friend says they want to learn to code. Give them one piece of real advice.",
+  "sample": "Build something you actually want to exist, and finish it badly. Courses will keep you busy for a year and teach you less than one finished thing.",
+  "chunk": "finish it badly",
+  "note": "Counterintuitive advice, stated confidently. Lands hard."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "You did badly on a test. Talk to your teacher about what to change.",
+  "sample": "I got sixty percent and I know why — I never practised the listening section. Could you point me at what to drill for next month?",
+  "chunk": "point me at ___",
+  "note": "Owns the failure and asks for direction. Teachers respond to this."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Tell a native speaker you want them to correct your English.",
+  "sample": "Do me a favour — correct me when I get things wrong, even mid-sentence. I promise I won't take it personally.",
+  "chunk": "I won't take it personally",
+  "note": "Removes their hesitation. The single most useful sentence for a learner."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Explain a concept you know well to someone who knows nothing about it.",
+  "sample": "Think of a database as a very strict spreadsheet that refuses to let you be careless. Everything after that is just how you ask it questions.",
+  "chunk": "everything after that is just ___",
+  "note": "Compresses a big topic into one honest simplification."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Ask a colleague to teach you something they are good at.",
+  "sample": "You're clearly the person who understands the deployment side. Any chance of half an hour where you just talk and I take notes?",
+  "chunk": "any chance of half an hour",
+  "note": "Small, specific, flattering ask. Very hard to refuse."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Describe the moment something finally clicked for you. Three sentences.",
+  "sample": "I'd read about closures about nine times and understood none of it. Then I broke one by accident and spent an hour fixing it. That hour taught me more than the nine readings.",
+  "chunk": "clicked",
+  "note": "Narrative arc: confusion, accident, understanding. Very satisfying."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Motivate a friend who wants to quit learning a language, in three sentences.",
+  "sample": "You're at the bit where it stops feeling like progress, and everyone quits here. You can already do things you couldn't do in January. Give it six more weeks, then decide.",
+  "chunk": "the bit where ___",
+  "note": "Names the plateau. Makes it feel normal rather than personal."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Tell a class you do not understand the homework, in front of everyone.",
+  "sample": "Sorry — can I ask a basic question? I don't think I've understood what we're actually meant to produce.",
+  "chunk": "can I ask a basic question?",
+  "note": "Owning the basicness of a question makes it easy to ask."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Explain why you are learning English, in two sentences, without clichés.",
+  "sample": "I can do my job in English on paper and not in a room. I'm fixing the gap between those two things.",
+  "chunk": "the gap between ___ and ___",
+  "note": "Precise and unsentimental. Far better than “for my future”."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Give feedback to a teacher whose lessons are too easy for you.",
+  "sample": "The lessons are really clear — I'm just not being stretched much. Could we push into harder material, even if I struggle?",
+  "chunk": "even if I struggle",
+  "note": "Asks for difficulty explicitly. Rare, and teachers love it."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Describe your biggest weakness as a learner honestly, in two sentences.",
+  "sample": "I start things enthusiastically and abandon them around week three. I've started building in a check-in so it's harder to quiet-quit on myself.",
+  "chunk": "quiet-quit on myself",
+  "note": "Self-aware and specific. Shows the fix as well as the flaw."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Ask someone to be your study partner and set the terms.",
+  "sample": "Fancy doing this together? Twenty minutes, twice a week, and either of us can cancel without an excuse.",
+  "chunk": "without an excuse",
+  "note": "Low-commitment framing. Makes people far more likely to agree."
+ },
+ {
+  "cat": "learning",
+  "kind": "sit",
+  "text": "Explain what you learnt from a course you did not finish.",
+  "sample": "I got about a third of the way through, and that third changed how I write tests. Not finishing it was a choice, not a failure — I'd got what I needed.",
+  "chunk": "not a failure — a choice",
+  "note": "Reframes an abandonment as a decision. Confident and honest."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Máy mình bị treo rồi.",
+  "sample": "My laptop's frozen.",
+  "chunk": "frozen",
+  "note": "Frozen for an unresponsive machine. Not “hanged” or “stopped”."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình khởi động lại thử xem.",
+  "sample": "I'll try restarting it.",
+  "chunk": "restarting it",
+  "note": "Restart, not “reopen”. The universal first fix."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Wifi nhà mình yếu quá.",
+  "sample": "The wifi here is dreadful.",
+  "chunk": "dreadful",
+  "note": "British intensifier for bad. Stronger than “not good”."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình mất mạng lúc đó.",
+  "sample": "I dropped off the call for a second.",
+  "chunk": "dropped off the call",
+  "note": "Standard phrasing for losing a connection mid-meeting."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Điện thoại mình gần hết pin.",
+  "sample": "My phone's about to die.",
+  "chunk": "my phone's about to die",
+  "note": "Phones die. Never “my phone is finishing battery”."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình cần sạc gấp.",
+  "sample": "Have you got a charger I could borrow?",
+  "chunk": "a charger I could borrow",
+  "note": "Full polite request. Adding “I could borrow” makes it easy to say yes."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Máy mình chạy chậm lắm.",
+  "sample": "It's running really slowly these days.",
+  "chunk": "running slowly",
+  "note": "Machines “run”. The verb matters here."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình bị mất hết dữ liệu.",
+  "sample": "I've lost the lot.",
+  "chunk": "lost the lot",
+  "note": "British for lost everything. Compact and dramatic."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình có sao lưu không nhỉ?",
+  "sample": "Please tell me that was backed up.",
+  "chunk": "backed up",
+  "note": "The two most important words in computing."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình quên mật khẩu rồi.",
+  "sample": "I've forgotten my password again.",
+  "chunk": "forgotten my password",
+  "note": "Present perfect and “again”. Universally relatable."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình cần cập nhật phần mềm.",
+  "sample": "It needs updating.",
+  "chunk": "needs updating",
+  "note": "Need + gerund for a passive requirement. Very British."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Màn hình bị nứt rồi.",
+  "sample": "I've cracked the screen.",
+  "chunk": "cracked the screen",
+  "note": "Crack for glass. You cracked it; it did not break itself."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Ứng dụng này cứ tự tắt.",
+  "sample": "The app keeps crashing.",
+  "chunk": "keeps crashing",
+  "note": "Keep + -ing for a recurring fault. The standard bug report."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình thử tắt đi bật lại chưa?",
+  "sample": "Have you tried turning it off and on again?",
+  "chunk": "turning it off and on again",
+  "note": "A joke and genuine advice. Say it with a straight face."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình không nhận được thông báo.",
+  "sample": "I'm not getting notifications.",
+  "chunk": "getting notifications",
+  "note": "Get, not receive. Receive sounds like a formal letter."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình cần chuyển dữ liệu sang máy mới.",
+  "sample": "I need to move everything across to the new one.",
+  "chunk": "move ___ across",
+  "note": "“Across” for transferring between devices. Very natural."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Máy này dùng được ba năm rồi.",
+  "sample": "I've had this one about three years.",
+  "chunk": "I've had this one ___",
+  "note": "Present perfect for ongoing ownership."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình đang cân nhắc đổi máy.",
+  "sample": "I'm thinking about upgrading.",
+  "chunk": "upgrading",
+  "note": "Upgrade covers phones, laptops, plans, everything."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Cái này dùng dễ hơn nhiều.",
+  "sample": "It's much more intuitive than the old one.",
+  "chunk": "intuitive",
+  "note": "The exact word for easy-to-figure-out. Sounds informed."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình không hiểu cái nút này làm gì.",
+  "sample": "I've no idea what that button does.",
+  "chunk": "I've no idea what ___ does",
+  "note": "Honest and idiomatic. Never “I do not know this button”."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình cài lại từ đầu.",
+  "sample": "I ended up doing a clean install.",
+  "chunk": "a clean install",
+  "note": "The fixed term for wiping and starting over."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình để chế độ im lặng.",
+  "sample": "I've put it on silent.",
+  "chunk": "on silent",
+  "note": "On silent, on mute, on airplane mode. All take “on”."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình không tìm thấy file đó.",
+  "sample": "I can't find the file anywhere.",
+  "chunk": "can't find it anywhere",
+  "note": "“Anywhere” adds the frustration. Very natural emphasis."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình gửi qua link cho nhanh.",
+  "sample": "I'll just send you a link.",
+  "chunk": "I'll just send you ___",
+  "note": "“Just” makes an action sound effortless and immediate."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình chưa quen dùng cái này.",
+  "sample": "I'm still getting used to it.",
+  "chunk": "getting used to ___",
+  "note": "Get used to = adapt. Always followed by a noun or gerund."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình tắt hết thông báo cho tập trung.",
+  "sample": "I've turned everything off to get some peace.",
+  "chunk": "get some peace",
+  "note": "The reason, stated humanly. Better than “to focus”."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Camera mình không bật được.",
+  "sample": "My camera won’t come on.",
+  "chunk": "won't come on",
+  "note": "Won’t = refuses to. Perfect for stubborn devices."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình bị lỗi khi thanh toán.",
+  "sample": "It threw an error when I tried to pay.",
+  "chunk": "threw an error",
+  "note": "Developer phrasing, now widely used. Precise and confident."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình cần hai bước xác thực.",
+  "sample": "It wants a code from the app.",
+  "chunk": "wants a code",
+  "note": "Devices “want” things. Very common and slightly funny."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình dùng bản miễn phí.",
+  "sample": "I'm on the free plan.",
+  "chunk": "I'm on the ___ plan",
+  "note": "“On” for subscription tiers. Free plan, basic plan, pro plan."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình mới học dùng cái này.",
+  "sample": "I've only just started using it.",
+  "chunk": "I've only just ___",
+  "note": "“Only just” = very recently. Extremely common construction."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình để máy chạy qua đêm.",
+  "sample": "I left it running overnight.",
+  "chunk": "left it running",
+  "note": "Leave + -ing for a continuing state. Precise and natural."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Điện thoại mình nóng quá.",
+  "sample": "My phone's getting really hot.",
+  "chunk": "getting really hot",
+  "note": "Get + adjective for change of state. Devices, weather, people."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình chuyển sang dùng máy tính bảng.",
+  "sample": "I've switched to using a tablet for that.",
+  "chunk": "switched to ___",
+  "note": "Switch to = change habits or tools. Very high-frequency."
+ },
+ {
+  "cat": "tech",
+  "kind": "vn",
+  "text": "Mình không muốn chia sẻ vị trí.",
+  "sample": "I'd rather not share my location.",
+  "chunk": "I'd rather not ___",
+  "note": "The politest possible refusal. Works for anything."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Your laptop dies mid-presentation. Handle it out loud in three sentences.",
+  "sample": "Well — that's the laptop gone. Give me thirty seconds and I'll carry on from memory. It was the good half anyway.",
+  "chunk": "that's the ___ gone",
+  "note": "Names the disaster calmly and keeps going. The room relaxes."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Help a parent over the phone who cannot find an app. Three sentences.",
+  "sample": "Don't worry, we'll find it. Swipe down from the top and type the first three letters — no, just three. There it is?",
+  "chunk": "no, just three",
+  "note": "Short corrective interjections are what real phone support sounds like."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Report a bug to a developer clearly, in three sentences.",
+  "sample": "When I upload a file over ten megabytes, it spins for a minute and then throws a 500. Happens every time on Chrome, not on Safari. I've got the console log if that helps.",
+  "chunk": "happens every time on ___",
+  "note": "Trigger, scope, evidence. The three things any developer needs."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Explain to a non-technical colleague why the site is down.",
+  "sample": "One of the servers stopped talking to the database. Nothing is lost — it just can't reach it right now. Half an hour, and I'll message you the moment it's back.",
+  "chunk": "it just can't reach it",
+  "note": "Plain-language cause with no jargon. Reassurance first."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Ask a shop to fix or replace a phone that broke after two weeks.",
+  "sample": "I bought it two weeks ago and the screen's already failing — that's not wear and tear. I'd like it replaced rather than repaired, if that's possible.",
+  "chunk": "that's not wear and tear",
+  "note": "Uses the exact phrase that shifts the argument in your favour."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Persuade a friend to back up their files, in two sentences.",
+  "sample": "You've got one copy of every photo you own, and that copy is in your bag on a bus. Give me ten minutes and I'll set it up for you.",
+  "chunk": "one copy of every ___ you own",
+  "note": "Makes an abstract risk vivid. Far better than a lecture."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "A video call keeps breaking up. Sort it out in the moment.",
+  "sample": "You're breaking up a bit — shall I turn my camera off and see if that helps?",
+  "chunk": "breaking up",
+  "note": "Names the problem and proposes the standard fix in one line."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Explain your job to a relative who thinks you fix printers. Three sentences.",
+  "sample": "I don't fix computers, I write the instructions computers follow. Closer to writing very pedantic recipes than mending anything. And no, I can't get your printer to work either.",
+  "chunk": "very pedantic recipes",
+  "note": "A fresh analogy plus a joke. Ends the misunderstanding warmly."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Ask a colleague to stop sending screenshots and send the actual error text.",
+  "sample": "Could you paste the error as text rather than a screenshot? I can search text, and I can't search a picture.",
+  "chunk": "I can't search a picture",
+  "note": "Gives the reason, which is what makes people actually change."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Talk a friend out of buying the newest phone, in three sentences.",
+  "sample": "Yours is two years old and works perfectly. The new one is the same phone with a better camera you'll use twice. Buy it next year when it's half the price.",
+  "chunk": "the same ___ with a better ___",
+  "note": "Reduces the upgrade to its actual difference. Very persuasive."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Your account has been locked and support is unhelpful. Escalate in writing.",
+  "sample": "I've been locked out for four days across three tickets, with no resolution. I'd like this passed to someone who can unlock it today. If that isn't possible, please tell me who can.",
+  "chunk": "I'd like this passed to ___",
+  "note": "Firm, specific escalation. Leaves them one obvious action."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Teach someone the one habit that will save them the most trouble.",
+  "sample": "Turn on automatic updates and never think about it again. Ninety percent of the horror stories I hear start with someone clicking 'later' for a year.",
+  "chunk": "start with someone ___ing",
+  "note": "Advice justified by consequence. Concrete and memorable."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Describe a bug that took you three days to find, in three sentences.",
+  "sample": "Everything worked locally and nothing worked in production. Three days later I found it: a trailing space in a config file. I have never felt so stupid and so relieved at once.",
+  "chunk": "so ___ and so ___ at once",
+  "note": "The ending makes it a story rather than a report."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Politely refuse to be your family’s unpaid IT support, in two sentences.",
+  "sample": "I'll always help with the important stuff, genuinely. But I'm not the right person for the TV remote — that one's Google's job.",
+  "chunk": "that one's ___ job",
+  "note": "Draws the line with a joke. Nobody is offended."
+ },
+ {
+  "cat": "tech",
+  "kind": "sit",
+  "text": "Explain to a client why the quick fix is a bad idea, in three sentences.",
+  "sample": "We can do it by Friday if we hard-code it, and it'll break the first time the data changes. Two extra days buys you something that doesn't need revisiting. Your call, but I'd take the two days.",
+  "chunk": "your call, but I'd ___",
+  "note": "States both options, recommends one, leaves the decision with them."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Cuối tuần này bạn rảnh không?",
+  "sample": "Are you around this weekend?",
+  "chunk": "are you around",
+  "note": "Around = available and nearby. Softer than “are you free”."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Thứ Năm bạn thế nào?",
+  "sample": "How are you fixed for Thursday?",
+  "chunk": "how are you fixed for ___",
+  "note": "Asks about availability idiomatically. Sounds very native."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình hẹn bảy giờ nhé.",
+  "sample": "Shall we say seven?",
+  "chunk": "shall we say ___",
+  "note": "Proposes a time gently. The most useful phrase in this whole mood."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình đến muộn mười phút nhé.",
+  "sample": "I'm going to be ten minutes behind.",
+  "chunk": "ten minutes behind",
+  "note": "Behind = late. Less apologetic than “late”, and more precise."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình đang trên đường.",
+  "sample": "I'm on my way.",
+  "chunk": "on my way",
+  "note": "Four words that buy you fifteen minutes of goodwill."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình phải huỷ hẹn mất.",
+  "sample": "I'm going to have to cancel, I'm afraid.",
+  "chunk": "I'm going to have to ___",
+  "note": "Distances you from the decision. Softens any cancellation."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình đổi sang tuần sau được không?",
+  "sample": "Could we push it to next week?",
+  "chunk": "push it to ___",
+  "note": "Push = move later. The standard rescheduling verb."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình muốn dời sớm hơn một tiếng.",
+  "sample": "Any chance we could bring it forward an hour?",
+  "chunk": "bring it forward",
+  "note": "Bring forward = make earlier. The opposite of push back."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình chưa chắc, để mình xem lại.",
+  "sample": "Let me check and come back to you.",
+  "chunk": "come back to you",
+  "note": "Buys time without committing. Completely standard."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình chốt luôn nhé.",
+  "sample": "Let's lock it in.",
+  "chunk": "lock it in",
+  "note": "Confirms a plan decisively. Modern and very common."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình đã hẹn chỗ khác rồi.",
+  "sample": "I've already got something on that night.",
+  "chunk": "got something on",
+  "note": "Vague but complete. Nobody ever asks what."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình rảnh sau bốn giờ.",
+  "sample": "I'm free from four onwards.",
+  "chunk": "from ___ onwards",
+  "note": "Gives an open window. Easier to schedule against."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Bạn chọn giờ nào cũng được.",
+  "sample": "Any time that suits you works for me.",
+  "chunk": "that suits you",
+  "note": "Suit = be convenient for. Very high-frequency verb here."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình đặt chỗ rồi nhé.",
+  "sample": "I've booked us a table for eight.",
+  "chunk": "I've booked us ___",
+  "note": "“Us” makes it warm and inclusive. Small word, big difference."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mai mình có hẹn cả ngày.",
+  "sample": "Tomorrow's pretty much wall to wall.",
+  "chunk": "wall to wall",
+  "note": "Back-to-back commitments. Vivid office idiom."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình sẽ nhắc bạn trước một hôm.",
+  "sample": "I'll give you a nudge the day before.",
+  "chunk": "give you a nudge",
+  "note": "Gentle reminder. Far friendlier than “I will remind you”."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Hẹn gặp lại tuần sau nhé.",
+  "sample": "See you next week, then.",
+  "chunk": "see you ___, then",
+  "note": "The “then” confirms the plan. Do not drop it."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình không đi được, xin lỗi nhé.",
+  "sample": "I can't make it, sorry.",
+  "chunk": "can't make it",
+  "note": "Make it = attend. Never “I cannot join”."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình đến sớm mười lăm phút.",
+  "sample": "I'll get there a bit early.",
+  "chunk": "a bit early",
+  "note": "“A bit” keeps it casual. Being precise sounds anxious."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Bạn cứ nhắn khi nào đến nhé.",
+  "sample": "Text me when you get there.",
+  "chunk": "text me when ___",
+  "note": "Present simple after “when” for the future. Common error point."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình chưa có kế hoạch gì.",
+  "sample": "I've got nothing on, actually.",
+  "chunk": "nothing on",
+  "note": "Completely free. The opposite of “something on”."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Để mình xem lịch đã.",
+  "sample": "Let me have a look at my diary.",
+  "chunk": "my diary",
+  "note": "British for calendar. Americans say schedule or calendar."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình quên mất buổi hẹn.",
+  "sample": "It completely slipped my mind.",
+  "chunk": "it completely slipped my mind",
+  "note": "Blames memory, not character. The best apology for forgetting."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Hôm đó mình không tiện.",
+  "sample": "That day's a bit awkward for me.",
+  "chunk": "a bit awkward",
+  "note": "Declines a specific date without any reason. Very British."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Bọn mình gặp ở đâu nhỉ?",
+  "sample": "Whereabouts shall we meet?",
+  "chunk": "whereabouts",
+  "note": "One word for “where roughly”. Sounds properly native."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình sẽ xác nhận lại sáng mai.",
+  "sample": "I'll confirm in the morning.",
+  "chunk": "I'll confirm ___",
+  "note": "Promises a decision with a deadline. Professional and clear."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Kế hoạch thay đổi rồi.",
+  "sample": "There's been a change of plan.",
+  "chunk": "a change of plan",
+  "note": "Singular “plan” in this fixed phrase. Not “plans”."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình đi cùng bạn nhé.",
+  "sample": "I'll come with you, if that's alright.",
+  "chunk": "I'll come with you, if that's alright",
+  "note": "Asks permission after stating the intention. Polite and easy."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình chỉ ở được một tiếng.",
+  "sample": "I can only stay for an hour, unfortunately.",
+  "chunk": "can only stay for ___",
+  "note": "Sets the limit in advance. Prevents an awkward exit."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình hoãn vô thời hạn.",
+  "sample": "We've put it off indefinitely.",
+  "chunk": "put it off indefinitely",
+  "note": "Postponed with no new date. The honest version."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình sẽ đến nếu tan làm sớm.",
+  "sample": "I'll come if I can get away early.",
+  "chunk": "get away",
+  "note": "Get away = leave work. Extremely useful phrasal verb."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Bọn mình gặp nhau hằng tháng.",
+  "sample": "We try to meet up once a month.",
+  "chunk": "meet up",
+  "note": "Meet up = get together socially. The “up” is essential."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Mình dự định đi vào tháng Tư.",
+  "sample": "I'm planning on going in April.",
+  "chunk": "planning on ___ing",
+  "note": "Plan on + gerund. Slightly more casual than “plan to”."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Bạn rảnh lúc nào thì bảo mình.",
+  "sample": "Just say when and I’ll work around it.",
+  "chunk": "I'll work around it",
+  "note": "Total flexibility offered in five words. Very generous-sounding."
+ },
+ {
+  "cat": "plans",
+  "kind": "vn",
+  "text": "Thôi để lần sau.",
+  "sample": "Let's do it another time.",
+  "chunk": "another time",
+  "note": "Keeps the door open without setting a date."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Organise dinner with four busy friends over text. Three sentences.",
+  "sample": "Right — dinner, next Thursday or the Saturday after. Reply with which works and I'll book whatever wins. Silence counts as a yes to both.",
+  "chunk": "silence counts as a yes",
+  "note": "Two options plus a default. The only method that actually works."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Cancel on a close friend two hours before, honestly.",
+  "sample": "I'm going to be that person and cancel — I'm completely wiped and I'd be terrible company. Can I make it up to you next week? My treat.",
+  "chunk": "I'm going to be that person",
+  "note": "Self-aware honesty disarms the annoyance completely."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Reschedule a work meeting you double-booked, without admitting the real reason.",
+  "sample": "Something's come up on my side for Wednesday — could we move it to Thursday morning? Any time before eleven works.",
+  "chunk": "something's come up",
+  "note": "The universal blameless excuse. Nobody ever questions it."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Turn down an invitation you genuinely do not want to attend.",
+  "sample": "That's really kind of you to think of me, but I'm going to sit this one out. Have a brilliant time, and send pictures.",
+  "chunk": "I'm going to sit this one out",
+  "note": "Declines warmly and closes with enthusiasm for them."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Confirm a plan someone made vaguely a week ago, in two sentences.",
+  "sample": "Just checking we're still on for Friday — seven at the noodle place? Happy either way, just don't want to leave you standing outside.",
+  "chunk": "still on for ___",
+  "note": "The confirmation everyone forgets to send. Extremely useful."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Propose a first meeting with a new contact, giving real options.",
+  "sample": "Would a coffee work sometime next week? I'm free Tuesday afternoon or Thursday morning — or I can fit around you if neither suits.",
+  "chunk": "or I can fit around you",
+  "note": "Two concrete options plus flexibility. Very hard to refuse."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "You are running badly late and the other person is waiting. Message them.",
+  "sample": "I'm so sorry — I'm fifteen minutes out. Order something and put it on my tab, I'll be there shortly.",
+  "chunk": "I'm fifteen minutes out",
+  "note": "Precise time, a solution, and no excuses. The perfect late text."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Politely chase someone who has not replied about a date for two weeks.",
+  "sample": "No pressure at all, just bumping this up your inbox. Still keen whenever you've got a free evening.",
+  "chunk": "bumping this up your inbox",
+  "note": "Light, self-aware nudge. Nobody minds receiving it."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Plan a weekend trip with someone indecisive. Take charge in three sentences.",
+  "sample": "I'm going to book the Saturday train and the place by the lake. If you want to change anything, tell me by Thursday and I'll sort it. Otherwise, bring walking shoes.",
+  "chunk": "tell me by ___ and I'll sort it",
+  "note": "Decides, then gives a clear window to object."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Explain to your team that you are unavailable next week, in two sentences.",
+  "sample": "I'm off from Monday to Friday and genuinely offline — Minh's covering anything urgent. I'll pick up everything else when I'm back on the 12th.",
+  "chunk": "___ is covering anything urgent",
+  "note": "Names a substitute. Turns absence into a handover."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Someone suggests a time that does not work. Counter-offer without a flat no.",
+  "sample": "Six is tight for me — could we do half seven instead? Or the same time on Thursday, if that's easier.",
+  "chunk": "could we do ___ instead",
+  "note": "Never decline without offering an alternative. Keeps momentum."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Make a plan with someone in a different time zone.",
+  "sample": "I'm seven hours ahead of you, so your morning is my evening. Would nine your time work? That's four for me, which is fine.",
+  "chunk": "I'm ___ hours ahead of you",
+  "note": "Does their arithmetic for them. Enormously appreciated."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "A friend keeps making vague plans that never happen. Pin them down kindly.",
+  "sample": "We've said 'soon' about six times now, which is my fault as much as yours. Pick a date, any date, and I'll put it in ink.",
+  "chunk": "I'll put it in ink",
+  "note": "Shares the blame, then demands a commitment. Warm and effective."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "Apologise for missing something important, in three sentences.",
+  "sample": "I missed it, and there's no good excuse — I had the wrong week in my head. I'm genuinely sorry, especially knowing how much work you put in. Let me hear all about it over lunch, on me.",
+  "chunk": "there’s no good excuse",
+  "note": "Skipping the excuse is what makes the apology land."
+ },
+ {
+  "cat": "plans",
+  "kind": "sit",
+  "text": "End a long planning conversation by summarising the decisions.",
+  "sample": "So: Saturday the 14th, seven o'clock, I'll book, you bring Linh. Anything I've got wrong?",
+  "chunk": "anything I've got wrong?",
+  "note": "Recap plus an invitation to correct. Prevents every mix-up."
  }
 ]

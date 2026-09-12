@@ -18,7 +18,9 @@ MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
 TARGET = int(sys.argv[1]) if len(sys.argv) > 1 else 1000
 BATCH = int(sys.argv[2]) if len(sys.argv) > 2 else 20
 
-CATS = ['work', 'daily', 'social', 'opinion', 'story']
+CATS = ['work', 'daily', 'social', 'opinion', 'story', 'travel', 'health', 'money',
+        'career', 'conflict', 'feelings', 'meeting', 'admin', 'food', 'family',
+        'learning', 'tech', 'plans']  # keep in sync with CATS in public/app.js
 KEYS = {'cat', 'kind', 'text', 'sample', 'chunk', 'note'}
 
 
@@ -52,7 +54,7 @@ Mix both kinds:
 - "sit": a short English-described situation for the learner to react to.
 Be specific and varied — real dev work, daily life, friends, opinions, short stories. Local Hanoi flavor welcome, sometimes funny. Avoid generic textbook lines.
 {avoid_line}Reply with ONLY a JSON array of {n} objects, each exactly:
-{{"cat":"work|daily|social|opinion|story","kind":"vn|sit","text":"the prompt","sample":"a natural native answer, 1-2 sentences","chunk":"the single most reusable multi-word phrase from sample","note":"short coaching tip, max 20 words"}}"""
+{{"cat":"{'|'.join(CATS)}","kind":"vn|sit","text":"the prompt","sample":"a natural native answer, 1-2 sentences","chunk":"the single most reusable multi-word phrase from sample","note":"short coaching tip, max 20 words"}}"""
 
 
 def valid(p):

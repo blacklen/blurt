@@ -147,3 +147,16 @@ Open the app, enter your `APP_SECRET`, and optionally set the server URL. The se
 | 💬 Small talk | greetings, compliments, polite exits |
 | 🧠 Opinions | hot takes, agreeing/disagreeing, recommendations |
 | 📖 Storytelling | past events, funny moments, dramatic retelling |
+| 🧳 Travel | airports, hotels, directions, passport control, getting lost |
+| 🩺 Health & body | symptoms, doctors, the gym, sleep, feeling run down |
+| 💸 Money & shopping | prices, haggling, refunds, subscriptions, splitting bills |
+| 🎯 Interviews & career | interviews, self-intros, salary talk, resigning, networking |
+| 💥 Conflict & pushback | disagreeing, saying no, complaints, boundaries, hard feedback |
+| 🫂 Feelings & venting | naming a mood, venting, comforting someone, asking for support |
+| 🎤 Meetings & presenting | demos, interrupting politely, clarifying, wrapping up, Q&A |
+| ☎️ Calls & admin | phone calls, customer service, banks, landlords, paperwork |
+| 🍜 Food & eating out | ordering, allergies, complaints, recommending a place, home cooking |
+| ❤️ Family & relationships | family news, partners, old friends, invitations, apologies |
+| 🎓 Learning & self-study | courses, asking questions, explaining what you don’t get |
+| 📱 Tech & gadgets | devices, apps, "it’s not working", bug reports, setup help |
+| 📅 Plans & scheduling | proposing times, rescheduling, cancelling, running late, confirming |
