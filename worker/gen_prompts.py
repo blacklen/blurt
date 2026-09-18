@@ -57,10 +57,27 @@ Be specific and varied — real dev work, daily life, friends, opinions, short s
 {{"cat":"{'|'.join(CATS)}","kind":"vn|sit","text":"the prompt","sample":"a natural native answer, 1-2 sentences","chunk":"the single most reusable multi-word phrase from sample","note":"short coaching tip, max 20 words"}}"""
 
 
+APOS = "'‘’ʼ"
+
+
+def blankable(chunk, sample):
+    """True when Drill can blank the chunk in the sample (mirrors drillBlank() in app.js)."""
+    for seg in re.split(r'\s*(?:\+|/|\.{3}|…|_+|\[[^\]]*\])\s*', chunk):
+        toks = re.findall(f'[A-Za-z0-9{APOS}]+', seg)
+        if not toks:
+            continue
+        body = f'[^A-Za-z0-9{APOS}]+'.join(
+            re.sub(f'[{APOS}]', f'[{APOS}]', re.escape(t)) for t in toks)
+        if re.search(f'(?<![A-Za-z0-9{APOS}]){body}(?![A-Za-z0-9{APOS}])', sample, re.I):
+            return True
+    return False
+
+
 def valid(p):
     return (isinstance(p, dict) and set(p.keys()) == KEYS
             and p['cat'] in CATS and p['kind'] in ('vn', 'sit')
-            and all(isinstance(p[k], str) and p[k].strip() for k in KEYS))
+            and all(isinstance(p[k], str) and p[k].strip() for k in KEYS)
+            and blankable(p['chunk'], p['sample']))
 
 
 def main():

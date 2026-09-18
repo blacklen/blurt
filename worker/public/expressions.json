@@ -492,7 +492,6 @@
   { "cat": "health", "kind": "expr", "text": "Không ngủ được thì làm gì cũng khó.", "sample": "Nothing works when you're not sleeping.", "chunk": "nothing ___ when you're ___", "note": "Generalises with “you” instead of “I”. Sounds wiser, less whiny." },
 
   { "cat": "health", "kind": "expr", "text": "Uống thuốc là đỡ ngay.", "sample": "It cleared up as soon as I started the medication.", "chunk": "cleared up", "note": "Illnesses, rashes, weather and misunderstandings all clear up." },
-  { "cat": "health", "kind": "expr", "text": "Mình vừa mệt vừa lo, hết pin rồi.", "sample": "I'm running on empty.", "chunk": "no gas left in the tank", "note": "Fuel metaphor for a person. Instantly understood everywhere." },
   { "cat": "health", "kind": "expr", "text": "Mình mới tập lại được hai tuần.", "sample": "I've only been back at it for two weeks.", "chunk": "back at it", "note": "Returning to a habit. Vague on purpose about what “it” is." },
   { "cat": "health", "kind": "expr", "text": "Không có gì nghiêm trọng đâu.", "sample": "It's nothing serious.", "chunk": "it's nothing serious", "note": "The reassurance sentence. Learn it before you need it." },
   { "cat": "health", "kind": "expr", "text": "Mình chưa bao giờ đau như vậy.", "sample": "I've never felt pain like that.", "chunk": "I've never felt ___ like that", "note": "Present perfect + “like that” points back at a specific moment." },
@@ -558,13 +557,11 @@
   { "cat": "career", "kind": "expr", "text": "Mình học được nhiều từ ông ấy hơn cả bốn năm đại học.", "sample": "I learnt more from him in one year than in four at university.", "chunk": "more from ___ in ___ than in ___", "note": "Comparison across two time spans. Precise and persuasive." },
 
   { "cat": "career", "kind": "expr", "text": "Mình không hối hận vì đã nghỉ.", "sample": "Leaving is the one decision I've never second-guessed.", "chunk": "the one decision I've never ___", "note": "Superlative-by-uniqueness. Stronger than “I don’t regret it”." },
-  { "cat": "career", "kind": "expr", "text": "Việc đó nghe hay nhưng làm thì khác.", "sample": "It sounded a lot better on the job description.", "chunk": "sounded better on ___", "note": "Compares promise with reality. Wry, and universally understood." },
   { "cat": "career", "kind": "expr", "text": "Mình chỉ giỏi hơn hôm qua một chút.", "sample": "I'm slightly better than I was yesterday, and that's the whole plan.", "chunk": "and that's the whole plan", "note": "Undersells ambition in a way that sounds very confident." },
   { "cat": "career", "kind": "expr", "text": "Mình được nhận không phải vì giỏi nhất mà vì chuẩn bị kỹ nhất.", "sample": "I didn't get it for being the best — I got it for being the most prepared.", "chunk": "I didn't get it for ___ — I got it for ___", "note": "Correction structure with a lesson inside it." },
   { "cat": "career", "kind": "expr", "text": "Lúc nào mình cũng thấy chưa đủ kinh nghiệm.", "sample": "However long I do this, I still feel like I just started.", "chunk": "I still feel like I just ___", "note": "Impostor syndrome in one sentence. Instantly relatable." },
 
   { "cat": "career", "kind": "expr", "text": "Đi phỏng vấn cũng là một cách học.", "sample": "Every interview teaches you something, even the bad ones.", "chunk": "even the bad ones", "note": "Tag on the end that softens and completes the claim." },
-  { "cat": "career", "kind": "expr", "text": "Mình không muốn làm quản lý.", "sample": "Management isn’t the goal for me — it’s just one road.", "chunk": "___ isn't the goal — it's ___", "note": "Rejects an assumption without rejecting the person asking." },
   { "cat": "career", "kind": "expr", "text": "Mình đã nộp bốn mươi chỗ mới được một lời mời.", "sample": "Forty applications, one offer — that’s just the maths of it.", "chunk": "that's just the maths of it", "note": "Normalises rejection with arithmetic. Removes the shame." },
   { "cat": "career", "kind": "expr", "text": "Càng lên cao thì càng ít viết code.", "sample": "The higher you go, the less you actually build.", "chunk": "the higher you go, the less ___", "note": "Ladder observation. Sounds experienced and slightly rueful." },
   { "cat": "career", "kind": "expr", "text": "Nếu được chọn lại mình vẫn chọn nghề này.", "sample": "Given the choice again, I'd do the same thing.", "chunk": "given the choice again", "note": "Compact conditional. Three words replace a whole clause." },
@@ -601,7 +598,6 @@
 
   { "cat": "feelings", "kind": "expr", "text": "Càng cố vui thì càng thấy tệ.", "sample": "The harder I try to be cheerful, the worse I feel.", "chunk": "the harder I try to ___, the worse ___", "note": "Effort-versus-result comparatives. Very natural in complaints." },
   { "cat": "feelings", "kind": "expr", "text": "Không phải mình buồn, chỉ là mình mệt trong đầu.", "sample": "It's not sadness exactly, it's more like static.", "chunk": "it's not ___ exactly, it's more like ___", "note": "Reaches for a better word mid-sentence. Sounds authentic." },
-  { "cat": "feelings", "kind": "expr", "text": "Mình ổn cho đến khi ai đó hỏi.", "sample": "I was completely fine until somebody asked.", "chunk": "I was fine until ___", "note": "The moment the feeling arrived. Sets up a whole story." },
   { "cat": "feelings", "kind": "expr", "text": "Mình cứ nghĩ chỉ mình như thế.", "sample": "I always assumed it was just me.", "chunk": "I always assumed ___", "note": "Past habit of belief. Perfect for a small revelation." },
   { "cat": "feelings", "kind": "expr", "text": "Nghe bạn kể mình cũng thấy nghẹn.", "sample": "Hearing you say that put a lump in my throat.", "chunk": "a lump in my throat", "note": "The physical sign of being moved. Fixed and vivid." },
 
@@ -690,7 +686,6 @@
   { "cat": "admin", "kind": "expr", "text": "Mình học được là phải ghi âm lại.", "sample": "What I learnt is to write down who I spoke to.", "chunk": "what I learnt is ___", "note": "Cleft sentence delivering a lesson. Sounds wise and considered." },
 
   { "cat": "food", "kind": "expr", "text": "Càng ăn càng thấy ngon.", "sample": "It gets better with every bite.", "chunk": "with every ___", "note": "Progressive improvement, compactly stated." },
-  { "cat": "food", "kind": "expr", "text": "Không phải mình kén ăn, mình chỉ không thích rau mùi.", "sample": "I'm not fussy, I just draw the line at coriander.", "chunk": "I draw the line at ___", "note": "Names the one exception. Sounds reasonable rather than picky." },
   { "cat": "food", "kind": "expr", "text": "Ăn ở đây một lần là nhớ mãi.", "sample": "You eat there once and you never forget it.", "chunk": "you ___ once and you never ___", "note": "Second-person generalisation. Turns your opinion into a rule." },
   { "cat": "food", "kind": "expr", "text": "Mình có thể ăn cái này cả ngày.", "sample": "I could eat this every day and not get bored.", "chunk": "and not get bored", "note": "Tag that upgrades any compliment. Very natural." },
   { "cat": "food", "kind": "expr", "text": "Đáng lẽ mình không nên ăn miếng cuối.", "sample": "I shouldn't have had that last one.", "chunk": "I shouldn't have had ___", "note": "Regret, food edition. The most-used sentence after any meal." },
@@ -740,7 +735,6 @@
   { "cat": "family", "kind": "expr", "text": "Mình vừa thương vừa giận bố.", "sample": "I love him and he drives me mad, in that order.", "chunk": "in that order", "note": "Three words that make a contradiction sound deliberate." },
   { "cat": "family", "kind": "expr", "text": "Con mình lớn nhanh quá.", "sample": "He was tiny about four minutes ago.", "chunk": "about four minutes ago", "note": "Comic exaggeration of time. Every parent says it." },
   { "cat": "family", "kind": "expr", "text": "Bà mình kể chuyện hay nhất.", "sample": "Nobody tells a story like my grandmother.", "chunk": "nobody ___ like ___", "note": "Superlative by comparison. Warm and emphatic." },
-  { "cat": "family", "kind": "expr", "text": "Mình cứ hoãn gọi về mãi.", "sample": "I keep putting off ringing them.", "chunk": "put off ___ing", "note": "Put off = postpone. Always followed by a gerund." },
   { "cat": "family", "kind": "expr", "text": "Về nhà mới thấy mọi thứ nhỏ đi.", "sample": "Everything at home has got smaller, somehow.", "chunk": "has got smaller, somehow", "note": "Present perfect plus “somehow”. The exact feeling of returning." },
 
   { "cat": "family", "kind": "expr", "text": "Mình không muốn giống bố ở chuyện đó.", "sample": "That's the one thing of his I don't want.", "chunk": "the one thing of ___ I don't want", "note": "Precise rejection. Loving and clear-eyed at once." },

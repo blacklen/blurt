@@ -234,13 +234,14 @@ async function fireDueReminder() {
 function reminderBody(today) {
   const generic = '3 blurts + due chunks. ~5 minutes. No homework, no streak.';
   try {
-    const row = db.prepare('SELECT value FROM documents WHERE key = ?').get('blurt:chunks');
-    if (!row) return generic;
-    const arr = JSON.parse(row.value);
-    const due = Array.isArray(arr) ? arr.filter((c) => c && c.due && c.due <= today) : [];
-    if (!due.length) return generic;
-    const pick = due[Math.floor(Math.random() * due.length)];
-    return due.length + ' chunk' + (due.length > 1 ? 's' : '') + ' due + 3 blurts (~5 min). First up: “' + pick.chunk + '”';
+    const n = db.prepare('SELECT COUNT(*) AS n FROM chunks WHERE due IS NOT NULL AND due <= ?').get(today).n;
+    if (!n) return generic;
+    const pick = db
+      .prepare('SELECT data FROM chunks WHERE due IS NOT NULL AND due <= ? ORDER BY RANDOM() LIMIT 1')
+      .get(today);
+    const chunk = pick ? JSON.parse(pick.data).chunk : '';
+    if (!chunk) return n + ' chunk' + (n > 1 ? 's' : '') + ' due + 3 blurts (~5 min).';
+    return n + ' chunk' + (n > 1 ? 's' : '') + ' due + 3 blurts (~5 min). First up: “' + chunk + '”';
   } catch (e) {
     return generic;
   }

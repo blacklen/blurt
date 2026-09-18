@@ -6,7 +6,7 @@
 
 Each rep gives you a prompt — either a Vietnamese sentence to express in English, or a real situation to react to — and a timer. You blurt it out fast. Editing is cheating.
 
-After you submit, Gemini shows you how a native speaker would say it, picks the most reusable phrase (a **chunk**), and gives you a short coaching note. Chunks enter a spaced-repetition drill schedule (1 → 3 → 7 → 14 → 30 → 60 days).
+After you submit, Gemini shows you how a native speaker would say it, picks the most reusable phrase (a **chunk**), and gives you a short coaching note. Chunks enter a spaced-repetition drill schedule (SM-2): each chunk keeps its own ease factor, the gap grows by that factor every time you recall it, and a miss sends it back to today.
 
 **For situation prompts**, the target chunk is shown upfront so you practice producing it on demand. The AI then checks if you used it, fixes grammar and unnatural phrasing, and shows a sample answer built around that chunk.
 
@@ -17,8 +17,8 @@ After you submit, Gemini shows you how a native speaker would say it, picks the 
 | Tab | What it does |
 |-----|-------------|
 | **Practice** | One rep with a timer. Pick mood categories, or generate an AI prompt. |
-| **Random** | Five game modes (Shuffle, Burst, Boss, Wager, Capsule) that drill your saved chunks without touching the SRS schedule. |
-| **Drill** | Spaced-repetition queue — due chunks only. Fill-in-the-blank from memory; type **or speak** your answer. Each review rotates through fresh AI-written example sentences (🔄 for a new one on demand) so you recall the chunk, not a memorised sentence. Grade a correct rep **Good** (next rung) or **Easy** (skip a rung). |
+| **Random** | Seven game modes (Shuffle, Burst, Boss, Wager, Capsule, Full sentence, Dictation) that drill your saved chunks without touching the SRS schedule. |
+| **Drill** | Spaced-repetition queue — due chunks only. Fill-in-the-blank from memory; type **or speak** your answer. Each review rotates through fresh AI-written example sentences (🔄 for a new one on demand) so you recall the chunk, not a memorised sentence. Grade a correct rep **Hard**, **Good** or **Easy**; each button shows the next interval SM-2 will give it. A miss brings the chunk back today. |
 | **My chunks** | Everything you've stolen. Add manually, export/import as JSON. |
 | **Stats** | 14-day rep bar chart, drill retention %, streak, nemesis chunks, and a weekly AI "mistake pattern" digest. |
 
@@ -33,7 +33,7 @@ After you submit, Gemini shows you how a native speaker would say it, picks the 
 
 ## Stack
 
-- **Frontend** — single HTML file ([worker/public/index.html](worker/public/index.html)), no framework, no build step for the UI
+- **Frontend** — plain HTML/CSS/JS ([index.html](worker/public/index.html), [app.js](worker/public/app.js), [styles.css](worker/public/styles.css)), no framework, no build step
 - **Backend** — Cloudflare Worker + D1 ([worker/src/index.js](worker/src/index.js))
 - **AI** — Gemini 2.5 Flash, proxied through the Worker so the key never touches the browser
 - **Notifications** — [ntfy.sh](https://ntfy.sh), topic stored as a server secret
@@ -45,7 +45,8 @@ After you submit, Gemini shows you how a native speaker would say it, picks the 
 worker/
   src/index.js        # Cloudflare Worker: D1 store, Gemini proxy, ntfy proxy, cron
   migrations/         # D1 schema (documents + chunks)
-  public/index.html   # The entire frontend
+  public/             # The frontend (index.html, app.js, styles.css) + prompt banks (*.json)
+  gen_prompts.py      # Grows public/prompts.json with Gemini
   wrangler.toml       # Worker config, D1 + KV bindings, cron trigger, static assets
 server/
   server.js           # Optional Node.js/SQLite alternative backend (self-hosted)

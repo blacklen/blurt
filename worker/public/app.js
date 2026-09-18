@@ -1519,10 +1519,13 @@ function drillBlank(chunkStr, exampleStr) {
     hits = 0;
   const answers = [];
   for (const seg of segs) {
-    const toks = seg.match(/[A-Za-z0-9']+/g) || [];
+    // Straight and curly apostrophes count as the same letter, so "isn't" blanks "isn’t".
+    const toks = seg.match(/[A-Za-z0-9'‘’ʼ]+/g) || [];
     if (!toks.length) continue;
-    const body = toks.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join("[^A-Za-z0-9']+");
-    const re = new RegExp("(?<![A-Za-z0-9'])" + body + "(?![A-Za-z0-9'])", 'gi');
+    const body = toks
+      .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/['‘’ʼ]/g, "['‘’ʼ]"))
+      .join("[^A-Za-z0-9'‘’ʼ]+");
+    const re = new RegExp("(?<![A-Za-z0-9'‘’ʼ])" + body + "(?![A-Za-z0-9'‘’ʼ])", 'gi');
     out = out.replace(re, (m) => {
       hits++;
       answers.push(m);
@@ -3553,7 +3556,7 @@ Pick a category from: ${catNames}.
 ${ctx ? "Weave in this learner's real life when it fits naturally (use the names/details): " + ctx : ''}
 ${target.length && state.ptype !== 'expr' ? (forcing ? 'Design the situation so a good answer MUST naturally use one of these phrases the learner keeps avoiding: ' : 'If it fits naturally, design the situation so a good answer could reuse one of these phrases the learner is reviewing: ') + target.join(' | ') + '.' : ''}
 ${kindInstr} Be creative and specific — local Hanoi flavor welcome, sometimes funny.
-Reply ONLY JSON: {"cat":"work|daily|social|opinion|story","kind":"${kindEnum}","text":"the prompt itself","sample":"a natural native-speaker answer, 1-2 sentences","chunk":"the most reusable multi-word phrase from sample","note":"short coaching note, max 20 words"}`;
+Reply ONLY JSON: {"cat":"${CAT_IDS.filter((id) => state.cats.includes(id)).join('|') || CAT_IDS.join('|')}","kind":"${kindEnum}","text":"the prompt itself","sample":"a natural native-speaker answer, 1-2 sentences","chunk":"the most reusable multi-word phrase from sample","note":"short coaching note, max 20 words"}`;
   try {
     const obj = await aiObj({
       contents: [{ parts: [{ text: msg }] }],
