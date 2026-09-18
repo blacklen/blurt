@@ -67,19 +67,33 @@ your data with an empty state.
 
 ## Storage
 
-Schema lives in `migrations/`. Two tables:
+Schema lives in `migrations/`. Three tables:
 
 | table | holds |
 |---|---|
 | `documents(key, value, updated_at)` | JSON blobs: `blurt:state`, `blurt:aiPrompts` |
 | `chunks(id, data, due, ord, updated_at)` | one row per saved chunk |
+| `attempts(id, d, source, kind, prompt, blurt, fix, natural, note, tags, clean, conf, pred, created_at)` | everything you've written, kept for good |
 
 `ord` is the chunk's creation position, so the bank loads in the same order on
 every device. Editing a chunk never changes it.
 
+`attempts` is the proof layer: one row per answer you write (`source` is
+`practice`, `three`, `replay`, and later `chat`, `write`, `free`…). `clean` is 1
+when the answer needed no meaningful fix, 0 when it had one, and NULL when it was
+never graded (AI down, or a freewrite you didn't send for review). `tags` holds
+comma-joined error types for the stats (`article`, `tense`, `preposition`,
+`word-order`, `word-choice`, `plural`, `missing-word`, `calque`). The app loads
+the last 90 days on boot for the clean rate, error bars and replays.
+
+**Adding a table means a migration.** After pulling a new file in `migrations/`,
+run `npm run db:migrate` (remote) before `npm run deploy`, and
+`npm run db:migrate:local` for local dev.
+
 D1 free-plan limits shape bulk writes: at most 100 bound parameters per
 statement and 50 statements per invocation. `upsertChunks()` packs 20 rows per
-statement and caps a request at 500 rows (larger requests get `413`).
+statement and caps a request at 500 rows; attempts have 14 columns, so 7 rows per
+statement and 175 per request. Larger requests get `413`.
 
 The Worker imports any pre-D1 KV data on the first `GET /api/chunks`, in pages,
 then marks itself done. No manual migration step.
@@ -143,6 +157,8 @@ Every route requires `Authorization: Bearer <APP_SECRET>`.
 | GET | `/api/chunks` | — | The whole chunk bank → `{ chunks }` |
 | PUT | `/api/chunks` | `{ chunks: [...] }` | Batch upsert chunks by `id` (≤ 500) |
 | DELETE | `/api/chunks/:id` | — | Delete one chunk |
+| POST | `/api/attempts` | `{ attempts: [...] }` | Batch upsert attempts by `id` (≤ 175). A repeat `id` updates only the grading fields (`fix`, `natural`, `note`, `tags`, `clean`, `conf`, `pred`) |
+| GET | `/api/attempts` | — | Newest first → `{ attempts }`. Filters: `since=YYYY-MM-DD`, `before=<created_at>`, `q=<text>` (searches blurt/fix/prompt), `clean=1`, `source=<s>`, `limit` (default 50, or 5000 with `since`) |
 | POST | `/api/ai` | `{ model?, body }` | Proxy a Gemini `generateContent` call |
 | POST | `/api/notify` | `{ title?, message, delay? }` | Proxy an ntfy notification |
 

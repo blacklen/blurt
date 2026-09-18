@@ -20,7 +20,7 @@ After you submit, Gemini shows you how a native speaker would say it, picks the 
 | **Random** | Seven game modes (Shuffle, Burst, Boss, Wager, Capsule, Full sentence, Dictation) that drill your saved chunks without touching the SRS schedule. |
 | **Drill** | Spaced-repetition queue — due chunks only. Fill-in-the-blank from memory; type **or speak** your answer. Each review rotates through fresh AI-written example sentences (🔄 for a new one on demand) so you recall the chunk, not a memorised sentence. Grade a correct rep **Hard**, **Good** or **Easy**; each button shows the next interval SM-2 will give it. A miss brings the chunk back today. |
 | **My chunks** | Everything you've stolen. Add manually, export/import as JSON. |
-| **Stats** | 14-day rep bar chart, drill retention %, streak, nemesis chunks, and a weekly AI "mistake pattern" digest. |
+| **Stats** | Clean rate (this week vs last, 12 weekly bars), 14-day rep chart, drill retention %, streak, what your fixes were about (last 30 days vs the 30 before), nemesis chunks, and a weekly AI "mistake pattern" digest. |
 
 ### Other features
 
@@ -44,7 +44,7 @@ After you submit, Gemini shows you how a native speaker would say it, picks the 
 ```
 worker/
   src/index.js        # Cloudflare Worker: D1 store, Gemini proxy, ntfy proxy, cron
-  migrations/         # D1 schema (documents + chunks)
+  migrations/         # D1 schema (documents, chunks, attempts)
   public/             # The frontend (index.html, app.js, styles.css) + prompt banks (*.json)
   gen_prompts.py      # Grows public/prompts.json with Gemini
   wrangler.toml       # Worker config, D1 + KV bindings, cron trigger, static assets
@@ -54,12 +54,13 @@ server/
 
 ## Storage
 
-Two tables, same shape in D1 and in the self-hosted SQLite twin:
+Three tables, same shape in D1 and in the self-hosted SQLite twin:
 
 | table | holds |
 |---|---|
 | `documents(key, value, updated_at)` | `blurt:state`, `blurt:aiPrompts` |
 | `chunks(id, data, due, ord, updated_at)` | one row per chunk |
+| `attempts(id, d, source, …, clean, tags, …)` | every answer you write, graded or not |
 
 `ord` is the chunk's creation position. The practice engine addresses chunks by
 array index, so the bank has to rebuild in the same order on every device;

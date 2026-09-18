@@ -101,6 +101,7 @@
   .hwItem.done{color:#9BE8CC;text-decoration:line-through}
   .hwDone{margin-top:14px;font-weight:700;color:var(--gold);font-family:'Bricolage Grotesque',sans-serif;font-size:1.1rem}
   .hwWarn{margin-top:12px;font-size:.85rem;color:#C9C7DC}
+  .hwClean{margin-top:6px;font-size:.85rem;font-weight:600;color:var(--mint)}
 
   .card{background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:24px;margin-bottom:16px}
   .eyebrow{font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
@@ -198,13 +199,19 @@
   .toast{font-size:.85rem;color:var(--mint);font-weight:600}
 
   .speak{background:none;border:none;cursor:pointer;font-size:1rem;vertical-align:-2px;margin-left:6px}
-  .statGrid{display:flex;gap:6px;align-items:flex-end;height:110px;margin-top:14px}
-  .statCol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+  .statGrid{display:flex;gap:6px;height:110px;margin-top:14px} /* columns stretch to full height so bar % heights resolve */
+  .statCol{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
   .statBar{width:100%;background:var(--pulse);border-radius:5px 5px 0 0;min-height:2px}
   .statLbl{font-size:.6rem;color:var(--muted)}
   .statBig{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.7rem}
   .statRow{display:flex;gap:18px;margin-top:16px;flex-wrap:wrap}
   .statCell .hint{margin-top:2px}
+  .cleanRate{color:var(--mint);font-weight:600}
+  .statGrid.clean .statBar{background:var(--mint)}
+  .tagRow{margin-top:12px}
+  .tagRow .rxBar{margin-top:6px;margin-bottom:0}
+  .tagHead{display:flex;justify-content:space-between;gap:10px;font-size:.9rem}
+  .tagHead small{color:var(--muted)}
   .addForm input{margin-top:10px}
   footer{position:fixed;bottom:0;left:0;right:0;text-align:center;font-size:.75rem;color:var(--muted);padding:10px;background:linear-gradient(transparent,var(--paper) 40%);pointer-events:none}
 

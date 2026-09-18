@@ -44,6 +44,7 @@ nothing is saved while the server is unreachable.
 |---|---|
 | `documents(key, value, updated_at)` | JSON blobs: `blurt:state`, `blurt:aiPrompts` |
 | `chunks(id, data, due, ord, updated_at)` | one row per saved chunk |
+| `attempts(id, d, source, …, clean, …, created_at)` | every answer you write (see the Worker README) |
 
 Back up by copying `blurt.db` while the server is stopped.
 
@@ -60,6 +61,8 @@ Every route requires `Authorization: Bearer <APP_SECRET>`. Same as the Worker.
 | GET | `/api/chunks` | — | The whole chunk bank → `{ chunks }` |
 | PUT | `/api/chunks` | `{ chunks: [...] }` | Batch upsert chunks by `id` |
 | DELETE | `/api/chunks/:id` | — | Delete one chunk |
+| POST | `/api/attempts` | `{ attempts: [...] }` | Batch upsert attempts by `id` (≤ 175). A repeat `id` updates only the grading fields (`fix`, `natural`, `note`, `tags`, `clean`, `conf`, `pred`) |
+| GET | `/api/attempts` | — | Newest first → `{ attempts }`. Filters: `since=YYYY-MM-DD`, `before=<created_at>`, `q=<text>` (searches blurt/fix/prompt), `clean=1`, `source=<s>`, `limit` (default 50, or 5000 with `since`) |
 | POST | `/api/ai` | `{ model?, body }` | Proxy a Gemini `generateContent` call |
 | POST | `/api/notify` | `{ title?, message, delay? }` | Proxy an ntfy notification |
 

@@ -41,6 +41,25 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_chunks_due ON chunks(due);
   CREATE INDEX IF NOT EXISTS idx_chunks_ord ON chunks(ord, id);
+  -- worker/migrations/0002_attempts.sql
+  CREATE TABLE IF NOT EXISTS attempts (
+    id         TEXT PRIMARY KEY,
+    d          TEXT NOT NULL,
+    source     TEXT NOT NULL,
+    kind       TEXT,
+    prompt     TEXT,
+    blurt      TEXT,
+    fix        TEXT,
+    natural    TEXT,
+    note       TEXT,
+    tags       TEXT,
+    clean      INTEGER,
+    conf       TEXT,
+    pred       INTEGER,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_attempts_d ON attempts(d);
+  CREATE INDEX IF NOT EXISTS idx_attempts_created ON attempts(created_at);
 `);
 
 const nowIso = () => new Date().toISOString();
@@ -153,6 +172,80 @@ app.put('/api/chunks', (req, res) => {
 app.delete('/api/chunks/:id', (req, res) => {
   db.prepare('DELETE FROM chunks WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
+});
+
+/* ================= attempts ================= */
+// Same column list, validation, row shape and filters as the Worker.
+const ATTEMPT_COLS = ['id', 'd', 'source', 'kind', 'prompt', 'blurt', 'fix', 'natural', 'note', 'tags', 'clean', 'conf', 'pred', 'created_at'];
+const MAX_ATTEMPTS_PER_REQUEST = 175; // matches the Worker's D1-driven cap
+
+function validAttempt(a) {
+  return (
+    a &&
+    typeof a.id === 'string' && a.id &&
+    typeof a.d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.d) &&
+    typeof a.source === 'string' && a.source &&
+    typeof a.created_at === 'string' && a.created_at
+  );
+}
+function attemptValues(a) {
+  const txt = (v) => (v == null || v === '' ? null : String(v).slice(0, 4000));
+  const bit = (v) => (v == null ? null : v ? 1 : 0);
+  const tags = Array.isArray(a.tags) ? a.tags.join(',') : a.tags;
+  return [
+    a.id, a.d, a.source, txt(a.kind), txt(a.prompt), txt(a.blurt), txt(a.fix), txt(a.natural),
+    txt(a.note), txt(tags), bit(a.clean), a.conf === 'sure' || a.conf === 'unsure' ? a.conf : null,
+    bit(a.pred), a.created_at,
+  ];
+}
+function rowToAttempt(r) {
+  return {
+    ...r,
+    tags: r.tags ? r.tags.split(',') : [],
+    clean: r.clean == null ? null : !!r.clean,
+    pred: r.pred == null ? null : !!r.pred,
+  };
+}
+
+app.get('/api/attempts', (req, res) => {
+  const conds = [],
+    binds = [];
+  const { since, before, q, source } = req.query;
+  if (since) conds.push('d >= ?'), binds.push(String(since));
+  if (before) conds.push('created_at < ?'), binds.push(String(before));
+  if (q) {
+    const like = '%' + String(q).replace(/[\\%_]/g, '\\$&') + '%';
+    conds.push("(blurt LIKE ? ESCAPE '\\' OR fix LIKE ? ESCAPE '\\' OR prompt LIKE ? ESCAPE '\\')");
+    binds.push(like, like, like);
+  }
+  if (req.query.clean === '1') conds.push('clean = 1');
+  if (source) conds.push('source = ?'), binds.push(String(source));
+  binds.push(Math.min(Number(req.query.limit) || (since ? 5000 : 50), 5000));
+  const rows = db
+    .prepare(
+      'SELECT ' + ATTEMPT_COLS.join(', ') + ' FROM attempts' +
+        (conds.length ? ' WHERE ' + conds.join(' AND ') : '') +
+        ' ORDER BY created_at DESC, id DESC LIMIT ?'
+    )
+    .all(...binds);
+  res.json({ attempts: rows.map(rowToAttempt) });
+});
+
+// Upsert: a later write for the same id replaces the grading fields only.
+app.post('/api/attempts', (req, res) => {
+  const list = req.body && Array.isArray(req.body.attempts) ? req.body.attempts : null;
+  if (!list) return res.status(400).json({ error: 'attempts must be an array' });
+  if (!list.every(validAttempt)) return res.status(400).json({ error: 'every attempt needs id, d, source, created_at' });
+  if (list.length > MAX_ATTEMPTS_PER_REQUEST)
+    return res.status(413).json({ error: 'too many attempts in one request (max ' + MAX_ATTEMPTS_PER_REQUEST + ')' });
+  const stmt = db.prepare(
+    `INSERT INTO attempts (${ATTEMPT_COLS.join(', ')}) VALUES (${ATTEMPT_COLS.map(() => '?').join(', ')})
+     ON CONFLICT(id) DO UPDATE SET
+       fix = excluded.fix, natural = excluded.natural, note = excluded.note, tags = excluded.tags,
+       clean = excluded.clean, conf = excluded.conf, pred = excluded.pred`
+  );
+  db.transaction(() => list.forEach((a) => stmt.run(...attemptValues(a))))();
+  res.json({ ok: true, saved: list.length });
 });
 
 // Proxy a Gemini generateContent call, injecting the server-side key.

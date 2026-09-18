@@ -8,6 +8,7 @@
  * Storage (binding: BLURT_DB, schema in ../migrations/0001_init.sql):
  *   documents(key, value, updated_at)        -- 'blurt:state', 'blurt:aiPrompts'
  *   chunks(id, data, due, ord, updated_at)   -- one row per chunk
+ *   attempts(id, d, source, …, clean, …)     -- every attempt, see 0002_attempts.sql
  *
  * KV (binding: BLURT_KV) is kept only for two TTL counters — the login throttle
  * and the daily-reminder marker — plus reading the pre-D1 data once to migrate it.
@@ -166,6 +167,106 @@ async function putChunks(req, env) {
   const updated_at = new Date().toISOString();
   await upsertChunks(env, list, updated_at);
   return json({ ok: true, saved: list.length, updated_at });
+}
+
+/* ================= attempts (everything you've written) ================= */
+
+// Column order for inserts. Same list in server/server.js.
+const ATTEMPT_COLS = ['id', 'd', 'source', 'kind', 'prompt', 'blurt', 'fix', 'natural', 'note', 'tags', 'clean', 'conf', 'pred', 'created_at'];
+const ATTEMPT_ROWS_PER_STMT = Math.floor(100 / ATTEMPT_COLS.length); // 7
+const MAX_ATTEMPTS_PER_REQUEST = ATTEMPT_ROWS_PER_STMT * MAX_STMTS; // 175
+
+function validAttempt(a) {
+  return (
+    a &&
+    typeof a.id === 'string' && a.id &&
+    typeof a.d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.d) &&
+    typeof a.source === 'string' && a.source &&
+    typeof a.created_at === 'string' && a.created_at
+  );
+}
+// Client object → column values, in ATTEMPT_COLS order.
+function attemptValues(a) {
+  const txt = (v) => (v == null || v === '' ? null : String(v).slice(0, 4000));
+  const bit = (v) => (v == null ? null : v ? 1 : 0);
+  const tags = Array.isArray(a.tags) ? a.tags.join(',') : a.tags;
+  return [
+    a.id, a.d, a.source, txt(a.kind), txt(a.prompt), txt(a.blurt), txt(a.fix), txt(a.natural),
+    txt(a.note), txt(tags), bit(a.clean), a.conf === 'sure' || a.conf === 'unsure' ? a.conf : null,
+    bit(a.pred), a.created_at,
+  ];
+}
+// Row → the shape the client works with.
+function rowToAttempt(r) {
+  return {
+    ...r,
+    tags: r.tags ? r.tags.split(',') : [],
+    clean: r.clean == null ? null : !!r.clean,
+    pred: r.pred == null ? null : !!r.pred,
+  };
+}
+// GET filters: since (d >= day), before (created_at <), q (text search over
+// blurt/fix/prompt), clean=1, source, limit. Newest first.
+function attemptQuery(params) {
+  const conds = [],
+    binds = [];
+  const since = params.get('since'),
+    before = params.get('before'),
+    q = params.get('q'),
+    source = params.get('source');
+  if (since) conds.push('d >= ?'), binds.push(since);
+  if (before) conds.push('created_at < ?'), binds.push(before);
+  if (q) {
+    const like = '%' + q.replace(/[\\%_]/g, '\\$&') + '%';
+    conds.push("(blurt LIKE ? ESCAPE '\\' OR fix LIKE ? ESCAPE '\\' OR prompt LIKE ? ESCAPE '\\')");
+    binds.push(like, like, like);
+  }
+  if (params.get('clean') === '1') conds.push('clean = 1');
+  if (source) conds.push('source = ?'), binds.push(source);
+  const limit = Math.min(Number(params.get('limit')) || (since ? 5000 : 50), 5000);
+  binds.push(limit);
+  const sql =
+    'SELECT ' + ATTEMPT_COLS.join(', ') + ' FROM attempts' +
+    (conds.length ? ' WHERE ' + conds.join(' AND ') : '') +
+    ' ORDER BY created_at DESC, id DESC LIMIT ?';
+  return { sql, binds };
+}
+
+async function listAttempts(req, env) {
+  const { sql, binds } = attemptQuery(new URL(req.url).searchParams);
+  const { results } = await env.BLURT_DB.prepare(sql).bind(...binds).all();
+  return json({ attempts: (results || []).map(rowToAttempt) });
+}
+
+// Batched upsert, packed like upsertChunks. A later write for the same id (e.g. a
+// freewrite graded afterwards) replaces the grading fields, never the original text.
+async function postAttempts(req, env) {
+  let body;
+  try {
+    body = await req.json();
+  } catch (e) {
+    return json({ error: 'invalid JSON' }, 400);
+  }
+  const list = body && Array.isArray(body.attempts) ? body.attempts : null;
+  if (!list) return json({ error: 'attempts must be an array' }, 400);
+  if (!list.every(validAttempt)) return json({ error: 'every attempt needs id, d, source, created_at' }, 400);
+  if (list.length > MAX_ATTEMPTS_PER_REQUEST)
+    return json({ error: 'too many attempts in one request (max ' + MAX_ATTEMPTS_PER_REQUEST + ')' }, 413);
+  const stmts = [];
+  const row = '(' + ATTEMPT_COLS.map(() => '?').join(', ') + ')';
+  for (let i = 0; i < list.length; i += ATTEMPT_ROWS_PER_STMT) {
+    const page = list.slice(i, i + ATTEMPT_ROWS_PER_STMT);
+    stmts.push(
+      env.BLURT_DB.prepare(
+        `INSERT INTO attempts (${ATTEMPT_COLS.join(', ')}) VALUES ${page.map(() => row).join(', ')}
+         ON CONFLICT(id) DO UPDATE SET
+           fix = excluded.fix, natural = excluded.natural, note = excluded.note, tags = excluded.tags,
+           clean = excluded.clean, conf = excluded.conf, pred = excluded.pred`
+      ).bind(...page.flatMap(attemptValues))
+    );
+  }
+  if (stmts.length) await env.BLURT_DB.batch(stmts);
+  return json({ ok: true, saved: list.length });
 }
 
 /* ================= one-time migration off KV ================= */
@@ -428,6 +529,11 @@ export default {
       if (pathname === '/api/login' && req.method === 'GET') return json({ ok: true });
       if (pathname === '/api/ai' && req.method === 'POST') return await proxyAi(req, env);
       if (pathname === '/api/notify' && req.method === 'POST') return await proxyNotify(req, env);
+
+      if (pathname === '/api/attempts') {
+        if (req.method === 'GET') return await listAttempts(req, env);
+        if (req.method === 'POST') return await postAttempts(req, env);
+      }
 
       if (pathname === '/api/chunks') {
         if (req.method === 'GET') {

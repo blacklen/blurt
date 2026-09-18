@@ -59,11 +59,14 @@ let state = {
   history: {},
   lastRecap: null,
   lastPattern: null,
-  repLog: [],
   settings: { hwReps: 3, voice: false },
 };
 const GEM_MODEL = 'gemini-2.5-flash';
 let chunks = [];
+/* Your attempts from the last ATTEMPT_DAYS days, oldest first. Older ones stay
+   on the server and are reached through the archive (GET /api/attempts). */
+let attempts = [];
+const ATTEMPT_DAYS = 90;
 let current = null,
   timer = null,
   secondsLeft = REP_BASE,
@@ -109,19 +112,36 @@ async function api(path, opts) {
   const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
   if (secret) headers['Authorization'] = 'Bearer ' + secret;
   const r = await fetch(apiBase() + path, Object.assign({}, opts, { headers }));
-  if (!r.ok) throw new Error('server said ' + r.status);
+  if (!r.ok) {
+    const err = new Error('server said ' + r.status);
+    err.status = r.status;
+    throw err;
+  }
   return r.json();
 }
 
 /* AI + notifications run through the Worker so the Gemini key / ntfy topic stay server-side. */
+/* Set when Gemini says the daily free quota is used up (HTTP 429 /
+   RESOURCE_EXHAUSTED), so the header can say why feedback fell back to the bank. */
+let aiQuotaHit = false;
 async function geminiJSON(payload) {
   if (!loggedIn()) return null;
   try {
-    return await api('/api/ai', {
+    const data = await api('/api/ai', {
       method: 'POST',
       body: JSON.stringify({ model: GEM_MODEL, body: payload }),
     });
+    if (data && data.error && data.error.status === 'RESOURCE_EXHAUSTED') throw Object.assign(new Error('quota'), { status: 429 });
+    if (aiQuotaHit) {
+      aiQuotaHit = false;
+      setSync(pendingCount() ? 'pending' : 'idle');
+    }
+    return data;
   } catch (e) {
+    if (e.status === 429) {
+      aiQuotaHit = true;
+      setSync(pendingCount() ? 'pending' : 'idle');
+    }
     console.error('AI proxy failed:', e);
     return null;
   }
@@ -162,18 +182,26 @@ async function aiObj(payload) {
 const FLUSH_MS = 1500; // idle time before a queued write goes out
 const RETRY_MAX = 30000;
 const CHUNK_PAGE = 500; // must not exceed the server's MAX_ROWS_PER_REQUEST
+const ATTEMPT_PAGE = 175; // must not exceed the server's MAX_ATTEMPTS_PER_REQUEST
 
 let dataLoaded = false; /* no write leaves the queue until a load has succeeded */
 const pendingDocs = new Map(); /* key -> latest value string */
 const pendingChunks = new Map(); /* id  -> latest chunk object */
 const pendingChunkDels = new Set();
 const pendingDocDels = new Set();
+const pendingAttempts = new Map(); /* id -> latest attempt object */
 let flushTimer = null,
   flushing = false,
   retryDelay = 0;
 
 function pendingCount() {
-  return pendingDocs.size + pendingChunks.size + pendingChunkDels.size + pendingDocDels.size;
+  return (
+    pendingDocs.size +
+    pendingChunks.size +
+    pendingChunkDels.size +
+    pendingDocDels.size +
+    pendingAttempts.size
+  );
 }
 function scheduleFlush(delay) {
   if (flushTimer) clearTimeout(flushTimer);
@@ -195,6 +223,12 @@ function queueChunk(c) {
   if (!c || !c.id) return;
   pendingChunks.set(c.id, c);
   pendingChunkDels.delete(c.id);
+  setSync('pending');
+  scheduleFlush();
+}
+function queueAttempt(a) {
+  if (!a || !a.id) return;
+  pendingAttempts.set(a.id, a);
   setSync('pending');
   scheduleFlush();
 }
@@ -221,6 +255,8 @@ async function flush(opts) {
   const chunkList = [...pendingChunks.values()];
   const chunkDels = [...pendingChunkDels];
   const docDels = [...pendingDocDels];
+  const attemptList = [...pendingAttempts.values()];
+  pendingAttempts.clear();
   pendingDocs.clear();
   pendingChunks.clear();
   pendingChunkDels.clear();
@@ -228,6 +264,14 @@ async function flush(opts) {
 
   const extra = opts.keepalive ? { keepalive: true } : {};
   try {
+    /* Attempts go first: the one-time repLog migration deletes the old log from
+       the state doc, and that must not land before the attempts it became. */
+    for (let i = 0; i < attemptList.length; i += ATTEMPT_PAGE)
+      await api('/api/attempts', {
+        method: 'POST',
+        body: JSON.stringify({ attempts: attemptList.slice(i, i + ATTEMPT_PAGE) }),
+        ...extra,
+      });
     for (const [k, v] of docs)
       await api('/api/doc/' + encodeURIComponent(k), {
         method: 'PUT',
@@ -251,6 +295,7 @@ async function flush(opts) {
   } catch (e) {
     /* put the payload back, without clobbering anything edited while it was in flight */
     for (const [k, v] of docs) if (!pendingDocs.has(k) && !pendingDocDels.has(k)) pendingDocs.set(k, v);
+    for (const a of attemptList) if (!pendingAttempts.has(a.id)) pendingAttempts.set(a.id, a);
     for (const c of chunkList)
       if (!pendingChunks.has(c.id) && !pendingChunkDels.has(c.id)) pendingChunks.set(c.id, c);
     chunkDels.forEach((id) => {
@@ -294,6 +339,9 @@ function setSync(s) {
     el.style.color = 'var(--bad)';
   } else if (s === 'saving' || (s === 'pending' && n)) {
     el.textContent = 'Saving…';
+    el.style.color = 'var(--muted)';
+  } else if (aiQuotaHit) {
+    el.textContent = 'AI quota reached for today — bank feedback only';
     el.style.color = 'var(--muted)';
   } else {
     el.textContent = '';
@@ -357,9 +405,14 @@ async function loadAll() {
   dataLoaded = false;
   setLoading(true);
   try {
-    // These three read different things and don't depend on each other, so they
+    // These read different things and don't depend on each other, so they
     // go out together — the wait is one round trip, not three stacked up.
-    const [r] = await Promise.all([store.get('blurt:state'), loadAiPrompts(), loadChunks()]);
+    const [r] = await Promise.all([
+      store.get('blurt:state'),
+      loadAiPrompts(),
+      loadChunks(),
+      loadAttempts(),
+    ]);
     if (r) state = { ...state, ...JSON.parse(r.value) };
   } catch (e) {
     setLoading(false); /* uncover the page so the error banner is actually visible */
@@ -397,6 +450,7 @@ async function loadAll() {
       state.streak = 0;
     }
   }
+  migrateRepLog();
   if (!state.ntfy) state.ntfy = { on: false, hour: 14, tzOffset: new Date().getTimezoneOffset() };
   if (state.ntfy.on === undefined)
     state.ntfy.on = !!state.ntfy.topic; /* migrate old topic-based opt-in */
@@ -434,6 +488,61 @@ async function loadChunks() {
     setLoadNote('Moving your chunks to the new database… ' + r.imported + '/' + r.total);
     if (++guard > 200) throw new Error('migration stalled at ' + r.imported + '/' + r.total);
   }
+}
+async function loadAttempts() {
+  const r = await api('/api/attempts?since=' + dayStr(-ATTEMPT_DAYS));
+  attempts = (r && Array.isArray(r.attempts) ? r.attempts : []).reverse(); /* server sends newest first */
+}
+/* Record one attempt: kept in memory for stats/replay and queued for the server.
+   Returns the attempt so a later grading pass can re-log the same id. */
+function logAttempt(a) {
+  const now = new Date().toISOString();
+  const row = {
+    id: a.id || newChunkId(),
+    d: a.d || dayStr(0),
+    source: a.source,
+    kind: a.kind || null,
+    prompt: a.prompt || '',
+    blurt: a.blurt || '',
+    fix: a.fix || '',
+    natural: a.natural || '',
+    note: a.note || '',
+    tags: cleanTags(a.tags),
+    clean: a.clean == null ? null : !!a.clean,
+    conf: a.conf || null,
+    pred: a.pred == null ? null : !!a.pred,
+    created_at: a.created_at || now,
+  };
+  const i = attempts.findIndex((x) => x.id === row.id);
+  if (i >= 0) attempts[i] = row;
+  else attempts.push(row);
+  queueAttempt(row);
+  if (dataLoaded) {
+    renderHeader(); /* clean rate */
+    renderHW();
+  }
+  return row;
+}
+/* One-time: the old 30-entry state.repLog becomes rows in the attempts table. */
+function migrateRepLog() {
+  const log = state.repLog;
+  if (!Array.isArray(log)) return;
+  log.forEach((r, i) => {
+    if (!r || !r.blurt) return;
+    logAttempt({
+      source: 'practice',
+      d: r.d || dayStr(0),
+      prompt: r.prompt,
+      blurt: r.blurt,
+      fix: r.fix,
+      note: r.note,
+      /* keep their order: same day, one millisecond apart */
+      created_at: new Date(Date.parse((r.d || dayStr(0)) + 'T12:00:00Z') + i).toISOString(),
+    });
+  });
+  attempts.sort((a, b) => a.created_at.localeCompare(b.created_at));
+  delete state.repLog;
+  saveState();
 }
 function chunkSave(c) {
   queueChunk(c);
@@ -575,6 +684,9 @@ function renderHW() {
   } else {
     html += '<div class="hwWarn">No homework, no streak. That\'s the deal you asked for.</div>';
   }
+  /* something that went well always sits next to the thing owed */
+  const cw = cleanWeekText();
+  if (cw) html += '<div class="hwClean">' + cw + '</div>';
   if (state.streakFrozeNote) {
     html +=
       '<div class="hwDone">❄️ A streak freeze covered ' +
@@ -647,9 +759,24 @@ function renderAll() {
 
 /* ================= UI ================= */
 const $ = (id) => document.getElementById(id);
+/* Share of graded attempts (clean true/false, not null) that needed no fix,
+   for days from..to inclusive. pct is null when nothing was graded. */
+function cleanStats(from, to) {
+  const g = attempts.filter((a) => a.clean != null && a.d >= from && (!to || a.d <= to));
+  const c = g.filter((a) => a.clean).length;
+  return { n: g.length, clean: c, pct: g.length ? Math.round((100 * c) / g.length) : null };
+}
+function cleanWeekText() {
+  const w = cleanStats(dayStr(-6));
+  return w.pct == null ? '' : '✓ ' + w.pct + '% clean this week';
+}
 function renderHeader() {
   $('streakNum').textContent = state.streak;
   $('totalNum').textContent = state.total;
+  /* short form here; the homework card spells out "this week" */
+  const w = cleanStats(dayStr(-6));
+  $('cleanRate').textContent = w.pct == null ? '' : ' · ✓ ' + w.pct + '% clean';
+  $('cleanRate').title = w.pct == null ? '' : w.clean + ' of ' + w.n + ' checked answers this week needed no fix';
   $('chunkCount').textContent = chunks.length;
   const rb = $('replayBtn');
   if (rb) rb.style.display = loggedIn() && replayPool().length ? '' : 'none';
@@ -1020,14 +1147,8 @@ function backToReady() {
   show('readyCard');
 }
 
-async function finishRep() {
-  stopTimer();
-  stopMic();
-  $('blurtInput').disabled = true;
-  $('checkBtn').disabled = true;
-  const blurt = $('blurtInput').value.trim();
-  const p = current.prompt;
-
+/* One homework rep done: totals, today's history, homework count, streak. */
+function creditRep() {
   state.total++;
   hist().reps++;
   if (state.hw.date !== dayStr(0)) state.hw = { date: dayStr(0), reps: 0 };
@@ -1036,6 +1157,16 @@ async function finishRep() {
   creditStreakIfDone();
   renderHeader();
   renderHW();
+}
+async function finishRep() {
+  stopTimer();
+  stopMic();
+  $('blurtInput').disabled = true;
+  $('checkBtn').disabled = true;
+  const blurt = $('blurtInput').value.trim();
+  const p = current.prompt;
+
+  creditRep();
 
   if (current.replay) {
     await finishReplay(blurt);
@@ -1110,20 +1241,19 @@ async function finishRep() {
   const saveBtn = visibleSaveBtn();
   if (saveBtn) saveBtn.focus();
 
-  /* keep a small rolling log of attempts + corrections — fuel for the weekly
-     mistake-pattern digest (see maybeWeeklyRecap). Blank reps have nothing to learn from. */
-  if (blurt) {
-    if (!Array.isArray(state.repLog)) state.repLog = [];
-    state.repLog.push({
-      d: dayStr(0),
+  /* Blank reps have nothing to learn from. clean stays null when no AI graded it. */
+  if (blurt)
+    logAttempt({
+      source: 'practice',
+      kind: p.kind,
       prompt: p.text,
       blurt,
       fix: fixed || result.natural || '',
+      natural: native,
       note: result.note || '',
+      tags: fallback ? [] : result.tags,
+      clean: fallback || p.kind === 'expr' ? null : clean,
     });
-    if (state.repLog.length > 30) state.repLog = state.repLog.slice(-30);
-    saveState();
-  }
 }
 
 /* Flag a word-for-word translation from Vietnamese when the AI spots one. */
@@ -1133,12 +1263,28 @@ function showCalque(text) {
   if (has) $('calqueText').textContent = String(text).trim();
 }
 
+/* Internal labels for what went wrong, used only for stats (never shown as
+   grammar jargon in the notes). */
+const ERROR_TAGS = ['article', 'tense', 'preposition', 'word-order', 'word-choice', 'plural', 'missing-word', 'calque', 'none'];
+const TAGS_FIELD =
+  '"tags":["which of these describe their mistakes: ' + ERROR_TAGS.join(', ') + '. Use [\\"none\\"] when there were none."]';
+/* Keep only known tags, once each; "none" is implied by an empty list. */
+function cleanTags(tags) {
+  const list = Array.isArray(tags) ? tags : typeof tags === 'string' ? tags.split(',') : [];
+  return [...new Set(list.map((t) => String(t).trim().toLowerCase()))].filter(
+    (t) => t !== 'none' && ERROR_TAGS.includes(t),
+  );
+}
+const truthy = (v) => v === true || v === 'true';
+
 async function askGemini(p, blurt) {
   let task, instr;
   if (p.kind === 'vn') {
     task = 'The prompt was a Vietnamese sentence to express in English: "' + p.text + '"';
     instr =
-      '{"fixedAnswer":"THEIR sentence, corrected. Keep their own words and structure; change only what is grammatically wrong, unclear, or unnatural. This is their answer cleaned up — NOT a rewrite. If nothing needs changing, copy it exactly.","clean":"true if their sentence needed no meaningful change (a native would say it that way, ignoring capitalization and punctuation), else false","natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (e.g. wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short encouraging coaching note (max 22 words). If clean, say specifically what they did well. Otherwise name the main fix."}';
+      '{"fixedAnswer":"THEIR sentence, corrected. Keep their own words and structure; change only what is grammatically wrong, unclear, or unnatural. This is their answer cleaned up — NOT a rewrite. If nothing needs changing, copy it exactly.","clean":"true if their sentence needed no meaningful change (a native would say it that way, ignoring capitalization and punctuation), else false","natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (e.g. wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.",' +
+      TAGS_FIELD +
+      ',"note":"one short encouraging coaching note (max 22 words). If clean, say specifically what they did well. Otherwise name the main fix."}';
   } else {
     task =
       'Situation: "' +
@@ -1146,7 +1292,9 @@ async function askGemini(p, blurt) {
       '"' +
       (p.chunk ? '\nTarget chunk to practice: "' + p.chunk + '"' : '');
     instr =
-      '{"fixedAnswer":"THEIR sentence, corrected. Keep their own words and structure; change only what is grammatically wrong, unclear, or unnatural, and make sure the target chunk is used. This is their answer cleaned up — NOT a rewrite.","clean":"true if their sentence needed no meaningful change (natural as written and it uses the target chunk; ignore capitalization and punctuation), else false","natural":"a different, native way to say it that uses the target chunk. Must NOT be the same sentence as fixedAnswer.","chunk":"the target chunk, copied exactly","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short tip (max 20 words). If clean, say specifically what they did well. Otherwise: did they use the chunk well, and the key fix."}';
+      '{"fixedAnswer":"THEIR sentence, corrected. Keep their own words and structure; change only what is grammatically wrong, unclear, or unnatural, and make sure the target chunk is used. This is their answer cleaned up — NOT a rewrite.","clean":"true if their sentence needed no meaningful change (natural as written and it uses the target chunk; ignore capitalization and punctuation), else false","natural":"a different, native way to say it that uses the target chunk. Must NOT be the same sentence as fixedAnswer.","chunk":"the target chunk, copied exactly","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.",' +
+      TAGS_FIELD +
+      ',"note":"one short tip (max 20 words). If clean, say specifically what they did well. Otherwise: did they use the chunk well, and the key fix."}';
   }
   const userMsg = `You are a friendly English fluency coach for a Vietnamese software developer practicing fast speech-like production.
 ${task}
@@ -1159,7 +1307,8 @@ ${instr}`;
     generationConfig: { responseMimeType: 'application/json' },
   });
   if (!obj || !obj.chunk) return null;
-  obj.clean = obj.clean === true || obj.clean === 'true';
+  obj.clean = truthy(obj.clean);
+  obj.tags = cleanTags(obj.tags);
   if (p.kind === 'sit' || p.kind === 'reflex' || p.kind === 'expr') {
     /* situation/reflex/expression need at least one answer field; fill the missing
        one from the other so the renderer always has a real value to show. */
@@ -1188,19 +1337,21 @@ Their three attempts:
 ${tries}
 Pick which attempt sounds most natural, then give one fresh native model version, the key reusable chunk, and a short note.
 Reply with ONLY a JSON object:
-{"best":1,"natural":"one natural native version (1-2 sentences)","chunk":"the single most reusable phrase from your native version","note":"max 22 words: which attempt was most natural and one quick tip"}`;
+{"best":1,"clean":"true if the best attempt needed no meaningful change (ignore capitalization and punctuation), else false",${TAGS_FIELD.replace('their mistakes', 'the mistakes in the best attempt')},"natural":"one natural native version (1-2 sentences)","chunk":"the single most reusable phrase from your native version","note":"max 22 words: which attempt was most natural and one quick tip"}`;
   const obj = await aiObj({
     contents: [{ parts: [{ text: userMsg }] }],
     generationConfig: { responseMimeType: 'application/json' },
   });
-  if (obj && obj.natural && obj.chunk) return obj;
-  return null;
+  if (!obj || !obj.natural || !obj.chunk) return null;
+  obj.clean = truthy(obj.clean);
+  obj.tags = cleanTags(obj.tags);
+  return obj;
 }
 
 async function finishThreeWays(lastAttempt) {
   const p = current.prompt;
-  const attempts = [...current.three.attempts, lastAttempt]; /* 3 entries, blanks allowed */
-  const nonBlank = attempts.filter(Boolean);
+  const takes = [...current.three.attempts, lastAttempt]; /* 3 entries, blanks allowed */
+  const nonBlank = takes.filter(Boolean);
 
   show('resultCard');
   showCalque('');
@@ -1208,22 +1359,23 @@ async function finishThreeWays(lastAttempt) {
   $('sitResult').style.display = 'none';
   $('yourBlurt').innerHTML =
     'You tried:' +
-    attempts.map((a, i) => '<div>' + (i + 1) + '. ' + (a ? esc(a) : '(blank)') + '</div>').join('');
+    takes.map((a, i) => '<div>' + (i + 1) + '. ' + (a ? esc(a) : '(blank)') + '</div>').join('');
   resetResultCard();
   $('naturalText').innerHTML = '<span class="spin"></span> Picking your most natural take...';
   $('chunkText').textContent = '...';
   $('noteText').textContent = '';
 
   let res = null;
-  if (nonBlank.length) res = await askGeminiThreeWays(p, attempts);
+  if (nonBlank.length) res = await askGeminiThreeWays(p, takes);
+  const graded = !!res;
   if (!res) res = { best: 1, natural: p.sample, chunk: p.chunk || '', note: p.note || '' };
   lastResult = { natural: res.natural, chunk: res.chunk, note: res.note };
 
   /* mark the AI's pick among the three tries */
-  const bi = Math.min(Math.max(parseInt(res.best, 10) || 1, 1), attempts.length) - 1;
+  const bi = Math.min(Math.max(parseInt(res.best, 10) || 1, 1), takes.length) - 1;
   $('yourBlurt').innerHTML =
     'You tried:' +
-    attempts
+    takes
       .map(
         (a, i) =>
           '<div' +
@@ -1241,32 +1393,39 @@ async function finishThreeWays(lastAttempt) {
   $('noteText').textContent = res.note || '';
 
   /* log the chosen take so warm-up / replay can re-serve it */
-  if (nonBlank.length) {
-    if (!Array.isArray(state.repLog)) state.repLog = [];
-    state.repLog.push({
-      d: dayStr(0),
+  if (nonBlank.length)
+    logAttempt({
+      source: 'three',
+      kind: p.kind,
       prompt: p.text,
-      blurt: attempts[bi] || nonBlank[0],
+      blurt: takes[bi] || nonBlank[0],
       fix: res.natural || '',
+      natural: res.natural || '',
       note: res.note || '',
+      tags: res.tags,
+      clean: graded ? res.clean : null,
     });
-    if (state.repLog.length > 30) state.repLog = state.repLog.slice(-30);
-    saveState();
-  }
 }
 
 /* ================= mistake replay ================= */
-/* Re-serve a past prompt you flubbed (logged in state.repLog) so you can beat
-   your earlier attempt; the AI judges whether the old slip is gone. */
+/* Re-serve a past prompt you flubbed so you can beat your earlier attempt; the
+   AI judges whether the old slip is gone. A prompt stays in the pool until its
+   latest attempt is clean, and only the 30 most recent misses are kept. */
+const REPLAY_SOURCES = ['practice', 'three', 'replay'];
 function replayPool() {
-  return (state.repLog || []).filter(
-    (r) => r.prompt && r.blurt && r.fix && norm(r.blurt) !== norm(r.fix),
-  );
+  const latest = new Map();
+  attempts.forEach((a) => {
+    if (REPLAY_SOURCES.includes(a.source) && a.prompt && a.blurt) latest.set(a.prompt, a);
+  });
+  return [...latest.values()]
+    .filter((r) => r.fix && r.clean !== true && norm(r.blurt) !== norm(r.fix))
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))
+    .slice(-30);
 }
 /* Chunks you've saved but never actually used in a rep answer — the ones rotting
    on the shelf. genPrompt targets these to force them into real use. */
 function avoidedChunks() {
-  const used = (state.repLog || []).map((r) => norm(r.blurt || ''));
+  const used = attempts.map((r) => norm(r.blurt || ''));
   return chunks.filter((c) => c.chunk && !used.some((b) => b && b.includes(norm(c.chunk))));
 }
 /* The session warm-up: re-serve one recent miss. Prefer a miss from a PRIOR day —
@@ -1342,13 +1501,16 @@ Their earlier attempt (had issues): "${orig.blurt}"
 The corrected version they were shown then: "${orig.fix}"
 Their NEW attempt: "${blurt}"
 Judge whether the new attempt avoids the earlier mistake and sounds natural. Reply with ONLY JSON:
-{"improved":true or false,"natural":"the most natural way to say it (1-2 sentences)","chunk":"the single most reusable phrase from the natural version","note":"one short coaching note, max 22 words"}`;
+{"improved":true or false,"clean":"true if the NEW attempt needed no meaningful change (ignore capitalization and punctuation), else false",${TAGS_FIELD.replace('their mistakes', 'the mistakes in the NEW attempt')},"natural":"the most natural way to say it (1-2 sentences)","chunk":"the single most reusable phrase from the natural version","note":"one short coaching note, max 22 words"}`;
   const obj = await aiObj({
     contents: [{ parts: [{ text: msg }] }],
     generationConfig: { responseMimeType: 'application/json' },
   });
-  if (obj && obj.natural) return obj;
-  return null;
+  if (!obj || !obj.natural) return null;
+  obj.improved = truthy(obj.improved) ? true : obj.improved === false || obj.improved === 'false' ? false : null;
+  obj.clean = truthy(obj.clean);
+  obj.tags = cleanTags(obj.tags);
+  return obj;
 }
 async function finishReplay(blurt) {
   if (current.warmup) {
@@ -1368,6 +1530,18 @@ async function finishReplay(blurt) {
   const orig = current.replay;
   const res = blurt ? await replayJudge(orig, blurt) : null;
   const out = res || { improved: null, natural: orig.fix, chunk: '', note: '' };
+  if (blurt)
+    logAttempt({
+      source: 'replay',
+      kind: orig.kind || null,
+      prompt: orig.prompt,
+      blurt,
+      fix: out.natural || '',
+      natural: out.natural || '',
+      note: out.note || '',
+      tags: res ? res.tags : [],
+      clean: res ? res.clean : null,
+    });
   lastResult = { natural: out.natural, chunk: out.chunk || '', note: out.note || '' };
   const verdict =
     out.improved === true
@@ -2728,15 +2902,7 @@ Assess the learner's spoken English across the conversation. Reply ONLY JSON:
   });
   conv.done = true;
   conv.result = obj || { grade: 'Done', used: [], note: '' };
-  // a finished conversation counts as one homework rep
-  state.total++;
-  hist().reps++;
-  if (state.hw.date !== dayStr(0)) state.hw = { date: dayStr(0), reps: 0 };
-  state.hw.reps++;
-  saveState();
-  creditStreakIfDone();
-  renderHeader();
-  renderHW();
+  creditRep(); /* a finished conversation counts as one homework rep */
   convRender();
 }
 function convRender(thinking) {
@@ -3666,6 +3832,103 @@ Reply ONLY JSON: {"cat":"${CAT_IDS.filter((id) => state.cats.includes(id)).join(
 }
 
 /* ================= 6. stats ================= */
+/* CSS height for a .statBar at pct% of its column, leaving room for the label. */
+function barHeight(pct) {
+  return 'calc((100% - 16px) * ' + (Math.max(0, Math.min(100, pct)) / 100).toFixed(3) + ')';
+}
+/* Clean rate: this week vs last, then 12 weekly bars (rolling 7-day windows). */
+function cleanRateHTML() {
+  const now = cleanStats(dayStr(-6)),
+    prev = cleanStats(dayStr(-13), dayStr(-7));
+  const pct = (x) => (x.pct == null ? '—' : x.pct + '%');
+  const weeks = [];
+  for (let w = 11; w >= 0; w--) {
+    const to = dayStr(-7 * w),
+      from = dayStr(-7 * w - 6);
+    weeks.push({ from, ...cleanStats(from, to) });
+  }
+  const bars = weeks
+    .map(
+      (w) =>
+        '<div class="statCol" title="' +
+        w.from +
+        ': ' +
+        (w.pct == null ? 'nothing graded' : w.pct + '% of ' + w.n) +
+        '"><div class="statBar" style="height:' +
+        barHeight(w.pct || 0) +
+        ';opacity:' +
+        (w.n ? 1 : 0.15) +
+        '"></div><div class="statLbl">' +
+        w.from.slice(8) +
+        '</div></div>',
+    )
+    .join('');
+  return (
+    '<div class="eyebrow">Clean rate</div>' +
+    '<div class="statRow" style="margin-top:0">' +
+    '<div class="statCell"><div class="statBig" style="color:var(--mint)">' +
+    pct(now) +
+    '</div><p class="hint">clean this week' +
+    (now.n ? ' (' + now.clean + ' of ' + now.n + ')' : '') +
+    '</p></div>' +
+    '<div class="statCell"><div class="statBig">' +
+    pct(prev) +
+    '</div><p class="hint">last week</p></div>' +
+    '</div>' +
+    '<div class="statGrid clean">' +
+    bars +
+    '</div>' +
+    '<p class="hint">Share of checked answers that needed no fix, per week (12 weeks; each bar starts on that day).</p>'
+  );
+}
+/* Plain-words names for the internal error tags. */
+const TAG_LABELS = {
+  article: 'a / an / the',
+  tense: 'time of the verb',
+  preposition: 'in / on / at / for…',
+  'word-order': 'word order',
+  'word-choice': 'word choice',
+  plural: 'one vs. many',
+  'missing-word': 'missing word',
+  calque: 'Vietnamese word-for-word',
+};
+/* What kind of fixes you got in the last 30 days, vs the 30 before. */
+function errorTypesHTML() {
+  const count = (from, to) => {
+    const m = {};
+    attempts
+      .filter((a) => a.d >= from && (!to || a.d <= to))
+      .forEach((a) => (a.tags || []).forEach((t) => (m[t] = (m[t] || 0) + 1)));
+    return m;
+  };
+  const cur = count(dayStr(-29)),
+    prev = count(dayStr(-59), dayStr(-30));
+  const tags = Object.keys(cur).sort((a, b) => cur[b] - cur[a]);
+  if (!tags.length) return '';
+  const max = cur[tags[0]];
+  return (
+    '<div style="margin-top:22px"><div class="eyebrow">What your fixes were about · 30 days</div>' +
+    tags
+      .map((t) => {
+        const d = cur[t] - (prev[t] || 0);
+        const delta =
+          d === 0 ? 'same as before' : d < 0 ? '▼ ' + -d + ' fewer' : '▲ ' + d + ' more';
+        return (
+          '<div class="tagRow"><div class="tagHead"><span>' +
+          esc(TAG_LABELS[t] || t) +
+          ' · <b>' +
+          cur[t] +
+          '</b></span><small>' +
+          delta +
+          '</small></div><div class="rxBar"><div class="rxFill" style="width:' +
+          Math.round((100 * cur[t]) / max) +
+          '%"></div></div></div>'
+        );
+      })
+      .join('') +
+    '</div>'
+  );
+}
 function renderStats() {
   const h = state.history || {};
   const days = [];
@@ -3676,8 +3939,8 @@ function renderStats() {
       const r = (h[d] && h[d].reps) || 0;
       return (
         '<div class="statCol"><div class="statBar" style="height:' +
-        Math.round((100 * r) / max) +
-        '%;opacity:' +
+        barHeight((100 * r) / max) +
+        ';opacity:' +
         (r ? 1 : 0.15) +
         '"></div><div class="statLbl">' +
         d.slice(8) +
@@ -3706,6 +3969,8 @@ function renderStats() {
     .sort((a, b) => (b.misses || 0) - (a.misses || 0))
     .slice(0, 3);
   $('statsBody').innerHTML =
+    cleanRateHTML() +
+    '<div class="eyebrow" style="margin-top:22px">Reps, last 14 days</div>' +
     '<div class="statGrid">' +
     bars +
     '</div>' +
@@ -3729,6 +3994,7 @@ function renderStats() {
     '</p></div>' +
     '</div>' +
     heatmapHTML() +
+    errorTypesHTML() +
     (state.lastPattern && state.lastPattern.text
       ? '<div style="margin-top:18px"><div class="eyebrow">This week\'s pattern</div><div class="chunkItem"><div>' +
         esc(state.lastPattern.text) +
@@ -3796,7 +4062,7 @@ function heatmapHTML() {
    Returns a short coaching line, or null (too few samples / offline / AI down). */
 async function genWeeklyPattern() {
   if (!loggedIn()) return null;
-  const log = (state.repLog || []).filter((r) => r.d >= dayStr(-7) && r.blurt && r.fix);
+  const log = attempts.filter((r) => r.d >= dayStr(-7) && r.blurt && r.fix && r.clean !== true);
   if (log.length < 3) return null; /* need a few samples before a pattern means anything */
   const samples = log
     .slice(-15)
