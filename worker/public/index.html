@@ -94,7 +94,7 @@
         </div>
         <div class="clock" id="clock">45</div>
       </div>
-      <textarea id="blurtInput" placeholder="Type fast — or hit the mic and speak. (Enter to check · Shift+Enter for a new line)" autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();repPrimary();}"></textarea>
+      <textarea id="blurtInput" placeholder="Type fast, don't polish. (Enter to check · Shift+Enter for a new line)" autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();repPrimary();}"></textarea>
       <div class="row">
         <button class="btn" id="checkBtn" onclick="repPrimary()">Done — check it</button>
         <button class="btn mic" id="micBtn" onclick="toggleMic()" title="Speak instead of typing" style="display:none">🎙</button>
@@ -104,6 +104,7 @@
     </div>
 
     <div class="card result" id="resultCard" style="display:none">
+      <div class="cleanLead" id="cleanLead" style="display:none">✓ That was already natural</div>
       <div class="eyebrow">How a native might say it<button class="speak" onclick="speakNatural()" title="Hear it">🔊</button></div>
       <div class="you" id="yourBlurt"></div>
       <div id="calqueNote" style="display:none">
@@ -122,8 +123,8 @@
       <div id="sitResult" style="display:none">
         <div id="fixedBlock">
           <div class="eyebrow" style="margin-top:2px">Your answer, fixed</div>
-          <div class="natural" id="fixedText"></div>
-          <div class="chunkBox">
+          <div class="natural diff" id="fixedText"></div>
+          <div class="chunkBox" id="fixedChunkBox">
             <div>chunk → <b id="fixedChunkText"></b></div>
             <button class="btn ghost" id="saveFixedBtn" onclick="saveChunk('fixed')">Save</button>
           </div>
@@ -139,9 +140,15 @@
       </div>
 
       <p class="note" id="noteText"></p>
+      <div id="typeBack" style="display:none">
+        <input class="drillIn" id="typeBackIn" autocomplete="off" placeholder="Type the native version from memory, then Enter">
+        <div id="typeBackOut"></div>
+      </div>
       <div class="row">
         <button class="btn pulse js-next" onclick="nextRep()">Next rep →</button>
         <button class="btn ghost" onclick="backToReady()">Done for now</button>
+        <button class="btn ghost" id="typeBackBtn" onclick="startTypeBack()">⌨️ Type it back</button>
+        <button class="speak" onclick="speakNatural()" title="Hear it">🔊</button>
       </div>
     </div>
   </div>
@@ -248,6 +255,12 @@
         <button class="btn ghost" onclick="saveHwReps()">Save</button>
       </div>
       <p class="hint" id="hwCfgStatus"></p>
+    </div>
+
+    <div class="card" id="voiceCard">
+      <div class="eyebrow">🎤 Voice input</div>
+      <p class="hint">Show mic buttons so you can speak instead of type. Speech recognition can mishear an accent, so the mic only fills the box; you always press Check yourself.</p>
+      <div class="row"><button class="chip" id="voiceChip" onclick="toggleVoice()"></button></div>
     </div>
 
     <div class="card" id="ctxCard">

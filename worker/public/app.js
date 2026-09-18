@@ -60,7 +60,7 @@ let state = {
   lastRecap: null,
   lastPattern: null,
   repLog: [],
-  settings: { hwReps: 3 },
+  settings: { hwReps: 3, voice: false },
 };
 const GEM_MODEL = 'gemini-2.5-flash';
 let chunks = [];
@@ -73,7 +73,6 @@ let drillCurrent = null,
   rec = null,
   micLive = false,
   micBtnId = 'micBtn',
-  micOnFinal = null,
   lastShownEx = null;
 let aiPrompts = []; /* generated prompts, kept server-side so they follow you across devices */
 
@@ -374,6 +373,7 @@ async function loadAll() {
   if (!['vn', 'sit', 'reflex', 'expr', 'mix', 'three'].includes(state.ptype)) state.ptype = 'vn';
   if (!state.settings) state.settings = { hwReps: 3 };
   if (!(state.settings.hwReps > 0)) state.settings.hwReps = 3;
+  if (typeof state.settings.voice !== 'boolean') state.settings.voice = false;
   if (!state.hw || state.hw.date !== dayStr(0)) state.hw = { date: dayStr(0), reps: 0 };
   if (!state.warmup || state.warmup.date !== dayStr(0))
     state.warmup = { date: dayStr(0), done: false };
@@ -638,6 +638,7 @@ function startSmartSession() {
 }
 function renderAll() {
   renderHeader();
+  renderVoice();
   renderChips();
   renderTypeChips();
   renderHW();
@@ -664,6 +665,7 @@ function toggleSettings() {
     $('hwCfgStatus').textContent = '';
     $('personalCtx').value = state.settings.context || '';
     $('ctxStatus').textContent = '';
+    renderVoice();
   } /* don't run a rep behind the panel */
 }
 function savePersonalCtx() {
@@ -752,7 +754,7 @@ const PTYPES = [
 ];
 /* '3 ways' is a flow variation, not a prompt kind — under the hood it draws any
    kind, like Mix. Keep this list in sync wherever ptype gates kind filtering.
-   'reflex' and 'expr' render like 'sit' (see isSit / askGemini) but each draws
+   'reflex' and 'expr' are judged like 'sit' (see askGemini) but each draws
    only its own curated bank, and both are kept OUT of the mix/3-ways pool
    (see pool()). 'expr' drills a fixed sentence PATTERN (e.g. "have no right
    to ___") across different scenarios — the chunk is the pattern, not a
@@ -1049,66 +1051,59 @@ async function finishRep() {
   $('yourBlurt').textContent = blurt
     ? 'You: ' + blurt
     : "You: (blank — that's okay, blank reps count too)";
-  resetSaveBtn();
+  resetResultCard();
 
-  const isSit = (p.kind === 'sit' || p.kind === 'reflex' || p.kind === 'expr') && !!p.chunk;
-  $('vnResult').style.display = isSit ? 'none' : '';
-  $('sitResult').style.display = isSit ? '' : 'none';
-
-  if (isSit) {
-    $('suggestBlock').style.display = '';
-    if (p.kind !== 'expr') {
-      $('fixedText').innerHTML = '<span class="spin"></span> Fixing your answer...';
-      $('suggestText').innerHTML = '<span class="spin"></span> Cooking up a suggestion...';
-    }
-  } else {
-    $('naturalText').innerHTML = '<span class="spin"></span> Getting the natural version...';
-    $('chunkText').textContent = '...';
-  }
+  /* Every kind uses the same layout: your sentence with only the mistakes fixed
+     (as a word diff), then a native version. */
+  const judged = !!blurt && p.kind !== 'expr';
+  $('vnResult').style.display = 'none';
+  $('sitResult').style.display = '';
+  $('fixedBlock').style.display = judged ? '' : 'none';
+  $('suggestBlock').style.display = '';
+  if (judged) $('fixedText').innerHTML = '<span class="spin"></span> Fixing your answer...';
+  $('suggestText').innerHTML = '<span class="spin"></span> Cooking up a suggestion...';
   $('noteText').textContent = '';
 
   let result = null;
   /* expr has no AI judging — the curated sample IS the model answer, so there's
      nothing for the AI to correct against. */
-  if (blurt && p.kind !== 'expr') result = await askGemini(p, blurt);
-  if (!result)
-    result = isSit
-      ? { fixedAnswer: p.sample, natural: p.sample, chunk: p.chunk, note: p.note }
-      : { natural: p.sample, chunk: p.chunk, note: p.note };
-  if (isSit) result.chunk = p.chunk;
+  if (judged) result = await askGemini(p, blurt);
+  /* No AI answer (blank rep, expr, or AI down): show the bank's sample only —
+     never present it as a correction of what they wrote. */
+  const fallback = !result;
+  if (fallback) result = { natural: p.sample, chunk: p.chunk, note: p.note };
+  if (p.kind !== 'vn' && p.chunk) result.chunk = p.chunk;
+  const fixed = fallback ? '' : result.fixedAnswer || '';
+  const native = result.natural || fixed;
+  const clean = !!fixed && (result.clean === true || norm(blurt) === norm(fixed));
+  result.clean = clean;
   lastResult = result;
-  showCalque(result.calque);
+  showCalque(clean ? '' : result.calque);
 
-  if (isSit) {
-    const fixed = result.fixedAnswer || result.natural;
-    const native = result.natural || fixed;
-    if (blurt && p.kind !== 'expr') {
-      /* they actually wrote something → show the correction of THEIR answer,
-         then a native version only if it's genuinely different. */
-      $('fixedBlock').style.display = '';
-      $('fixedText').textContent = fixed;
-      $('fixedChunkText').textContent = result.chunk;
-      const dupe = norm(native) === norm(fixed);
-      $('suggestBlock').style.display = dupe ? 'none' : '';
-      $('suggestEyebrow').textContent = 'Or say it like this';
-      if (!dupe) {
-        $('suggestText').textContent = native;
-        $('suggestChunkText').textContent = result.chunk;
-      }
-    } else {
-      /* blank rep, or expr (no AI judging of their attempt) → just show how the
-         pattern fills in. */
-      $('fixedBlock').style.display = 'none';
-      $('suggestBlock').style.display = '';
-      $('suggestEyebrow').textContent =
-        p.kind === 'expr' ? 'How the pattern fills in' : 'How a native might say it';
-      $('suggestText').textContent = native;
-      $('suggestChunkText').textContent = result.chunk;
-    }
-  } else {
-    $('naturalText').textContent = result.natural;
-    $('chunkText').textContent = result.chunk;
+  $('cleanLead').style.display = clean ? '' : 'none';
+  const showFixed = judged && !!fixed && !clean;
+  $('fixedBlock').style.display = showFixed ? '' : 'none';
+  if (showFixed) {
+    $('fixedText').innerHTML = wordDiff(blurt, fixed);
+    $('fixedChunkText').textContent = result.chunk;
+    /* The chunk box saves your own fixed sentence as the drill example, so only
+       offer it when Drill can actually blank the chunk in that sentence. */
+    $('fixedChunkBox').style.display = drillBlank(result.chunk, fixed).hasBlank ? '' : 'none';
   }
+  const dupe = !!fixed && norm(native) === norm(fixed);
+  $('suggestEyebrow').textContent = clean
+    ? dupe
+      ? 'Exactly how a native would say it'
+      : 'Another way a native might say it'
+    : showFixed
+      ? 'Or say it like this'
+      : p.kind === 'expr'
+        ? 'How the pattern fills in'
+        : 'How a native might say it';
+  /* A native version identical to the fix adds nothing — unless it's all we show. */
+  $('suggestBlock').style.display = showFixed && dupe ? 'none' : '';
+  $('suggestText').textContent = native;
+  $('suggestChunkText').textContent = result.chunk;
   $('noteText').textContent = result.note || '';
 
   /* answer's in — put focus on the Save button so Tab/Enter work without the mouse. */
@@ -1123,7 +1118,7 @@ async function finishRep() {
       d: dayStr(0),
       prompt: p.text,
       blurt,
-      fix: (isSit ? result.fixedAnswer || result.natural : result.natural) || '',
+      fix: fixed || result.natural || '',
       note: result.note || '',
     });
     if (state.repLog.length > 30) state.repLog = state.repLog.slice(-30);
@@ -1143,7 +1138,7 @@ async function askGemini(p, blurt) {
   if (p.kind === 'vn') {
     task = 'The prompt was a Vietnamese sentence to express in English: "' + p.text + '"';
     instr =
-      '{"natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (e.g. wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short encouraging coaching note (max 22 words) about the main gap between their version and the natural one. If their version was already natural, say so."}';
+      '{"fixedAnswer":"THEIR sentence, corrected. Keep their own words and structure; change only what is grammatically wrong, unclear, or unnatural. This is their answer cleaned up — NOT a rewrite. If nothing needs changing, copy it exactly.","clean":"true if their sentence needed no meaningful change (a native would say it that way, ignoring capitalization and punctuation), else false","natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (e.g. wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short encouraging coaching note (max 22 words). If clean, say specifically what they did well. Otherwise name the main fix."}';
   } else {
     task =
       'Situation: "' +
@@ -1151,7 +1146,7 @@ async function askGemini(p, blurt) {
       '"' +
       (p.chunk ? '\nTarget chunk to practice: "' + p.chunk + '"' : '');
     instr =
-      '{"fixedAnswer":"THEIR sentence, corrected. Keep their own words and structure; change only what is grammatically wrong, unclear, or unnatural, and make sure the target chunk is used. This is their answer cleaned up — NOT a rewrite.","natural":"a different, native way to say it that uses the target chunk. Must NOT be the same sentence as fixedAnswer.","chunk":"the target chunk, copied exactly","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short tip (max 20 words): did they use the chunk well, and the key fix."}';
+      '{"fixedAnswer":"THEIR sentence, corrected. Keep their own words and structure; change only what is grammatically wrong, unclear, or unnatural, and make sure the target chunk is used. This is their answer cleaned up — NOT a rewrite.","clean":"true if their sentence needed no meaningful change (natural as written and it uses the target chunk; ignore capitalization and punctuation), else false","natural":"a different, native way to say it that uses the target chunk. Must NOT be the same sentence as fixedAnswer.","chunk":"the target chunk, copied exactly","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.","note":"one short tip (max 20 words). If clean, say specifically what they did well. Otherwise: did they use the chunk well, and the key fix."}';
   }
   const userMsg = `You are a friendly English fluency coach for a Vietnamese software developer practicing fast speech-like production.
 ${task}
@@ -1164,6 +1159,7 @@ ${instr}`;
     generationConfig: { responseMimeType: 'application/json' },
   });
   if (!obj || !obj.chunk) return null;
+  obj.clean = obj.clean === true || obj.clean === 'true';
   if (p.kind === 'sit' || p.kind === 'reflex' || p.kind === 'expr') {
     /* situation/reflex/expression need at least one answer field; fill the missing
        one from the other so the renderer always has a real value to show. */
@@ -1213,7 +1209,7 @@ async function finishThreeWays(lastAttempt) {
   $('yourBlurt').innerHTML =
     'You tried:' +
     attempts.map((a, i) => '<div>' + (i + 1) + '. ' + (a ? esc(a) : '(blank)') + '</div>').join('');
-  resetSaveBtn();
+  resetResultCard();
   $('naturalText').innerHTML = '<span class="spin"></span> Picking your most natural take...';
   $('chunkText').textContent = '...';
   $('noteText').textContent = '';
@@ -1363,7 +1359,7 @@ async function finishReplay(blurt) {
   show('resultCard');
   showCalque('');
   $('yourBlurt').textContent = blurt ? 'You now: ' + blurt : "You: (blank — that's okay)";
-  resetSaveBtn();
+  resetResultCard();
   $('vnResult').style.display = '';
   $('sitResult').style.display = 'none';
   $('naturalText').innerHTML = '<span class="spin"></span> Comparing with last time...';
@@ -1381,9 +1377,13 @@ async function finishReplay(blurt) {
         : '';
   $('naturalText').innerHTML =
     verdict +
-    '<div class="replayOld" style="opacity:.7;margin:6px 0">Last time you said: ' +
-    esc(orig.blurt) +
-    '</div>' +
+    (blurt
+      ? '<div class="replayOld diff" style="margin:6px 0">Last time → now: ' +
+        wordDiff(orig.blurt, blurt) +
+        '</div>'
+      : '<div class="replayOld" style="opacity:.7;margin:6px 0">Last time you said: ' +
+        esc(orig.blurt) +
+        '</div>') +
     '<div>' +
     esc(out.natural) +
     '</div>';
@@ -1393,10 +1393,22 @@ async function finishReplay(blurt) {
 
 /* ================= voice ================= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-if (SR) {
-  document.addEventListener('DOMContentLoaded', () => {
-    $('micBtn').style.display = '';
-  });
+/* Mic buttons only when the browser supports it AND Voice input is switched on
+   in Settings (off by default: recognition mishears accents). */
+function micOk() {
+  return !!(SR && state.settings && state.settings.voice);
+}
+function renderVoice() {
+  const on = !!state.settings.voice;
+  $('voiceChip').textContent = on ? '🎤 Voice input: on' : 'Voice input: off';
+  $('voiceChip').classList.toggle('on', on);
+  $('micBtn').style.display = micOk() ? '' : 'none';
+}
+function toggleVoice() {
+  state.settings.voice = !state.settings.voice;
+  if (!state.settings.voice) stopMic();
+  saveState();
+  renderVoice();
 }
 
 /* ================= theme ================= */
@@ -1418,10 +1430,9 @@ document.addEventListener('DOMContentLoaded', updateThemeBtn);
 function toggleMic() {
   micLive ? stopMic() : startMic();
 }
-function startMic(inputId, btnId, onFinal) {
+function startMic(inputId, btnId) {
   if (!SR) return;
   micBtnId = btnId || 'micBtn';
-  micOnFinal = onFinal || null;
   rec = new SR();
   rec.lang = 'en-US';
   rec.continuous = true;
@@ -1431,7 +1442,6 @@ function startMic(inputId, btnId, onFinal) {
     for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
     const box = $(inputId || 'blurtInput');
     if (box) box.value = (box.value + ' ' + t).trim();
-    if (micOnFinal) micOnFinal();
   };
   rec.onend = () => {
     micLive = false;
@@ -1460,8 +1470,8 @@ function stopMic() {
   const b = $(micBtnId);
   if (b) b.classList.remove('live');
 }
-/* Drill: speak your answer. The recognized text fills the blank, then we
-   auto-check it — closes the gap between typing and actually saying the chunk. */
+/* Drill: speak your answer. The recognized text fills the blank; you check it
+   yourself, so a misheard word is never graded as a miss. */
 function toggleDrillMic() {
   if (micLive) {
     stopMic();
@@ -1469,10 +1479,7 @@ function toggleDrillMic() {
   }
   const box = $('drillInput');
   if (box) box.value = '';
-  startMic('drillInput', 'drillMicBtn', () => {
-    stopMic();
-    drillCheck();
-  });
+  startMic('drillInput', 'drillMicBtn'); /* fills the box only — you press Check */
 }
 
 /* ================= drill (due-today queue) ================= */
@@ -1632,7 +1639,7 @@ function showDrillCard(idx, scheduled, mode, bodyId, exOverride) {
     (hasBlank ? '' : '<p class="hint">Type the chunk you saved for this sentence:</p>') +
     '<input class="drillIn" id="drillInput" autocomplete="off" placeholder="Fill the blank from memory...">' +
     '<div class="row"><button class="btn" onclick="drillCheck()">Check</button>' +
-    (SR
+    (micOk()
       ? '<button class="btn mic" id="drillMicBtn" onclick="toggleDrillMic()" title="Say it out loud">🎤</button>'
       : '') +
     '<button class="btn ghost" onclick="drillReveal()">I forgot — show me</button></div>' +
@@ -1654,6 +1661,42 @@ function norm(s) {
     .replace(/[^a-z0-9 ]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+/* Word-level diff of a → b as HTML: words only in a are <del>, words only in b
+   are <ins>. Words are compared through norm() (so case and punctuation alone
+   don't count as a change) and shown as b spells them. */
+function wordDiff(a, b) {
+  const A = String(a || '').split(/\s+/).filter(Boolean),
+    B = String(b || '').split(/\s+/).filter(Boolean);
+  const nA = A.map(norm),
+    nB = B.map(norm);
+  /* LCS table, filled from the end so the walk below goes front to back. */
+  const L = Array.from({ length: A.length + 1 }, () => new Array(B.length + 1).fill(0));
+  for (let i = A.length - 1; i >= 0; i--)
+    for (let j = B.length - 1; j >= 0; j--)
+      L[i][j] = nA[i] === nB[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const out = [];
+  let i = 0,
+    j = 0,
+    dels = [],
+    ins = [];
+  const flush = () => {
+    if (dels.length) out.push('<del>' + esc(dels.join(' ')) + '</del>');
+    if (ins.length) out.push('<ins>' + esc(ins.join(' ')) + '</ins>');
+    dels = [];
+    ins = [];
+  };
+  while (i < A.length || j < B.length) {
+    if (i < A.length && j < B.length && nA[i] === nB[j]) {
+      flush();
+      out.push(esc(B[j]));
+      i++;
+      j++;
+    } else if (j < B.length && (i === A.length || L[i][j + 1] >= L[i + 1][j])) ins.push(B[j++]);
+    else dels.push(A[i++]);
+  }
+  flush();
+  return out.join(' ');
 }
 function drillCheck() {
   if (micLive) stopMic();
@@ -1945,7 +1988,7 @@ function dictationNext() {
   $('randomBody').innerHTML =
     '<div class="rxMeta">🎧 Listen, then write what you heard</div>' +
     '<div class="row" style="justify-content:center"><button class="btn" onclick="dictPlay()">🔊 Play</button>' +
-    (SR
+    (micOk()
       ? '<button class="btn mic" id="dictMicBtn" onclick="toggleDictMic()" title="Say what you heard">🎤</button>'
       : '') +
     '</div>' +
@@ -1969,10 +2012,7 @@ function toggleDictMic() {
   }
   const box = $('dictInput');
   if (box) box.value = '';
-  startMic('dictInput', 'dictMicBtn', () => {
-    stopMic();
-    dictCheck();
-  });
+  startMic('dictInput', 'dictMicBtn'); /* fills the box only — you press Check */
 }
 function dictCheck() {
   if (!dictCur) return;
@@ -2742,7 +2782,7 @@ function convRender(thinking) {
     html +=
       '<input class="drillIn" id="convInput" autocomplete="off" placeholder="Your reply...">' +
       '<div class="row"><button class="btn" onclick="convSend()">Send</button>' +
-      (SR
+      (micOk()
         ? '<button class="btn mic" id="convMicBtn" onclick="toggleConvMic()" title="Speak your reply">🎤</button>'
         : '') +
       '<button class="btn ghost" onclick="convEnd()">End &amp; grade</button></div>' +
@@ -2761,6 +2801,53 @@ function convRender(thinking) {
 }
 
 /* ================= chunks tab ================= */
+/* Clear what a previous result left behind: save buttons, the clean banner,
+   and any type-it-back attempt. */
+function resetResultCard() {
+  resetSaveBtn();
+  $('cleanLead').style.display = 'none';
+  $('typeBack').style.display = 'none';
+  $('typeBackIn').value = '';
+  $('typeBackOut').innerHTML = '';
+  $('typeBackBtn').style.display = '';
+  ['suggestText', 'naturalText'].forEach((id) => $(id).classList.remove('blurred'));
+}
+/* Type it back: hide the native version, retype it from memory, see the diff.
+   Pure practice — no effect on homework, streak, or the schedule. */
+function typeBackTarget() {
+  return $('sitResult').style.display !== 'none' ? $('suggestText') : $('naturalText');
+}
+function startTypeBack() {
+  if (!lastResult || !lastResult.natural) return;
+  typeBackTarget().classList.add('blurred');
+  $('typeBackBtn').style.display = 'none';
+  $('typeBack').style.display = '';
+  $('typeBackOut').innerHTML = '';
+  const inp = $('typeBackIn');
+  inp.value = '';
+  inp.disabled = false;
+  inp.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      checkTypeBack();
+    }
+  };
+  inp.focus();
+}
+function checkTypeBack() {
+  const inp = $('typeBackIn');
+  const typed = inp.value.trim();
+  if (!typed || !lastResult) return;
+  const target = lastResult.natural;
+  inp.disabled = true;
+  typeBackTarget().classList.remove('blurred');
+  const exact = norm(typed) === norm(target);
+  $('typeBackOut').innerHTML =
+    (exact
+      ? '<div class="verdict good">✓ Word for word.</div>'
+      : '<div class="verdict badv">Close. Here\'s what changed:</div>') +
+    (exact ? '' : '<div class="natural diff">' + wordDiff(typed, target) + '</div>');
+}
 function resetSaveBtn() {
   [
     ['saveChunkBtn', 'Save'],

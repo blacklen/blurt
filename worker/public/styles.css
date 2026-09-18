@@ -135,6 +135,14 @@
   .chunkBox b{color:var(--mint);font-size:1.02rem}
   .note{margin-top:14px;font-size:.92rem;color:var(--muted);font-style:italic}
 
+  /* Word-level diff: what the correction removed vs added. */
+  .diff del{color:var(--bad);text-decoration:line-through;text-decoration-thickness:2px}
+  .diff ins{color:var(--mint);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+  /* "Nothing to fix" leads the result card, and is louder than any correction. */
+  .cleanLead{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.5rem;line-height:1.25;color:var(--mint);border:2px solid var(--mint);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+  .blurred{filter:blur(6px);user-select:none}
+  #typeBackOut .natural{margin-top:12px}
+
   .spin{display:inline-block;width:16px;height:16px;border:2.5px solid var(--ink);border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-right:8px}
   @keyframes sp{to{transform:rotate(360deg)}}
 
