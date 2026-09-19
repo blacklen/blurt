@@ -3492,8 +3492,8 @@ Scenario: ${conv.scenario}
 Transcript:
 ${convTranscript()}
 Target phrases the learner was practicing: ${conv.targets.join(', ') || '(none)'}
-Assess the learner's spoken English across the conversation. Reply ONLY JSON:
-{"grade":"a short verdict like 'Natural' / 'Getting there' / 'Keep practicing'","used":["which target phrases they actually used, if any"],"note":"2-3 sentences of specific, encouraging feedback with one concrete tip"}`,
+Assess the learner's spoken English across the conversation, then check each of the learner's lines (the "Learner:" turns, in order, one entry per line). Reply ONLY JSON:
+{"grade":"a short verdict like 'Natural' / 'Getting there' / 'Keep practicing'","used":["which target phrases they actually used, if any"],"note":"2-3 sentences of specific, encouraging feedback with one concrete tip","lines":[{"you":"the learner's line, exactly as written","fixed":"THEIR line minimally corrected: keep their words, change only what is wrong or unnatural. Copy it exactly if nothing needs changing.","clean":true or false (true = no meaningful change needed, ignoring capitalization and punctuation),${TAGS_FIELD}}]}`,
           },
         ],
       },
@@ -3502,8 +3502,60 @@ Assess the learner's spoken English across the conversation. Reply ONLY JSON:
   });
   conv.done = true;
   conv.result = obj || { grade: 'Done', used: [], note: '' };
+  /* One verdict per learner line, paired by position with what they actually
+     typed (never the AI's copy of it). Ungraded when the AI didn't answer. */
+  const graded = obj && Array.isArray(obj.lines) ? obj.lines : [];
+  conv.result.lines = conv.turns
+    .filter((t) => t.who === 'you')
+    .map((t, i) => {
+      const g = graded[i] || null;
+      const fixed = g && g.fixed ? String(g.fixed).trim() : '';
+      return {
+        you: t.text,
+        fixed,
+        tags: g ? cleanTags(g.tags) : [],
+        clean: !g || !fixed ? null : truthy(g.clean) || norm(t.text) === norm(fixed),
+      };
+    });
+  conv.result.lines.forEach((l) =>
+    logAttempt({
+      source: 'chat',
+      kind: 'chat',
+      prompt: conv.scenario,
+      blurt: l.you,
+      fix: l.fixed,
+      tags: l.tags,
+      clean: l.clean,
+    }),
+  );
   creditRep(); /* a finished conversation counts as one homework rep */
   convRender();
+}
+/* Each of your lines after grading: ✓ when it was already natural, else the diff. */
+function convLinesHTML(lines) {
+  if (!lines.length) return '';
+  const n = lines.filter((l) => l.clean != null).length,
+    c = lines.filter((l) => l.clean).length;
+  return (
+    '<div class="eyebrow" style="margin-top:18px">Your lines' +
+    (n ? ' · ✓ ' + c + ' of ' + n + ' already natural' : '') +
+    '</div>' +
+    lines
+      .map(
+        (l) =>
+          '<div class="writeSent">' +
+          (l.clean === true
+            ? '<div class="cleanSent">✓ ' + esc(l.you) + '</div>'
+            : l.clean === false
+              ? '<div class="natural diff">' + wordDiff(l.you, l.fixed) + '</div>'
+              : '<div>' + esc(l.you) + '</div>') +
+          (l.clean === false && l.tags.length
+            ? '<div style="margin-top:4px;font-size:.78rem;color:var(--muted)">' + l.tags.map((t) => esc(TAG_LABELS[t] || t)).join(' · ') + '</div>'
+            : '') +
+          '</div>',
+      )
+      .join('')
+  );
 }
 function convRender(thinking) {
   if (!conv) {
@@ -3543,6 +3595,7 @@ function convRender(thinking) {
       '<p class="note">' +
       esc(r.note || '') +
       '</p>' +
+      convLinesHTML(r.lines || []) +
       '<div class="row"><button class="btn pulse" onclick="convStart()">New conversation →</button></div>';
   } else {
     html +=
