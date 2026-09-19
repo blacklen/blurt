@@ -51,8 +51,27 @@ curl "http://localhost:8787/__scheduled?cron=0+*+*+*+*"
 ## How the app is served
 
 Everything in `public/` is a static asset served by `[assets]` in
-`wrangler.toml`: `index.html` (markup), `app.js` (all app logic), `styles.css`,
-and the three prompt banks. There is no build step; edit the files directly.
+`wrangler.toml`: `index.html` (markup), `styles.css`, the prompt banks, and the
+app itself as plain `<script>` files loaded in order — no modules, no build
+step, so the inline `onclick` handlers in the markup keep working and
+everything is global on purpose:
+
+| file | holds |
+|---|---|
+| `core.js` | shared state, `$`, `esc`, `norm`, dates, diffs, category/type lists |
+| `sync.js` | auth, the write queue, loading, `logAttempt` |
+| `ui.js` | header, homework card, tabs, settings sheet, 15-minute session |
+| `practice.js` | prompt banks and pool, the rep loop, AI judging, replay, ladder |
+| `drill.js` | SM-2, blanking a chunk in a sentence, the due queue |
+| `random.js` | every Random mode |
+| `chat.js` | role-play and its per-line grading |
+| `write.js` | every Write mode, plus the "do natives say this?" popover |
+| `chunks.js` | the chunk list, adding, mining, backup files |
+| `stats.js` | clean rate, error types, calibration, voice, archive, letters |
+| `voice.js` | speech in/out and the theme toggle |
+| `boot.js` | login gate, reminder settings, `boot()` — loads last |
+
+Bump the `?v=` on each `<script>` in `index.html` when you deploy.
 Static assets are matched first and only `/api/*` runs the Worker, so the app and
 its API share one origin (no CORS, one URL to bookmark).
 

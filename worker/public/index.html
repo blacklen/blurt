@@ -351,6 +351,19 @@
 
 <footer>homework done = streak earned · no freebies</footer>
 
-<script src="app.js?v=20260910"></script>
+<!-- Plain scripts in dependency order (no modules, no build step) so the inline
+     onclick handlers above keep working. boot.js starts the app. -->
+<script src="core.js?v=20260919"></script>
+<script src="sync.js?v=20260919"></script>
+<script src="ui.js?v=20260919"></script>
+<script src="practice.js?v=20260919"></script>
+<script src="drill.js?v=20260919"></script>
+<script src="random.js?v=20260919"></script>
+<script src="chat.js?v=20260919"></script>
+<script src="write.js?v=20260919"></script>
+<script src="chunks.js?v=20260919"></script>
+<script src="stats.js?v=20260919"></script>
+<script src="voice.js?v=20260919"></script>
+<script src="boot.js?v=20260919"></script>
 </body>
 </html>

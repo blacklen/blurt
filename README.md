@@ -49,7 +49,7 @@ After you submit, Gemini shows you how a native speaker would say it, picks the 
 
 ## Stack
 
-- **Frontend** — plain HTML/CSS/JS ([index.html](worker/public/index.html), [app.js](worker/public/app.js), [styles.css](worker/public/styles.css)), no framework, no build step
+- **Frontend** — plain HTML/CSS/JS ([index.html](worker/public/index.html), twelve `<script>` files loaded in order, [styles.css](worker/public/styles.css)), no framework, no build step
 - **Backend** — Cloudflare Worker + D1 ([worker/src/index.js](worker/src/index.js))
 - **AI** — Gemini 2.5 Flash, proxied through the Worker so the key never touches the browser
 - **Notifications** — [ntfy.sh](https://ntfy.sh), topic stored as a server secret
@@ -61,7 +61,7 @@ After you submit, Gemini shows you how a native speaker would say it, picks the 
 worker/
   src/index.js        # Cloudflare Worker: D1 store, Gemini proxy, ntfy proxy, cron
   migrations/         # D1 schema (documents, chunks, attempts)
-  public/             # The frontend (index.html, app.js, styles.css) + prompt banks (*.json)
+  public/             # The frontend (index.html, styles.css, core/sync/ui/practice/… .js) + prompt banks (*.json)
   gen_prompts.py      # Grows public/prompts.json with Gemini
   wrangler.toml       # Worker config, D1 + KV bindings, cron trigger, static assets
 server/
