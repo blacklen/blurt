@@ -224,6 +224,11 @@
           <div class="row"><button class="btn ghost" id="pasteBtn" onclick="extractChunks()">Extract chunks</button></div>
           <div id="pastePreview"></div>
         </div>
+        <div class="addForm">
+          <textarea class="drillIn" id="showText" placeholder="📺 From a show — paste subtitle lines or a scene you just watched. AI turns the moments into your own Reflex scenes." autocomplete="off" style="min-height:64px;resize:vertical"></textarea>
+          <div class="row"><button class="btn ghost" id="showBtn" onclick="mineShow()">Make scenes</button></div>
+          <div id="showPreview"></div>
+        </div>
       </details>
       <input class="drillIn" id="chunkSearch" type="search" autocomplete="off" placeholder="Search your chunks…" oninput="chunkSearchInput()">
       <div id="chunkList"></div>
@@ -282,6 +287,12 @@
         <button class="btn ghost" onclick="saveFreeMin()">Save</button>
       </div>
       <p class="hint" id="freeMinStatus"></p>
+    </div>
+
+    <div class="card" id="vnShareCard">
+      <div class="eyebrow">🇻🇳 Vietnamese prompts: <span id="vnShareLbl">100%</span></div>
+      <p class="hint">In Mix and 3 ways, how many prompts are Vietnamese sentences; the rest are English situations. Lower it as translating fades.</p>
+      <input id="vnShareIn" type="range" min="0" max="100" step="10" value="100" oninput="setVnShare(this.value)" style="width:100%;margin-top:12px;accent-color:var(--mint)">
     </div>
 
     <div class="card" id="voiceCard">

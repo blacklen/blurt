@@ -81,6 +81,8 @@ let drillCurrent = null,
   micBtnId = 'micBtn',
   lastShownEx = null;
 let aiPrompts = []; /* generated prompts, kept server-side so they follow you across devices */
+let myReflexes = []; /* reflex scenes mined from shows you watched (doc blurt:myReflexes) */
+const MY_REFLEX_CAP = 500;
 
 /* ================= sync config (optional server) ================= */
 let API_BASE =
@@ -413,6 +415,7 @@ async function loadAll() {
     const [r] = await Promise.all([
       store.get('blurt:state'),
       loadAiPrompts(),
+      loadMyReflexes(),
       loadChunks(),
       loadAttempts(),
     ]);
@@ -800,6 +803,8 @@ function toggleSettings() {
     $('hwRepsIn').value = state.settings.hwReps;
     $('hwCfgStatus').textContent = '';
     $('freeMinIn').value = freeMin();
+    $('vnShareIn').value = vnShare();
+    $('vnShareLbl').textContent = vnShare() + '%';
     $('freeMinStatus').textContent = '';
     $('personalCtx').value = state.settings.context || '';
     $('ctxStatus').textContent = '';
@@ -971,6 +976,15 @@ const CAT_IDS = CATS.map((c) => c.id);
 /* AI-generated prompts accumulate into their own document, so the pool you've
    built up follows you between devices instead of living on whichever machine
    happened to generate it. */
+async function loadMyReflexes() {
+  const r = await store.get('blurt:myReflexes');
+  myReflexes = [];
+  if (!r) return;
+  try {
+    const arr = JSON.parse(r.value);
+    if (Array.isArray(arr)) myReflexes = arr.filter((p) => p && p.text && p.sample && p.chunk).map((p) => ({ ...p, kind: 'reflex', mine: true }));
+  } catch (e) {}
+}
 async function loadAiPrompts() {
   const r = await store.get('blurt:aiPrompts');
   if (!r) return;
@@ -1006,7 +1020,9 @@ function pool() {
      focused single-pattern drills; "say it 3 ways" makes no sense for either). */
   if (!KIND_PTYPES.includes(state.ptype))
     return byCat.filter((p) => p.kind !== 'reflex' && p.kind !== 'expr');
-  const byKind = byCat.filter((p) => p.kind === state.ptype);
+  let byKind = byCat.filter((p) => p.kind === state.ptype);
+  /* scenes you mined are yours: they skip the mood filter */
+  if (state.ptype === 'reflex') byKind = byKind.concat(myReflexes.filter((p) => !disliked.has(norm(p.text))));
   /* never strand the learner: if this kind is empty for the chosen moods, fall back to all */
   return byKind.length ? byKind : byCat;
 }
@@ -1018,6 +1034,18 @@ function rememberPrompt(text) {
   recentPrompts.push(text);
   while (recentPrompts.length > MAX_RECENT) recentPrompts.shift();
 }
+/* Settings → "Vietnamese prompts": the share of Mix / 3-ways draws that are
+   Vietnamese sentences rather than English situations. */
+function vnShare() {
+  const v = state.settings.vnShare;
+  return v >= 0 && v <= 100 ? v : 100;
+}
+/* 'vn' or 'sit' by that share; null at 100% (no weighting, draw as before). */
+function mixDrawKind() {
+  const share = vnShare();
+  if (share >= 100) return null;
+  return Math.random() * 100 < share ? 'vn' : 'sit';
+}
 function pickPrompt() {
   const ps = pool();
   let avail = ps.filter((p) => !recentPrompts.includes(p.text));
@@ -1026,6 +1054,11 @@ function pickPrompt() {
       (p) => !current || !current.prompt || current.prompt.text !== p.text,
     ); /* tiny pool: at least dodge the last one */
   if (!avail.length) avail = ps;
+  if (!KIND_PTYPES.includes(state.ptype)) {
+    const k = mixDrawKind();
+    const byK = k ? avail.filter((p) => p.kind === k) : [];
+    if (byK.length) avail = byK;
+  }
   const p = avail[Math.floor(Math.random() * avail.length)];
   rememberPrompt(p.text);
   return p;
@@ -1051,7 +1084,9 @@ function startRepWith(p) {
     p.kind === 'vn'
       ? 'Say this in English'
       : p.kind === 'reflex'
-        ? 'In the moment'
+        ? p.mine
+          ? 'In the moment · 📺 yours'
+          : 'In the moment'
         : p.kind === 'expr'
           ? 'Apply this expression'
           : 'Situation';
@@ -1069,7 +1104,7 @@ function startRepWith(p) {
   current.three = three ? { attempts: [], n: 1 } : null;
   renderThreeUI();
   /* "Not for me" only applies to real bank prompts (not AI-generated ones). */
-  const isBank = PROMPTS.concat(REFLEXES, EXPRESSIONS).some((x) => norm(x.text) === norm(p.text));
+  const isBank = PROMPTS.concat(REFLEXES, EXPRESSIONS, myReflexes).some((x) => norm(x.text) === norm(p.text));
   $('dislikeBtn').style.display = isBank ? '' : 'none';
   $('blurtInput').value = '';
   $('blurtInput').disabled = false;
@@ -1610,7 +1645,10 @@ const WRITE_MODES = [
   { id: 'free', label: '⏱ Freewrite' },
   { id: 'journal', label: '📓 Journal' },
   { id: 'draft', label: '✉️ Draft a message' },
+  { id: 'react', label: '💬 React' },
 ];
+const REACT_ICONS = { reddit: '👽 Reddit comment', slack: '💬 Slack', text: '📱 Text', email: '✉️ Email' };
+let REACTS = null; /* backup texts (reacts.json) for when the AI is down */
 const STALL_MS = 5000; /* no keystroke this long → nudge */
 /* mode, seed prompt, and the live freewrite (timer, attempt) */
 let write = { mode: 'free', seed: null, phase: 'idle', left: 0, timer: null, lastKey: 0, attempt: null, sents: [] };
@@ -1618,12 +1656,45 @@ let write = { mode: 'free', seed: null, phase: 'idle', left: 0, timer: null, las
 function freeMin() {
   return state.settings.freeMin || 3;
 }
-/* A Vietnamese sentence from the selected moods, as the freewrite's starting idea. */
+/* What the freewrite starts from. Each stage leans less on Vietnamese; the app
+   suggests the next one once the current one is going well, never forces it. */
+const FREE_STAGES = [
+  { id: 'vi', label: '🇻🇳 Vietnamese idea' },
+  { id: 'en', label: '🇬🇧 English situation' },
+  { id: 'topic', label: '🏷 One word' },
+  { id: 'none', label: '⬜ Blank page' },
+];
+const FREE_TOPICS = ['deadlines', 'coffee', 'weekends', 'your commute', 'a bug', 'rain', 'your manager', 'sleep', 'money', 'a movie', 'music', 'your hometown', 'cooking', 'a friend', 'mistakes', 'luck', 'your phone', 'the gym', 'meetings', 'holidays', 'noise', 'waiting', 'a gift', 'your desk', 'learning', 'traffic', 'a promise', 'food delivery', 'family dinners', 'a decision', 'being late', 'first days', 'small talk', 'your laptop', 'patience', 'a surprise', 'code reviews', 'moving house', 'weather', 'tomorrow'];
+function freeStage() {
+  return FREE_STAGES.some((x) => x.id === state.settings.freeSeed) ? state.settings.freeSeed : 'vi';
+}
 function freeSeed() {
-  const vn = PROMPTS.filter((p) => p.kind === 'vn');
-  const mine = vn.filter((p) => state.cats.includes(p.cat));
-  const src = mine.length ? mine : vn;
-  return src.length ? src[Math.floor(Math.random() * src.length)] : { text: 'Hôm nay của bạn thế nào?' };
+  const st = freeStage();
+  const draw = (kind) => {
+    const all = PROMPTS.filter((p) => p.kind === kind);
+    const mine = all.filter((p) => state.cats.includes(p.cat));
+    const src = mine.length ? mine : all;
+    return src.length ? src[Math.floor(Math.random() * src.length)] : null;
+  };
+  if (st === 'en') return draw('sit') || { text: 'Tell someone about your day.' };
+  if (st === 'topic') return { text: FREE_TOPICS[Math.floor(Math.random() * FREE_TOPICS.length)] };
+  if (st === 'none') return { text: 'Blank page. Whatever is on your mind.' };
+  return draw('vn') || { text: 'Hôm nay của bạn thế nào?' };
+}
+function setFreeStage(id) {
+  state.settings.freeSeed = id;
+  saveState();
+  write.seed = freeSeed();
+  writeRender();
+}
+/* 5+ freewrites at this stage, and ≥70% clean among the ones you had checked. */
+function freeStageReady() {
+  const st = freeStage();
+  if (st === 'none') return null;
+  const done = attempts.filter((a) => a.source === 'free' && a.kind === 'free:' + st);
+  const graded = done.filter((a) => a.clean != null);
+  if (done.length < 5 || (graded.length && graded.filter((a) => a.clean).length / graded.length < 0.7)) return null;
+  return FREE_STAGES[FREE_STAGES.findIndex((x) => x.id === st) + 1];
 }
 function setWriteMode(m) {
   if (write.phase === 'running') return; /* finish the freewrite first */
@@ -1632,6 +1703,7 @@ function setWriteMode(m) {
   write.attempt = null;
   write.sents = [];
   if (m === 'free') write.seed = freeSeed();
+  if (m === 'react') write.react = null;
   writeRender();
 }
 function writeRender() {
@@ -1649,9 +1721,11 @@ function writeRender() {
   ).join('');
   $('writeTimer').style.display = m === 'free' ? '' : 'none';
   inp.classList.remove('stalling');
+  $('writeSeed').style.fontSize = '';
   if (m === 'free') {
     if (!write.seed) write.seed = freeSeed();
     $('writeEyebrow').textContent = 'no backspace · keep going';
+    if (freeStage() === 'en') $('writeSeed').style.fontSize = '1.1rem'; /* situations are long */
     $('writeSeed').textContent = write.seed.text;
     inp.placeholder = 'Start typing in English. Anything that comes to mind. Mistakes stay.';
     if (write.phase === 'idle') {
@@ -1664,8 +1738,33 @@ function writeRender() {
         '<button class="btn pulse" onclick="startFreewrite()">▶ Start ' +
         freeMin() +
         ':00</button><button class="btn ghost" onclick="setWriteMode(\'free\')">Another idea</button>';
-      $('writeResult').innerHTML = '';
+      const next = freeStageReady();
+      $('writeResult').innerHTML =
+        '<div class="chips">' +
+        FREE_STAGES.map(
+          (x) =>
+            '<button class="chip ' + (freeStage() === x.id ? 'on' : '') + '" onclick="setFreeStage(\'' + x.id + '\')">' + x.label + '</button>',
+        ).join('') +
+        '</div>' +
+        (next
+          ? '<p class="hint">This stage is going well. Ready for the next one? <button class="btn ghost" style="margin-left:6px;padding:6px 12px" onclick="setFreeStage(\'' +
+            next.id +
+            '\')">→ ' +
+            next.label +
+            '</button></p>'
+          : '');
     }
+  } else if (m === 'react') {
+    $('writeEyebrow').textContent = 'React · read it, then reply';
+    inp.disabled = false;
+    inp.placeholder = 'Your reply…';
+    $('writeHint').textContent = 'Reply like you would for real. The check also says if your tone fits theirs.';
+    $('writeActions').innerHTML =
+      (write.phase === 'checked' ? '' : '<button class="btn pulse" id="writeCheckBtn" onclick="writeCheckNow()">Check it</button>') +
+      '<button class="btn ghost" onclick="reactNext()">Another one</button>';
+    if (!write.react) reactNext();
+    else renderReactSeed();
+    if (write.phase === 'idle') $('writeResult').innerHTML = '';
   } else {
     const journal = m === 'journal';
     $('writeEyebrow').textContent = journal ? 'Journal · casual' : 'Draft · a real message';
@@ -1684,11 +1783,71 @@ function writeRender() {
     $('writeHint').textContent = journal
       ? 'Each sentence comes back as ✓ already natural, or with only the mistakes marked.'
       : 'Keeps your tone. Fixes only what a native colleague would notice.';
-    $('writeActions').innerHTML = '<button class="btn pulse" id="writeCheckBtn" onclick="writeCheckNow()">Check it</button>';
+    /* checked text can't be checked (and credited) again; start fresh instead */
+    $('writeActions').innerHTML =
+      write.phase === 'checked'
+        ? '<button class="btn ghost" onclick="writeStartOver()">Start over</button>'
+        : '<button class="btn pulse" id="writeCheckBtn" onclick="writeCheckNow()">Check it</button>';
   }
 }
 function fmtClock(s) {
   return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+/* ---- react: a short native text to read and reply to ---- */
+function renderReactSeed() {
+  const r = write.react;
+  $('writeSeed').style.fontSize = '1.02rem';
+  $('writeSeed').innerHTML = r
+    ? '<span class="reactMeta">' + esc(REACT_ICONS[r.kind] || r.kind) + ' · from ' + esc(r.from) + '</span><span class="reactText">' + esc(r.text) + '</span>'
+    : '<span class="spin"></span> Finding something to react to…';
+}
+async function reactNext() {
+  write.react = null;
+  write.phase = 'idle';
+  $('writeInput').value = '';
+  $('writeResult').innerHTML = '';
+  renderReactSeed();
+  let r = null;
+  if (loggedIn()) {
+    const topics = CATS.filter((c) => state.cats.includes(c.id)).map((c) => c.label.slice(2).trim());
+    const ctx = (state.settings.context || '').trim();
+    const due = dueChunks().slice(0, 2).map((c) => c.chunk);
+    const obj = await aiObj({
+      contents: [
+        {
+          parts: [
+            {
+              text: `Write ONE short, real-sounding piece of native English that a software developer might read and want to reply to: a Reddit comment, a Slack thread (2-3 short messages, each "Name: line"), a text from a friend, or a short email.
+2-5 lines, casual and natural, ending with a question or something to react to. Topic from: ${topics.join(', ') || 'daily life'}.
+${ctx ? 'Their real life (names, role, project), use it if it fits: ' + ctx : ''}
+${due.length ? 'If it fits naturally, make it easy to reply with one of these phrases: ' + due.join(' | ') : ''}
+Reply ONLY JSON: {"kind":"reddit|slack|text|email","from":"who wrote it","text":"the text, with \\n between lines"}`,
+            },
+          ],
+        },
+      ],
+      generationConfig: { responseMimeType: 'application/json' },
+    });
+    if (obj && obj.text && REACT_ICONS[obj.kind]) r = { kind: obj.kind, from: String(obj.from || 'someone'), text: String(obj.text).trim() };
+  }
+  if (!r) {
+    if (!REACTS) {
+      try {
+        const res = await fetch(apiBase() + '/reacts.json');
+        REACTS = res.ok ? await res.json() : [];
+      } catch (e) {
+        REACTS = [];
+      }
+    }
+    const pick = REACTS.filter((x) => !write.lastReact || x.text !== write.lastReact);
+    r = pick.length ? pick[Math.floor(Math.random() * pick.length)] : { kind: 'text', from: 'a friend', text: 'hey! how was your weekend?' };
+  }
+  if (write.mode !== 'react') return; /* switched modes while waiting */
+  write.react = r;
+  write.lastReact = r.text;
+  renderReactSeed();
+  $('writeInput').focus();
 }
 
 /* ---- freewrite: forward-only typing ---- */
@@ -1754,7 +1913,7 @@ function finishFreewrite() {
   const words = freewriteWords(text);
   const mins = (freeMin() * 60 - Math.max(0, write.left)) / 60 || freeMin();
   if (words) {
-    write.attempt = logAttempt({ source: 'free', kind: 'free', prompt: write.seed.text, blurt: text, clean: null });
+    write.attempt = logAttempt({ source: 'free', kind: 'free:' + freeStage(), prompt: write.seed.text, blurt: text, clean: null });
     creditRep();
   }
   $('writeHint').textContent = '';
@@ -1774,8 +1933,11 @@ function finishFreewrite() {
 /* ---- checking: one AI call, one verdict per sentence ---- */
 async function writeCheck(mode, text) {
   const ctx = (state.settings.context || '').trim();
+  const r = write.react;
   const instr =
-    mode === 'draft'
+    mode === 'react' && r
+      ? 'This is their REPLY to this ' + r.kind + ' from ' + r.from + ':\n"""' + r.text + '"""\nJudge it as a natural reply in the same register.'
+      : mode === 'draft'
       ? 'This is a real work message they are about to send. Keep their tone, intent and length; fix only what a native colleague would notice.'
       : mode === 'free'
         ? 'This is a timed freewrite: fast, unedited, stream of thought. Judge it as casual written English.'
@@ -1787,7 +1949,7 @@ Their text:
 """${text}"""
 Split it into sentences, in order; don't merge, drop or reorder any. For each sentence return:
 {"original":"the sentence exactly as written","fixed":"THEIR sentence minimally corrected: keep their words and structure, change only what is wrong or unnatural. Copy it exactly if nothing needs changing.","natural":"how a native would phrase it, or empty if fixed already is","chunk":"one reusable multi-word phrase from fixed or natural worth saving, or empty","clean":true or false (true = no meaningful change needed, ignoring capitalization and punctuation),${TAGS_FIELD}}
-Reply with ONLY JSON: {"sentences":[...],"note":"one encouraging line (max 25 words) about the whole text: what worked, and the one thing to watch","ready":"${mode === 'draft' ? 'the full message, cleaned up, in their tone, ready to send' : ''}"}`;
+Reply with ONLY JSON: {"sentences":[...],"note":"one encouraging line (max 25 words) about the whole text: what worked, and the one thing to watch","ready":"${mode === 'draft' ? 'the full message, cleaned up, in their tone, ready to send' : ''}"${mode === 'react' ? ',"fit":"one line: does the reply match the tone and register of the original (too formal, too blunt, just right)?"' : ''}}`;
   const obj = await aiObj({
     contents: [{ parts: [{ text: msg }] }],
     generationConfig: { responseMimeType: 'application/json' },
@@ -1809,7 +1971,7 @@ Reply with ONLY JSON: {"sentences":[...],"note":"one encouraging line (max 25 wo
       };
     });
   if (!sents.length) return null;
-  return { sents, note: String(obj.note || ''), ready: String(obj.ready || '') };
+  return { sents, note: String(obj.note || ''), ready: String(obj.ready || ''), fit: String(obj.fit || '') };
 }
 async function writeCheckNow() {
   const mode = write.mode;
@@ -1844,9 +2006,9 @@ async function writeCheckNow() {
   } else {
     res.sents.forEach((x) =>
       logAttempt({
-        source: 'write',
-        kind: mode,
-        prompt: seed,
+        source: mode === 'react' ? 'react' : 'write',
+        kind: mode === 'react' && write.react ? write.react.kind : mode,
+        prompt: mode === 'react' && write.react ? write.react.text : seed,
         blurt: x.original,
         fix: x.fixed,
         natural: x.natural,
@@ -1860,7 +2022,17 @@ async function writeCheckNow() {
   write.sents = res.sents;
   write.ready = res.ready;
   writeRenderResult(res);
-  if (btn) btn.remove();
+  if (mode === 'free') {
+    if (btn) btn.remove();
+  } else writeRender(); /* swaps Check for Start over */
+}
+function writeStartOver() {
+  write.phase = 'idle';
+  write.sents = [];
+  state.write = null;
+  saveState();
+  $('writeInput').value = '';
+  writeRender();
 }
 /* The example saved with a chunk must contain it, or Drill can't blank it. */
 function writeChunkExample(x) {
@@ -1873,14 +2045,11 @@ function writeRenderResult(res) {
   const n = res.sents.length,
     c = res.sents.filter((x) => x.clean).length;
   let html =
-    '<div class="writeSum" style="color:var(--mint)">✓ ' +
-    c +
-    ' of ' +
-    n +
-    ' sentence' +
-    (n > 1 ? 's' : '') +
-    ' already natural</div>' +
-    (res.note ? '<p class="note">' + esc(res.note) + '</p>' : '');
+    (c
+      ? '<div class="writeSum" style="color:var(--mint)">✓ ' + c + ' of ' + n + ' sentence' + (n > 1 ? 's' : '') + ' already natural</div>'
+      : '<div class="writeSum">' + n + ' sentence' + (n > 1 ? 's' : '') + ', small fixes below</div>') +
+    (res.note ? '<p class="note">' + esc(res.note) + '</p>' : '') +
+    (res.fit ? '<p class="note">🎯 ' + esc(res.fit) + '</p>' : '');
   res.sents.forEach((x, i) => {
     html +=
       '<div class="writeSent">' +
@@ -1943,12 +2112,19 @@ async function copyWriteReady() {
 /* Journal/draft text survives a reload until the day ends. */
 let writeSaveTimer = null;
 function persistWriteText() {
-  if (write.mode === 'free') return;
+  if (write.mode !== 'journal' && write.mode !== 'draft') return;
   clearTimeout(writeSaveTimer);
   writeSaveTimer = setTimeout(() => {
     state.write = { date: dayStr(0), mode: write.mode, text: $('writeInput').value };
     saveState();
   }, 800);
+}
+let vnShareTimer = null;
+function setVnShare(v) {
+  state.settings.vnShare = Math.max(0, Math.min(100, Math.round(Number(v) / 10) * 10));
+  $('vnShareLbl').textContent = state.settings.vnShare + '%';
+  clearTimeout(vnShareTimer);
+  vnShareTimer = setTimeout(saveState, 400);
 }
 function saveFreeMin() {
   const n = Math.floor(Number($('freeMinIn').value));
@@ -1995,10 +2171,11 @@ const ARCH_FILTERS = [
   { id: 'practice', label: 'Practice', source: 'practice' },
   { id: 'write', label: 'Write', source: 'write' },
   { id: 'free', label: 'Free', source: 'free' },
+  { id: 'react', label: 'React', source: 'react' },
   { id: 'chat', label: 'Chat', source: 'chat' },
 ];
 const ARCH_PAGE = 50;
-const SOURCE_LABELS = { practice: 'practice', three: '3 ways', replay: 'replay', write: 'write', free: 'freewrite', chat: 'chat' };
+const SOURCE_LABELS = { practice: 'practice', three: '3 ways', replay: 'replay', write: 'write', free: 'freewrite', chat: 'chat', react: 'react' };
 let arch = { q: '', filter: 'all', rows: [], more: true, loading: false, seq: 0 };
 let archTimer = null;
 
@@ -2609,6 +2786,11 @@ const RMODES = [
     label: '🎧 Dictation',
     desc: 'hear a sentence read aloud, type or say what you heard',
   },
+  {
+    id: 'sense',
+    label: '👂 Sounds right?',
+    desc: 'two sentences, tap the natural one — mostly your own old slips',
+  },
 ];
 const RX_FMTS = [
   'blank',
@@ -2736,6 +2918,7 @@ function randomBegin(mode) {
   else if (mode === 'capsule') rxSession = { mode: 'capsule', total: chunks.length, seen: 0 };
   else if (mode === 'context') rxSession = { mode: 'context' };
   else if (mode === 'dictation') rxSession = { mode: 'dictation' };
+  else if (mode === 'sense') rxSession = { mode: 'sense', recent: [] };
   else rxSession = { mode: 'shuffle' };
   $('randomEyebrow').textContent = 'Random · ' + RMODES.find((m) => m.id === mode).label;
   $('randomModes').innerHTML = RMODES.map(
@@ -2749,7 +2932,75 @@ function randomBegin(mode) {
       '</button>',
   ).join('');
   if (mode === 'dictation') dictationNext();
+  else if (mode === 'sense') senseNext();
   else rxNext();
+}
+
+/* ---- sounds right?: pick the natural sentence (self-contained, like dictation) ---- */
+let senseCur = null;
+/* Your own slips: a sentence you wrote and its fix, short enough to compare at a glance. */
+function sensePairs() {
+  return attempts.filter(
+    (a) =>
+      a.clean === false &&
+      a.blurt &&
+      a.fix &&
+      norm(a.blurt) !== norm(a.fix) &&
+      a.fix.split(/\s+/).length <= 25 &&
+      !rxSession.recent.includes(a.id),
+  );
+}
+async function senseNext() {
+  const s = rxSession;
+  const own = sensePairs();
+  const chunkOk = loggedIn() && chunks.some((c) => c.example && drillBlank(c.chunk, c.example).hasBlank);
+  let pair = null;
+  /* your own history first; a chunk + AI-made slip when there's none (or 1 in 4 for variety) */
+  if (own.length && (!chunkOk || Math.random() < 0.75)) {
+    const a = own[Math.floor(Math.random() * own.length)];
+    s.recent = s.recent.concat(a.id).slice(-20);
+    pair = { right: a.fix, wrong: a.blurt, why: a.note || '', own: true, idx: null };
+  } else if (chunkOk) {
+    $('randomBody').innerHTML = '<div class="drillSentence"><span class="spin"></span> Finding a pair…</div>';
+    const idxs = chunks.map((c, i) => i).filter((i) => chunks[i].example && drillBlank(chunks[i].chunk, chunks[i].example).hasBlank);
+    const idx = idxs[Math.floor(Math.random() * idxs.length)],
+      c = chunks[idx];
+    /* same prompt the multiple-choice format uses: plausible wrong forms of the chunk */
+    const obj = await rxAI(wrongFormsPrompt(c.chunk));
+    const wrong = obj && Array.isArray(obj.wrong) ? obj.wrong.map(String).find((w) => w && norm(w) !== norm(c.chunk)) : null;
+    if (!rxSession || rxSession.mode !== 'sense') return; /* left the mode while waiting */
+    if (wrong) {
+      const re = new RegExp(c.chunk.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      const bad = c.example.replace(re, wrong);
+      if (bad !== c.example) pair = { right: c.example, wrong: bad, why: 'The phrase is “' + c.chunk + '”.', own: false, idx };
+    }
+  }
+  if (!pair) {
+    $('randomBody').innerHTML =
+      '<div class="empty">Nothing to compare yet. Once some of your answers get a fix, they show up here as pairs.</div>';
+    return;
+  }
+  senseCur = { ...pair, opts: shuffle([pair.right, pair.wrong]), answered: false };
+  $('randomBody').innerHTML =
+    '<div class="rxMeta">👂 Which one sounds natural?' + (pair.own ? ' · from your own writing' : '') + '</div>' +
+    '<div class="rxBank" style="flex-direction:column;align-items:stretch">' +
+    senseCur.opts
+      .map((o, i) => '<button class="rxWord" style="text-align:left;line-height:1.45" onclick="sensePick(' + i + ')">' + esc(o) + '</button>')
+      .join('') +
+    '</div><div id="senseVerdict"></div>';
+}
+function sensePick(i) {
+  if (!senseCur || senseCur.answered) return;
+  senseCur.answered = true;
+  const ok = senseCur.opts[i] === senseCur.right;
+  scoreRandom(senseCur.idx == null ? null : chunks[senseCur.idx], ok);
+  $('senseVerdict').innerHTML =
+    '<p class="verdict ' + (ok ? 'good">✓ Right — that one sounds natural.' : 'badv">✗ The other one is the natural one.') + '</p>' +
+    '<div class="natural diff">' + wordDiff(senseCur.wrong, senseCur.right) + '</div>' +
+    (senseCur.why ? '<p class="note">' + esc(senseCur.why) + '</p>' : '') +
+    '<div class="row"><button class="btn pulse js-next" onclick="senseNext()">Next →</button></div>';
+  const nb = $('senseVerdict').querySelector('.js-next');
+  if (nb) nb.focus({ preventScroll: true });
 }
 
 /* ---- dictation: listen and reconstruct (self-contained; bypasses the format loop) ---- */
@@ -3116,13 +3367,15 @@ function rxVerdictHTML(res, c, guess) {
   );
 }
 
-/* scoring — same counters as before, schedule untouched */
+/* scoring — same counters as before, schedule untouched. c is null for rounds
+   not tied to a chunk (Sounds right? on your own old attempts). */
 function scoreRandom(c, ok) {
   const hd = hist();
   hd.rr = (hd.rr || 0) + 1;
   if (ok) hd.rh = (hd.rh || 0) + 1;
-  ok ? (c.rhits = (c.rhits || 0) + 1) : (c.rmisses = (c.rmisses || 0) + 1);
   saveState();
+  if (!c) return;
+  ok ? (c.rhits = (c.rhits || 0) + 1) : (c.rmisses = (c.rmisses || 0) + 1);
   chunkSave(c);
 }
 function rxRecord(idx, ok) {
@@ -3243,6 +3496,14 @@ function rxCapsuleDone() {
 }
 
 /* ---- AI-backed formats (Phase 2): generation runs through the Worker; grading stays client-side ---- */
+/* Three near-miss forms of a phrase (multiple choice, Sounds right?). */
+function wrongFormsPrompt(chunk) {
+  return (
+    'Target English phrase: "' +
+    chunk +
+    '". Give THREE plausible but WRONG variants a Vietnamese learner might say (wrong preposition/tense/article/word-order, or classic slips like "should of"). Keep each close to the target. Reply ONLY JSON: {"wrong":["..","..",".."]}'
+  );
+}
 async function rxAI(prompt) {
   return aiObj({
     contents: [{ parts: [{ text: prompt }] }],
@@ -3282,11 +3543,7 @@ async function rxRenderAI(fmt, idx, banner) {
         ' using ONLY 2 to 5 emoji and no words. Reply ONLY JSON: {"emoji":"..."}',
     );
   } else if (fmt === 'mc') {
-    obj = await rxAI(
-      'Target English phrase: "' +
-        c.chunk +
-        '". Give THREE plausible but WRONG variants a Vietnamese learner might say (wrong preposition/tense/article/word-order, or classic slips like "should of"). Keep each close to the target. Reply ONLY JSON: {"wrong":["..","..",".."]}',
-    );
+    obj = await rxAI(wrongFormsPrompt(c.chunk));
   }
   if (!rxCur || rxCur.idx !== idx || rxCur.fmt !== fmt) return; /* user moved on while we waited */
   if (!obj || (fmt === 'mc' && !(obj.wrong && obj.wrong.length))) {
@@ -4289,6 +4546,119 @@ async function saveCtxChunk(btn) {
 
 /* Paste-to-chunks: pull the 2–3 most reusable phrases out of English you wrote. */
 let pastePending = [];
+/* ---- 📺 from a show: subtitles → your own reflex scenes + chunks ---- */
+let showPending = { scenes: [], chunks: [] };
+async function mineShow() {
+  if (!loggedIn()) return;
+  const text = $('showText').value.trim();
+  if (!text) return;
+  const btn = $('showBtn'),
+    prev = $('showPreview');
+  btn.disabled = true;
+  btn.textContent = '✨ watching...';
+  const msg = `A Vietnamese learner pasted lines from an English show they just watched:
+"""${text}"""
+1) Find up to 5 moments where a character fires back a short, reusable reply. For each, write a reflex scene:
+- "text": the moment narrated in VIETNAMESE, present tense, 1-2 short sentences; what the OTHER character says stays in ENGLISH inside double quotes, e.g. Bạn cùng phòng mở cửa, mặt tái mét: "Dude, I think I just broke your laptop."
+- "sample": the reply line (2-8 words, English), as in the show or close to it
+- "chunk": the reusable phrase inside sample, copied exactly
+- "note": ONE line in VIETNAMESE (max 20 words) on when this line fires
+- "cat": one of ${CAT_IDS.join(', ')}
+2) Pick up to 3 other reusable phrases from the lines, each with one short natural example sentence that contains it verbatim.
+Reply ONLY JSON: {"scenes":[{"text":"","sample":"","chunk":"","note":"","cat":""}],"chunks":[{"chunk":"","example":""}]}`;
+  try {
+    const obj = await aiObj({
+      contents: [{ parts: [{ text: msg }] }],
+      generationConfig: { responseMimeType: 'application/json' },
+    });
+    const str = (v) => (v == null ? '' : String(v).trim());
+    const seen = new Set(REFLEXES.concat(myReflexes).map((p) => norm(p.text)));
+    const haveChunk = new Set(chunks.map((c) => c.chunk.toLowerCase()));
+    showPending.scenes = ((obj && obj.scenes) || [])
+      .map((x) => ({
+        cat: CAT_IDS.includes(str(x && x.cat)) ? str(x.cat) : 'daily',
+        kind: 'reflex',
+        text: str(x && x.text),
+        sample: str(x && x.sample),
+        chunk: str(x && x.chunk),
+        note: str(x && x.note),
+      }))
+      .filter((x) => x.text && x.sample && x.chunk && drillBlank(x.chunk, x.sample).hasBlank && !seen.has(norm(x.text)));
+    showPending.chunks = ((obj && obj.chunks) || [])
+      .map((x) => ({ chunk: str(x && x.chunk), example: str(x && x.example) }))
+      .filter((x) => x.chunk && x.example && drillBlank(x.chunk, x.example).hasBlank && !haveChunk.has(x.chunk.toLowerCase()));
+    if (!showPending.scenes.length && !showPending.chunks.length) {
+      prev.innerHTML = '<div class="empty">Nothing usable in there — try a longer bit of dialogue.</div>';
+      return;
+    }
+    const item = (kind, j, head, sub) =>
+      '<div class="chunkItem"><div><b>' +
+      esc(head) +
+      '</b><small>' +
+      esc(sub) +
+      '</small></div><button class="btn ghost" id="showSave' +
+      kind +
+      j +
+      '" onclick="saveShow(\'' +
+      kind +
+      "', " +
+      j +
+      ')">Save</button></div>';
+    prev.innerHTML =
+      (showPending.scenes.length
+        ? '<div class="eyebrow" style="margin-top:12px">Reflex scenes</div>' +
+          showPending.scenes.map((x, j) => item('scene', j, x.sample, x.text)).join('')
+        : '') +
+      (showPending.chunks.length
+        ? '<div class="eyebrow" style="margin-top:12px">Chunks</div>' +
+          showPending.chunks.map((x, j) => item('chunk', j, x.chunk, x.example)).join('')
+        : '') +
+      '<div class="row"><button class="btn" id="showSaveAll" onclick="saveShow(\'all\')">Save all</button></div>';
+  } catch (e) {
+    prev.innerHTML = '<div class="empty">Couldn\'t read that — try again.</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Make scenes';
+  }
+}
+async function saveShow(kind, j) {
+  const pick = (k, list) =>
+    list
+      .map((x, i) => [x, i])
+      .filter(([x, i]) => x && (kind === 'all' || (kind === k && i === j)))
+      .map(([x, i]) => {
+        const b = $('showSave' + k + i);
+        if (b) {
+          b.textContent = 'Saved ✓';
+          b.disabled = true;
+        }
+        list[i] = null;
+        return x;
+      });
+  const scenes = pick('scene', showPending.scenes),
+    newChunks = pick('chunk', showPending.chunks);
+  if (scenes.length) {
+    myReflexes = myReflexes.concat(scenes.map((x) => ({ ...x, mine: true }))).slice(-MY_REFLEX_CAP);
+    store.set('blurt:myReflexes', JSON.stringify(myReflexes.map(({ mine, ...x }) => x)));
+  }
+  /* a scene's reply is a chunk too, with the reply as its example */
+  const added = newChunks
+    .map((x) => ({ ...newChunkBase(), chunk: x.chunk, example: x.example }))
+    .concat(scenes.map((x) => ({ ...newChunkBase(), chunk: x.chunk, example: x.sample, context: x.text })));
+  const have = new Set(chunks.map((c) => c.chunk.toLowerCase()));
+  const fresh = added.filter((c) => !have.has(c.chunk.toLowerCase()) && have.add(c.chunk.toLowerCase()));
+  fresh.forEach((c) => chunks.unshift(c));
+  if (fresh.length) await chunkAddMany(fresh);
+  renderHeader();
+  renderHW();
+  renderChunks();
+  if (kind === 'all' || (!showPending.scenes.some(Boolean) && !showPending.chunks.some(Boolean))) {
+    showPending = { scenes: [], chunks: [] };
+    $('showText').value = '';
+    $('showPreview').innerHTML =
+      '<div class="empty">Saved ✓ ' + (scenes.length ? 'Your scenes show up in Practice → Reflex, marked 📺 yours.' : '') + '</div>';
+  }
+}
 async function extractChunks() {
   if (!loggedIn()) {
     const p = $('pastePreview');
@@ -4500,14 +4870,16 @@ async function genPrompt() {
     state.ptype === 'expr' && EXPRESSIONS.length
       ? EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)].chunk
       : null;
+  /* Mix / 3 ways follow the Vietnamese share from Settings */
+  const pt = (!KIND_PTYPES.includes(state.ptype) && mixDrawKind()) || state.ptype;
   const kindInstr =
-    state.ptype === 'vn'
+    pt === 'vn'
       ? 'Use kind "vn": a natural everyday Vietnamese sentence for the learner to express in English.'
-      : state.ptype === 'sit'
+      : pt === 'sit'
         ? 'Use kind "sit": an English-described situation for the learner to react to.'
-        : state.ptype === 'reflex'
+        : pt === 'reflex'
           ? 'Use kind "reflex": "text" narrates ONE moment in VIETNAMESE, present tense, 1-2 short sentences, set in native everyday life like a sitcom or movie (apartment, office, coffee shop, dating, family dinner, airport…; nothing Vietnam-specific). Anything another character SAYS stays in ENGLISH inside double quotes, e.g. Bạn cùng phòng mở cửa, mặt tái mét: "Dude, I think I just broke your laptop." "sample" is the ONE short line (2-8 words, English) a native fires back instantly: spoken, idiomatic, never textbook. "chunk" is the reusable phrase inside sample, copied exactly. "note" is ONE line in VIETNAMESE (max 20 words) on when/why this line fires.'
-          : state.ptype === 'expr'
+          : pt === 'expr'
             ? 'Use kind "expr": the learner is drilling this fixed expression pattern — "' +
               exprPattern +
               '". Invent a NEW everyday scenario ("text") — different from ones already practiced — and write "sample" as ONE full natural sentence that fills in the pattern to fit that scenario. Return "chunk" as exactly this pattern, unchanged: "' +
@@ -4515,12 +4887,12 @@ async function genPrompt() {
               '".'
             : 'Either kind "vn" (a natural everyday Vietnamese sentence to express in English) or kind "sit" (an English-described situation to react to).';
   const kindEnum =
-    state.ptype === 'reflex'
+    pt === 'reflex'
       ? 'reflex'
-      : state.ptype === 'expr'
+      : pt === 'expr'
         ? 'expr'
-        : KIND_PTYPES.includes(state.ptype)
-          ? state.ptype
+        : KIND_PTYPES.includes(pt)
+          ? pt
           : 'vn|sit';
   const ctx = (state.settings.context || '').trim();
   const msg = `Generate ONE practice prompt for a Vietnamese software developer in Hanoi training spoken English fluency.
