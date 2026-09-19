@@ -12,6 +12,8 @@ After you submit, Gemini shows you how a native speaker would say it, picks the 
 
 **For Vietnamese prompts**, you blurt freely — the AI picks the best chunk from its rewrite.
 
+**For Reflex prompts**, a moment is narrated in Vietnamese (what someone says stays in English, in quotes) and you have 8 seconds to type the line a native would fire back. Any natural reply counts as clean, not just the example.
+
 ### Tabs
 
 | Tab | What it does |

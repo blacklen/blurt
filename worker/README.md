@@ -107,7 +107,7 @@ file and redeploy.
 | file | entries | kind |
 |---|---|---|
 | `prompts.json` | 1579 | `vn` (Vietnamese sentence to say in English) and `sit` (English situation to react to) |
-| `reflexes.json` | 525 | `reflex` (a movie-style moment; reply with one snappy line) |
+| `reflexes.json` | 317 | `reflex`: a moment narrated in Vietnamese, with whatever someone says kept in English inside quotes; you type the one short line a native fires back, in 8 seconds. `note` is in Vietnamese. Common lines ("No worries", "Tell me about it", "My bad"…) repeat across scenes on purpose. |
 | `expressions.json` | 619 | `expr` (a fixed pattern to fill for a new scenario) |
 
 Each entry:

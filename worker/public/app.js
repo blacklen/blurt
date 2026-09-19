@@ -39,7 +39,10 @@ let PROMPTS = [
 
 const REP_BASE = 45,
   REP_MIN = 30; /* timer shrinks 1s per streak day */
+/* Reflex is typed, not spoken: one short line, fired back fast. */
+const REFLEX_SECONDS = 8;
 function repSeconds() {
+  if (current && current.prompt && current.prompt.kind === 'reflex') return REFLEX_SECONDS;
   return Math.max(REP_MIN, REP_BASE - (state.streak || 0));
 }
 let repTotal = REP_BASE;
@@ -941,9 +944,9 @@ async function loadPrompts() {
    gen_prompts.py regen of the main bank can't wipe them. Merged into the draw pool()
    at runtime; a compact cold-start fallback lives here so it works offline first-run. */
 let REFLEXES = [
-  { cat: 'daily', kind: 'reflex', text: 'The guy next to you on the train lets out a monster sneeze.', sample: 'Bless you!', chunk: 'bless you', note: "Fires automatically. 'Gesundheit' is the casual alt." },
-  { cat: 'social', kind: 'reflex', text: "You spot an old friend across the street — you haven't seen them in years.", sample: "No way — it's been ages!", chunk: "it's been ages", note: 'The reunion reflex. Fires the second you recognize them.' },
-  { cat: 'work', kind: 'reflex', text: "Your manager freezes on the call, then: '...so can you take that?' You caught none of it.", sample: 'Sorry, you cut out — could you say that again?', chunk: 'you cut out', note: 'The exact phrase for bad audio. Everyone uses it.' },
+  { cat: 'daily', kind: 'reflex', text: 'Bạn cùng phòng mở cửa, mặt tái mét: "Dude, I think I just broke your laptop."', sample: "You're kidding, right?", chunk: "you're kidding", note: 'Câu bật ra khi nghe tin sốc mà chưa muốn tin ngay.' },
+  { cat: 'daily', kind: 'reflex', text: 'Chuông cửa reo. Bạn cùng phòng đang tắm hét vọng ra: "Can someone get that?"', sample: "I'll get it!", chunk: "I'll get it", note: 'Nhận làm việc ngay tức thì, dùng cho cửa, điện thoại.' },
+  { cat: 'daily', kind: 'reflex', text: 'Bạn cùng phòng than: "Mondays are the worst."', sample: 'Tell me about it.', chunk: 'tell me about it', note: 'Đồng cảm kiểu "ai mà chẳng biết", không phải bảo kể thêm.' },
 ];
 async function loadReflexes() {
   await loadBank('reflexes.json', (arr) => {
@@ -1215,6 +1218,13 @@ async function finishRep() {
   const fallback = !result;
   if (fallback) result = { natural: p.sample, chunk: p.chunk, note: p.note };
   if (p.kind !== 'vn' && p.chunk) result.chunk = p.chunk;
+  /* Reflex: the bank's line is the model answer (it holds the chunk, so it's
+     what gets saved and drilled); the AI's extra lines are just alternatives. */
+  let others = '';
+  if (p.kind === 'reflex' && p.sample) {
+    others = fallback ? '' : String(result.natural || '').trim();
+    result.natural = p.sample;
+  }
   const fixed = fallback ? '' : result.fixedAnswer || '';
   const native = result.natural || fixed;
   const clean = !!fixed && (result.clean === true || norm(blurt) === norm(fixed));
@@ -1244,7 +1254,11 @@ async function finishRep() {
         : 'How a native might say it';
   /* A native version identical to the fix adds nothing — unless it's all we show. */
   $('suggestBlock').style.display = showFixed && dupe ? 'none' : '';
-  $('suggestText').textContent = native;
+  $('suggestText').innerHTML =
+    esc(native) +
+    (others && norm(others) !== norm(native)
+      ? '<div class="meta" style="margin-top:6px;font-size:.85rem;color:var(--muted)">also: ' + esc(others) + '</div>'
+      : '');
   $('suggestChunkText').textContent = result.chunk;
   $('noteText').textContent = result.note || '';
 
@@ -1296,6 +1310,17 @@ async function askGemini(p, blurt) {
       '{"fixedAnswer":"THEIR sentence, corrected. Keep their own words and structure; change only what is grammatically wrong, unclear, or unnatural. This is their answer cleaned up — NOT a rewrite. If nothing needs changing, copy it exactly.","clean":"true if their sentence needed no meaningful change (a native would say it that way, ignoring capitalization and punctuation), else false","natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (e.g. wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.",' +
       TAGS_FIELD +
       ',"note":"one short encouraging coaching note (max 22 words). If clean, say specifically what they did well. Otherwise name the main fix."}';
+  } else if (p.kind === 'reflex') {
+    task =
+      'Reflex drill: a scene narrated in Vietnamese; quoted lines are what the learner just heard, in English. They had 8 seconds to TYPE the instant reply a native would fire back.\nScene: "' +
+      p.text +
+      '"\nExample reply: "' +
+      p.sample +
+      '"';
+    instr =
+      '{"fixedAnswer":"THEIR reply, minimally corrected: keep their words, fix only what a native would not say. Copy it exactly if it works.","clean":"true if their reply would land as a natural instant reaction in that moment. Be generous: any idiomatic line that fits counts, it does NOT have to match the example. Else false.","natural":"up to 2 other short lines a native might fire back here, separated by \\" / \\"","chunk":"the key phrase from the example reply, copied exactly","calque":"ONLY if their reply is a word-for-word translation a native would never say: one short line naming it. Otherwise empty string.",' +
+      TAGS_FIELD +
+      ',"note":"ONE line IN VIETNAMESE (max 20 words): did it land as an instant reaction, and when this kind of line fires"}';
   } else {
     task =
       'Situation: "' +
@@ -4362,7 +4387,7 @@ async function genPrompt() {
       : state.ptype === 'sit'
         ? 'Use kind "sit": an English-described situation for the learner to react to.'
         : state.ptype === 'reflex'
-          ? 'Use kind "reflex": write "text" like a vivid beat from a movie scene — present tense, often another character\'s line in quotes (e.g. "Your friend\'s voice cracks: \'We had to put the dog down.\'"). The "sample" is the ONE short, snappy line a real native blurts back in that instant (a few words, not 1-2 sentences) — spoken and idiomatic, never textbook. "chunk" is the reusable phrase inside it.'
+          ? 'Use kind "reflex": "text" narrates ONE moment in VIETNAMESE, present tense, 1-2 short sentences, set in native everyday life like a sitcom or movie (apartment, office, coffee shop, dating, family dinner, airport…; nothing Vietnam-specific). Anything another character SAYS stays in ENGLISH inside double quotes, e.g. Bạn cùng phòng mở cửa, mặt tái mét: "Dude, I think I just broke your laptop." "sample" is the ONE short line (2-8 words, English) a native fires back instantly: spoken, idiomatic, never textbook. "chunk" is the reusable phrase inside sample, copied exactly. "note" is ONE line in VIETNAMESE (max 20 words) on when/why this line fires.'
           : state.ptype === 'expr'
             ? 'Use kind "expr": the learner is drilling this fixed expression pattern — "' +
               exprPattern +
@@ -4383,7 +4408,7 @@ async function genPrompt() {
 Pick a category from: ${catNames}.
 ${ctx ? "Weave in this learner's real life when it fits naturally (use the names/details): " + ctx : ''}
 ${target.length && state.ptype !== 'expr' ? (forcing ? 'Design the situation so a good answer MUST naturally use one of these phrases the learner keeps avoiding: ' : 'If it fits naturally, design the situation so a good answer could reuse one of these phrases the learner is reviewing: ') + target.join(' | ') + '.' : ''}
-${kindInstr} Be creative and specific — local Hanoi flavor welcome, sometimes funny.
+${kindInstr} Be creative and specific${state.ptype === 'reflex' ? '' : ' — local Hanoi flavor welcome'}, sometimes funny.
 Reply ONLY JSON: {"cat":"${CAT_IDS.filter((id) => state.cats.includes(id)).join('|') || CAT_IDS.join('|')}","kind":"${kindEnum}","text":"the prompt itself","sample":"a natural native-speaker answer, 1-2 sentences","chunk":"the most reusable multi-word phrase from sample","note":"short coaching note, max 20 words"}`;
   try {
     const obj = await aiObj({
