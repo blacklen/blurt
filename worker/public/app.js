@@ -1837,7 +1837,30 @@ const WRITE_MODES = [
   { id: 'draft', label: '✉️ Draft a message' },
   { id: 'react', label: '💬 React' },
   { id: 'copy', label: '📄 Copy' },
+  { id: 'explain', label: '🧑‍🏫 Explain' },
+  { id: 'dialogue', label: '🗣 Two voices' },
 ];
+const EXPLAIN_TOPICS = ['what a race condition is', 'why we use feature flags', 'how our deploy works', 'what a code review is for', 'why tests sometimes flake', 'what technical debt is', 'how caching speeds things up', 'what an API is, to a non-developer', 'why we write migrations', 'how git branches work', 'what a memory leak is', 'why the build is slow', 'what "eventual consistency" means', 'how you debug a bug you can\'t reproduce', 'why naming things is hard', 'what a database index does', 'how retries can make things worse', 'what a staging environment is for', 'why we pair program', 'how you estimate a task', 'what an on-call rotation is', 'why rollbacks matter', 'what a feature freeze is', 'how rate limiting works', 'why logs matter at 3 a.m.', 'what a pull request should include', 'how you onboard to a new codebase', 'what "done" means for a ticket', 'why small commits help', 'how a queue decouples services', 'what a timezone bug looks like', 'why we avoid global state', 'how you say no to scope creep', 'what a postmortem is', 'why accessibility matters', 'how CI catches problems early', 'what the difference is between a bug and a feature request', 'how you split a big task', 'why we document decisions', 'what happens when you type a URL'];
+/* A dev topic to explain, sometimes built from your own context in Settings. */
+function explainTopic() {
+  const bits = (state.settings.context || '')
+    .split(/[;.,\n]+/)
+    .map((x) => x.trim())
+    /* needs to be a real thing to explain, not "PM is Minh" */
+    .filter((x) => x.split(/\s+/).length >= 4 && x.length <= 60);
+  if (bits.length && Math.random() < 0.3) return 'something from your work: ' + bits[Math.floor(Math.random() * bits.length)];
+  return EXPLAIN_TOPICS[Math.floor(Math.random() * EXPLAIN_TOPICS.length)];
+}
+/* The other voice in a dialogue: a name from "PM is Minh"-style context, else PM. */
+function dialogueRole() {
+  const m = (state.settings.context || '').match(/\b(?:PM|manager|lead|boss)\s+is\s+([A-Z][a-z]+)/);
+  return m ? m[1] : 'PM';
+}
+function dialogueSeed() {
+  const sit = PROMPTS.filter((p) => p.kind === 'sit' && state.cats.includes(p.cat));
+  const src = sit.length ? sit : PROMPTS.filter((p) => p.kind === 'sit');
+  return src.length ? src[Math.floor(Math.random() * src.length)].text : 'You need to ask for a deadline extension.';
+}
 const REACT_ICONS = { reddit: '👽 Reddit comment', slack: '💬 Slack', text: '📱 Text', email: '✉️ Email' };
 let REACTS = null; /* backup texts (reacts.json) for when the AI is down */
 const STALL_MS = 5000; /* no keystroke this long → nudge */
@@ -1896,6 +1919,9 @@ function setWriteMode(m) {
   if (m === 'free') write.seed = freeSeed();
   if (m === 'react') write.react = null;
   if (m === 'copy') write.copy = null;
+  if (m === 'explain') write.topic = null;
+  if (m === 'dialogue') write.scene = null;
+  if (m === 'explain' || m === 'dialogue') $('writeInput').value = '';
   if (m === 'rewrite') {
     write.rewrite = yesterdayEntry();
     $('writeInput').value = '';
@@ -1971,6 +1997,36 @@ function writeRender() {
     $('writeActions').innerHTML =
       write.phase === 'checked' ? '' : '<button class="btn pulse" id="writeCheckBtn" onclick="writeCheckNow()">Check it</button>';
     if (write.phase === 'idle') $('writeResult').innerHTML = '';
+  } else if (m === 'explain' || m === 'dialogue') {
+    const ex = m === 'explain';
+    if (ex && !write.topic) write.topic = explainTopic();
+    if (!ex && !write.scene) write.scene = dialogueSeed();
+    $('writeEyebrow').textContent = ex ? 'Explain it · to a new teammate' : 'Two voices · write both sides';
+    if (!ex) $('writeSeed').style.fontSize = '1.1rem';
+    $('writeSeed').textContent = ex ? 'Explain ' + write.topic + '.' : write.scene;
+    inp.disabled = false;
+    if (write.phase === 'idle') {
+      const role = dialogueRole();
+      inp.value = ex ? '' : inp.value.trim() ? inp.value : 'You: \n' + role + ': \nYou: \n' + role + ': ';
+      $('writeResult').innerHTML = ex
+        ? '<input class="drillIn" id="explainOwn" autocomplete="off" placeholder="…or type your own topic, then Enter" style="margin-top:14px">'
+        : '';
+      const own = $('explainOwn');
+      if (own)
+        own.addEventListener('keydown', (e) => {
+          if (e.key !== 'Enter' || !own.value.trim()) return;
+          e.preventDefault();
+          write.topic = own.value.trim();
+          writeRender();
+        });
+    }
+    inp.placeholder = ex ? 'A few sentences, plain words…' : '';
+    $('writeHint').textContent = ex
+      ? 'Plain words, like you would say it at the whiteboard. The check also says if a new teammate would get it.'
+      : 'Play both people. The check looks at every line, and at how your questions sound.';
+    $('writeActions').innerHTML =
+      (write.phase === 'checked' ? '' : '<button class="btn pulse" id="writeCheckBtn" onclick="writeCheckNow()">Check it</button>') +
+      '<button class="btn ghost" onclick="writeNewSeed()">' + (ex ? 'Another topic' : 'Another scene') + '</button>';
   } else if (m === 'copy') {
     $('writeEyebrow').textContent = 'Copy · type it out, word for word';
     inp.disabled = write.phase === 'checked';
@@ -2083,6 +2139,13 @@ async function reactNext() {
   $('writeInput').focus();
 }
 
+function writeNewSeed() {
+  if (write.mode === 'explain') write.topic = explainTopic();
+  if (write.mode === 'dialogue') write.scene = dialogueSeed();
+  write.phase = 'idle';
+  $('writeInput').value = '';
+  writeRender();
+}
 /* ---- rewrite yesterday: the latest Write / Freewrite / React entry from yesterday ---- */
 const REWRITE_SOURCES = ['write', 'free', 'react'];
 function yesterdayEntry() {
@@ -2235,7 +2298,11 @@ async function writeCheck(mode, text) {
   const ctx = (state.settings.context || '').trim();
   const r = write.react;
   const instr =
-    mode === 'react' && r
+    mode === 'explain'
+      ? 'This is an explanation of "' + (write.topic || 'a topic') + '" for a new teammate. Judge it as clear, spoken-style English.'
+      : mode === 'dialogue'
+        ? 'This is a short dialogue they wrote, playing both people, for this scene: "' + (write.scene || '') + '". Treat each line as one sentence; "original" is the line WITHOUT the "Name:" label.'
+        : mode === 'react' && r
       ? 'This is their REPLY to this ' + r.kind + ' from ' + r.from + ':\n"""' + r.text + '"""\nJudge it as a natural reply in the same register.'
       : mode === 'draft'
       ? 'This is a real work message they are about to send. Keep their tone, intent and length; fix only what a native colleague would notice.'
@@ -2249,7 +2316,7 @@ Their text:
 """${text}"""
 Split it into sentences, in order; don't merge, drop or reorder any. For each sentence return:
 {"original":"the sentence exactly as written","fixed":"THEIR sentence minimally corrected: keep their words and structure, change only what is wrong or unnatural. Copy it exactly if nothing needs changing.","natural":"how a native would phrase it, or empty if fixed already is","chunk":"one reusable multi-word phrase from fixed or natural worth saving, or empty","clean":true or false (true = no meaningful change needed, ignoring capitalization and punctuation),${TAGS_FIELD}}
-Reply with ONLY JSON: {"sentences":[...],"note":"one encouraging line (max 25 words) about the whole text: what worked, and the one thing to watch","ready":"${mode === 'draft' ? 'the full message, cleaned up, in their tone, ready to send' : ''}"${mode === 'react' ? ',"fit":"one line: does the reply match the tone and register of the original (too formal, too blunt, just right)?"' : ''}}`;
+Reply with ONLY JSON: {"sentences":[...],"note":"one encouraging line (max 25 words) about the whole text: what worked, and the one thing to watch","ready":"${mode === 'draft' ? 'the full message, cleaned up, in their tone, ready to send' : ''}"${mode === 'react' ? ',"fit":"one line: does the reply match the tone and register of the original (too formal, too blunt, just right)?"' : ''}${mode === 'explain' ? ',"clarity":"one line: would a new teammate get it? What to add or cut."' : ''}${mode === 'dialogue' ? ',"questions":"one line on whether the questions in it sound natural"' : ''}}`;
   const obj = await aiObj({
     contents: [{ parts: [{ text: msg }] }],
     generationConfig: { responseMimeType: 'application/json' },
@@ -2271,7 +2338,13 @@ Reply with ONLY JSON: {"sentences":[...],"note":"one encouraging line (max 25 wo
       };
     });
   if (!sents.length) return null;
-  return { sents, note: String(obj.note || ''), ready: String(obj.ready || ''), fit: String(obj.fit || '') };
+  return {
+    sents,
+    note: String(obj.note || ''),
+    ready: String(obj.ready || ''),
+    /* the one mode-specific line, per mode */
+    fit: String((mode === 'explain' ? obj.clarity : mode === 'dialogue' ? obj.questions : obj.fit) || ''),
+  };
 }
 async function writeCheckNow() {
   const mode = write.mode;
@@ -2308,7 +2381,14 @@ async function writeCheckNow() {
       logAttempt({
         source: mode === 'react' ? 'react' : mode === 'rewrite' ? 'rewrite' : 'write',
         kind: mode === 'react' && write.react ? write.react.kind : mode === 'rewrite' ? write.rewrite.source : mode,
-        prompt: mode === 'react' && write.react ? write.react.text : mode === 'rewrite' ? write.rewrite.prompt : seed,
+        prompt:
+          mode === 'react' && write.react
+            ? write.react.text
+            : mode === 'rewrite'
+              ? write.rewrite.prompt
+              : mode === 'dialogue'
+                ? write.scene
+                : seed,
         blurt: x.original,
         fix: x.fixed,
         natural: x.natural,
@@ -2620,6 +2700,114 @@ function archRetry(i) {
   showTab('practice');
   startReplay({ prompt: a.prompt, blurt: a.blurt, fix: a.fix, kind: a.kind, d: a.d }, { single: true });
 }
+
+/* ================= "do natives say this?" ================= */
+/* Select any phrase in a result, a write-up or the archive and ask about it. */
+const NATIVES_AREAS = ['resultCard', 'writeResult', 'convBody', 'archList', 'drillBody', 'randomBody'];
+let nativesSel = null;
+function nativesContainer(node) {
+  let el = node && (node.nodeType === 1 ? node : node.parentElement);
+  while (el) {
+    if (NATIVES_AREAS.includes(el.id)) return el;
+    el = el.parentElement;
+  }
+  return null;
+}
+function onSelectionChange() {
+  const sel = document.getSelection();
+  const btn = $('nativesBtn');
+  if (!sel || sel.isCollapsed || !loggedIn()) return hideNatives();
+  const text = sel.toString().trim();
+  const box = nativesContainer(sel.anchorNode);
+  if (!box || text.length < 2 || text.length > 120) return hideNatives();
+  /* the sentence it sits in, so a saved alternative has an example to drill */
+  const around = (sel.anchorNode && sel.anchorNode.parentElement ? sel.anchorNode.parentElement.textContent : '') || text;
+  nativesSel = { text, around };
+  const r = sel.getRangeAt(0).getBoundingClientRect();
+  btn.style.display = '';
+  const w = btn.offsetWidth || 180,
+    h = btn.offsetHeight || 38;
+  const top = r.top > h + 16 ? r.top - h - 8 : r.bottom + 8;
+  btn.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+  btn.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, top)) + 'px'; /* always reachable */
+}
+function hideNatives() {
+  nativesSel = null;
+  $('nativesBtn').style.display = 'none';
+}
+function closeNativesPop() {
+  $('nativesPop').style.display = 'none';
+}
+async function askNatives() {
+  const sel = nativesSel;
+  if (!sel) return;
+  hideNatives();
+  const pop = $('nativesPop');
+  pop.style.display = '';
+  pop.style.left = Math.max(8, Math.min(window.innerWidth - 348, window.innerWidth / 2 - 170)) + 'px';
+  pop.style.top = Math.max(60, window.innerHeight / 2 - 120) + 'px';
+  pop.innerHTML = '<span class="spin"></span> Asking…';
+  const obj = await aiObj({
+    contents: [
+      {
+        parts: [
+          {
+            text: `A Vietnamese developer learning English asks whether this English phrase is something natives actually say: "${sel.text}"
+Context it appeared in: "${sel.around}"
+Reply with ONLY JSON: {"common":"yes|rare|no","why":"one short line in plain words — no grammar terms","alts":["a natural alternative","another one"]}`,
+          },
+        ],
+      },
+    ],
+    generationConfig: { responseMimeType: 'application/json' },
+  });
+  if (!obj) {
+    pop.innerHTML = '<button class="popClose" onclick="closeNativesPop()">✕</button>Couldn\'t ask right now.';
+    return;
+  }
+  const common = String(obj.common || '').toLowerCase();
+  nativesAlts = (Array.isArray(obj.alts) ? obj.alts : []).map(String).filter(Boolean).slice(0, 3);
+  pop.innerHTML =
+    '<button class="popClose" onclick="closeNativesPop()">✕</button>' +
+    '<p class="verdict ' + (common === 'yes' ? 'good">✓ Yes, natives say this' : common === 'rare' ? 'badv">△ Rare — understood, but unusual' : 'badv">✗ Not really') + '</p>' +
+    '<p class="note">' + esc(obj.why || '') + '</p>' +
+    nativesAlts
+      .map(
+        (a, i) =>
+          '<div class="alt"><span>' + esc(a) + '</span><button class="btn ghost" id="natSave' + i + '" onclick="saveNativeAlt(' + i + ')">Save as chunk</button></div>',
+      )
+      .join('');
+  nativesAround = sel.around;
+  nativesText = sel.text;
+}
+let nativesAlts = [],
+  nativesAround = '',
+  nativesText = '';
+async function saveNativeAlt(i) {
+  const alt = nativesAlts[i],
+    b = $('natSave' + i);
+  if (!alt || !b || b.disabled) return;
+  /* drop the alternative into the sentence it came from, so Drill can blank it */
+  let example = nativesAround && nativesAround.includes(nativesText) ? nativesAround.replace(nativesText, alt) : alt;
+  if (!drillBlank(alt, example).hasBlank) example = alt;
+  const c = { ...newChunkBase(), chunk: alt, example, context: nativesText };
+  chunks.unshift(c);
+  await chunkAdd(c);
+  renderHeader();
+  renderHW();
+  b.textContent = 'Saved ✓';
+  b.disabled = true;
+}
+document.addEventListener('selectionchange', onSelectionChange);
+document.addEventListener('mousedown', (e) => {
+  if (!e.target.closest('#nativesPop') && !e.target.closest('#nativesBtn')) closeNativesPop();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    hideNatives();
+    closeNativesPop();
+  }
+});
 
 /* ================= voice ================= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -5588,6 +5776,7 @@ function renderStats() {
     heatmapHTML() +
     errorTypesHTML() +
     selfTrustHTML() +
+    lettersHTML() +
     (state.lastPattern && state.lastPattern.text
       ? '<div style="margin-top:18px"><div class="eyebrow">This week\'s pattern</div><div class="chunkItem"><div>' +
         esc(state.lastPattern.text) +
@@ -5673,6 +5862,52 @@ Reply with ONLY JSON: {"pattern":"one or two short sentences"}`;
   });
   return (obj && obj.pattern && String(obj.pattern).trim()) || null;
 }
+/* Your clean sentences from the week, arranged (never rewritten) into a short
+   letter. No AI: this is literally what you wrote. */
+const LETTER_CAP = 12,
+  LETTER_SENTENCES = 25;
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+function buildWeeklyLetter() {
+  const from = dayStr(-6);
+  const picked = attempts.filter((a) => a.clean === true && a.d >= from && a.source !== 'copy' && (a.fix || a.blurt));
+  if (!picked.length) return null;
+  const byDay = new Map();
+  picked.slice(-LETTER_SENTENCES).forEach((a) => {
+    const line = (a.fix || a.blurt).trim();
+    byDay.set(a.d, (byDay.get(a.d) || []).concat(line));
+  });
+  const days = [...byDay.keys()].sort();
+  const text =
+    'This week I wrote:\n\n' +
+    days
+      .map((d) => DAY_NAMES[new Date(d + 'T12:00:00Z').getUTCDay()] + ' (' + d.slice(5) + ')\n' + byDay.get(d).map((l) => '· ' + l).join('\n'))
+      .join('\n\n');
+  return { date: dayStr(0), from, count: picked.length, text };
+}
+function lettersHTML() {
+  const list = (state.letters || []).slice().reverse();
+  if (!list.length) return '';
+  return (
+    '<div style="margin-top:22px"><div class="eyebrow">Weekly letters</div>' +
+    list
+      .map(
+        (l, i) =>
+          '<details class="chunkTools"' +
+          (i === 0 ? ' open' : '') +
+          '><summary>Week of ' +
+          esc(l.from || l.date) +
+          ' · ' +
+          l.count +
+          ' clean sentence' +
+          (l.count === 1 ? '' : 's') +
+          '</summary><div class="natural writeReady">' +
+          esc(l.text) +
+          '</div></details>',
+      )
+      .join('') +
+    '</div>'
+  );
+}
 async function maybeWeeklyRecap() {
   if (!loggedIn()) return;
   const today = dayStr(0);
@@ -5697,11 +5932,14 @@ async function maybeWeeklyRecap() {
     (usedThisWeek().length ? ' Used for real: ' + usedThisWeek().map((c) => '"' + c.chunk + '"').join(', ') + '.' : '') +
     (pattern ? ' Pattern: ' + pattern : '') +
     ' Keep the chain alive.';
+  const letter = buildWeeklyLetter();
+  if (letter) state.letters = (state.letters || []).concat(letter).slice(-LETTER_CAP);
   state.lastRecap = today;
   saveState();
   if (state.ntfy && state.ntfy.on) {
     try {
       await pingNtfy('Blurt weekly recap 📊', msg);
+      if (letter) await pingNtfy('Blurt weekly letter 💌', 'Your weekly letter is ready — ' + letter.count + ' sentences you got right, in Stats.');
     } catch (e) {}
   }
 }
