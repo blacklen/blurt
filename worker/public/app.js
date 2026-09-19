@@ -3707,6 +3707,11 @@ async function saveChunk(which) {
     b.disabled = true;
   }
 }
+let chunkSearchTimer = null;
+function chunkSearchInput() {
+  clearTimeout(chunkSearchTimer);
+  chunkSearchTimer = setTimeout(renderChunks, 150);
+}
 function renderChunks() {
   const list = $('chunkList');
   if (!chunks.length) {
@@ -3715,7 +3720,15 @@ function renderChunks() {
     return;
   }
   const t = dayStr(0);
-  list.innerHTML = [...chunks]
+  const q = norm(($('chunkSearch') || {}).value || '');
+  const shown = q
+    ? chunks.filter((c) => norm([c.chunk, c.example, c.context].join(' ')).includes(q))
+    : chunks;
+  if (!shown.length) {
+    list.innerHTML = '<div class="empty">No chunk matches that.</div>';
+    return;
+  }
+  list.innerHTML = [...shown]
     .sort((a, b) => a.due.localeCompare(b.due))
     .map((c) => {
       const i = chunks.indexOf(c);
@@ -3821,47 +3834,100 @@ async function delChunk(i) {
   renderAll();
 }
 
-function exportChunks() {
-  const data = JSON.stringify({ chunks, state }, null, 0);
-  navigator.clipboard
-    .writeText(data)
-    .then(() => {
-      $('backupToast').textContent = 'Copied! Paste it somewhere safe.';
-      setTimeout(() => ($('backupToast').textContent = ''), 3000);
-    })
-    .catch(() => {
-      window.prompt('Copy this backup:', data);
-    });
-}
-async function importChunks() {
-  const raw = window.prompt('Paste your backup JSON:');
-  if (!raw) return;
-  try {
-    const data = JSON.parse(raw);
-    if (Array.isArray(data.chunks)) {
-      const existing = new Set(chunks.map((c) => c.chunk.toLowerCase()));
-      const added = [];
-      data.chunks.forEach((c) => {
-        if (c.chunk && !existing.has(c.chunk.toLowerCase())) {
-          migrateChunk(c);
-          delete c.id; /* imported backup ids aren't ours to reuse — assign fresh ones */
-          chunks.push(c);
-          added.push(c);
-        }
-      });
-      if (data.state) {
-        state.total = Math.max(state.total, data.state.total || 0);
-        state.streak = Math.max(state.streak, data.state.streak || 0);
-      }
-      if (added.length) await chunkAddMany(added);
-      await saveState();
-      renderAll();
-      $('backupToast').textContent = 'Imported ✓';
-      setTimeout(() => ($('backupToast').textContent = ''), 3000);
-    } else alert("That doesn't look like a Blurt backup.");
-  } catch (e) {
-    alert("Couldn't read that backup — make sure you pasted the whole thing.");
+/* Every attempt on the server, not just the 90 days kept in memory. */
+async function fetchAllAttempts() {
+  let all = [],
+    before = '';
+  for (;;) {
+    const r = await api('/api/attempts?limit=5000' + (before ? '&before=' + encodeURIComponent(before) : ''));
+    const got = (r && r.attempts) || [];
+    all = all.concat(got);
+    if (got.length < 5000) return all;
+    before = got[got.length - 1].created_at;
   }
+}
+function backupToast(msg) {
+  $('backupToast').textContent = msg;
+  setTimeout(() => ($('backupToast').textContent = ''), 4000);
+}
+/* A downloadable file: chunks, state, and every attempt. Clipboard only when
+   the browser can't download. */
+async function exportChunks(btn) {
+  if (btn) btn.disabled = true;
+  try {
+    const all = await fetchAllAttempts();
+    const data = JSON.stringify({ version: 2, exportedAt: new Date().toISOString(), chunks, state, attempts: all });
+    try {
+      const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'blurt-backup-' + dayStr(0) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      const n = (k, w) => k + ' ' + w + (k === 1 ? '' : 's');
+      backupToast('Downloaded ✓ (' + n(chunks.length, 'chunk') + ', ' + n(all.length, 'attempt') + ')');
+    } catch (e) {
+      await navigator.clipboard.writeText(data);
+      backupToast('Copied to clipboard — paste it somewhere safe.');
+    }
+  } catch (e) {
+    backupToast("Couldn't build the backup: " + ((e && e.message) || e));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+/* Read a backup file (v1: {chunks, state}; v2 adds attempts). Chunks are
+   deduped by text; attempts by id (the server upserts, so a repeat is harmless). */
+async function importChunks(input) {
+  const file = input && input.files && input.files[0];
+  if (input) input.value = ''; /* picking the same file again still fires onchange */
+  if (!file) return;
+  let data;
+  try {
+    data = JSON.parse(await file.text());
+  } catch (e) {
+    alert("Couldn't read that file. Is it a Blurt backup?");
+    return;
+  }
+  if (!data || !Array.isArray(data.chunks)) {
+    alert("That doesn't look like a Blurt backup.");
+    return;
+  }
+  const existing = new Set(chunks.map((c) => c.chunk.toLowerCase()));
+  const added = [];
+  data.chunks.forEach((c) => {
+    if (c && c.chunk && !existing.has(c.chunk.toLowerCase())) {
+      existing.add(c.chunk.toLowerCase());
+      migrateChunk(c);
+      delete c.id; /* imported backup ids aren't ours to reuse — assign fresh ones */
+      chunks.push(c);
+      added.push(c);
+    }
+  });
+  if (data.state) {
+    state.total = Math.max(state.total, data.state.total || 0);
+    state.streak = Math.max(state.streak, data.state.streak || 0);
+  }
+  const have = new Set(attempts.map((a) => a.id));
+  const since = dayStr(-ATTEMPT_DAYS);
+  let queued = 0;
+  (Array.isArray(data.attempts) ? data.attempts : []).forEach((a) => {
+    if (!a || !a.id || !a.d || !a.source || !a.created_at || have.has(a.id)) return;
+    have.add(a.id);
+    queueAttempt(a);
+    queued++;
+    if (a.d >= since) attempts.push(a);
+  });
+  attempts.sort((x, y) => x.created_at.localeCompare(y.created_at));
+  if (added.length) await chunkAddMany(added);
+  await saveState();
+  renderAll();
+  /* attempts already on the server are just rewritten with the same values */
+  backupToast(
+    'Imported ✓ ' + added.length + ' new chunk' + (added.length === 1 ? '' : 's') + (queued ? '; attempts merged' : ''),
+  );
 }
 function esc(s) {
   return String(s).replace(

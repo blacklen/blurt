@@ -204,8 +204,9 @@
       <details class="chunkTools">
         <summary>Add / import chunks</summary>
         <div class="toolbar">
-          <button class="btn ghost" onclick="exportChunks()">Copy backup</button>
-          <button class="btn ghost" onclick="importChunks()">Import</button>
+          <button class="btn ghost" onclick="exportChunks(this)">Download backup</button>
+          <button class="btn ghost" onclick="$('importFile').click()">Import backup</button>
+          <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importChunks(this)">
           <span class="toast" id="backupToast"></span>
         </div>
         <div class="addForm">
@@ -224,6 +225,7 @@
           <div id="pastePreview"></div>
         </div>
       </details>
+      <input class="drillIn" id="chunkSearch" type="search" autocomplete="off" placeholder="Search your chunks…" oninput="chunkSearchInput()">
       <div id="chunkList"></div>
     </div>
   </div>

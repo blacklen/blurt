@@ -174,4 +174,4 @@ day. The ping names a real due chunk (`WHERE due <= today`).
 
 - The secret is compared in constant time. Pick a long, random value; the
   `workers.dev` URL is HTTPS by default.
-- Backup: `npx wrangler d1 export blurt --remote --output backup.sql`.
+- Backup: **My chunks → Download backup** saves a JSON file with your chunks, settings and every attempt; **Import backup** merges one back in (chunks deduped by text, attempts by id). For a full server-side copy: `npx wrangler d1 export blurt --remote --output backup.sql`.
