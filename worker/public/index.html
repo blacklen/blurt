@@ -97,6 +97,7 @@
         <div class="clock" id="clock">45</div>
       </div>
       <textarea id="blurtInput" placeholder="Type fast, don't polish. (Enter to check · Shift+Enter for a new line)" autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();repPrimary();}"></textarea>
+      <div class="confRow"><span>How sure?</span><button class="chip" id="confUnsure" onclick="setConf('unsure')">😐 unsure</button><button class="chip" id="confSure" onclick="setConf('sure')">😎 sure</button></div>
       <div class="row">
         <button class="btn" id="checkBtn" onclick="repPrimary()">Done — check it</button>
         <button class="btn mic" id="micBtn" onclick="toggleMic()" title="Speak instead of typing" style="display:none">🎙</button>
@@ -109,6 +110,7 @@
       <div class="cleanLead" id="cleanLead" style="display:none">✓ That was already natural</div>
       <div class="eyebrow">How a native might say it<button class="speak" onclick="speakNatural()" title="Hear it">🔊</button></div>
       <div class="you" id="yourBlurt"></div>
+      <div id="predBox" style="display:none"></div>
       <div id="calqueNote" style="display:none">
         <div class="eyebrow" style="margin-top:2px;color:var(--bad)">⚠️ Word-for-word from Vietnamese</div>
         <div class="natural" id="calqueText"></div>
@@ -288,6 +290,12 @@
         <button class="btn ghost" onclick="saveFreeMin()">Save</button>
       </div>
       <p class="hint" id="freeMinStatus"></p>
+    </div>
+
+    <div class="card" id="predictCard">
+      <div class="eyebrow">🎯 Predict the fix</div>
+      <p class="hint">After you check a rep, tap the words you think will change before the answer shows. Stats tracks how well you notice your own slips.</p>
+      <div class="row"><button class="chip" id="predictChip" onclick="togglePredict()"></button></div>
     </div>
 
     <div class="card" id="vnShareCard">

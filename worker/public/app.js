@@ -812,6 +812,7 @@ function toggleSettings() {
     $('personalCtx').value = state.settings.context || '';
     $('ctxStatus').textContent = '';
     renderVoice();
+    renderPredict();
   } /* don't run a rep behind the panel */
 }
 function savePersonalCtx() {
@@ -1110,6 +1111,7 @@ function startRepWith(p) {
   current.three = three ? { attempts: [], n: 1 } : null;
   current.ladder = state.ptype === 'ladder' ? { round: 1, texts: [] } : null;
   renderThreeUI();
+  renderConf();
   /* "Not for me" only applies to real bank prompts (not AI-generated ones). */
   const isBank = PROMPTS.concat(REFLEXES, EXPRESSIONS, myReflexes).some((x) => norm(x.text) === norm(p.text));
   $('dislikeBtn').style.display = isBank ? '' : 'none';
@@ -1121,6 +1123,17 @@ function startRepWith(p) {
   startTimer();
 }
 /* Reflect the current 3-ways step in the counter + primary button label. */
+/* How sure you felt before seeing the fix (optional): stored on the attempt. */
+function setConf(v) {
+  if (!current) return;
+  current.conf = current.conf === v ? null : v;
+  renderConf();
+}
+function renderConf() {
+  const v = current && current.conf;
+  $('confUnsure').classList.toggle('on', v === 'unsure');
+  $('confSure').classList.toggle('on', v === 'sure');
+}
 function renderThreeUI() {
   const l = current && current.ladder;
   $('ladderCounter').style.display = l ? '' : 'none';
@@ -1280,7 +1293,16 @@ async function finishRep() {
   let result = null;
   /* expr has no AI judging — the curated sample IS the model answer, so there's
      nothing for the AI to correct against. */
-  if (judged) result = await askGemini(p, blurt);
+  const aiCall = judged ? askGemini(p, blurt) : Promise.resolve(null);
+  /* Predict the fix: while the AI works, tap the words you expect to change. */
+  const predicting = judged && state.settings.predict !== false;
+  let picks = null;
+  if (predicting) {
+    $('sitResult').style.display = 'none';
+    picks = await predictGate(blurt);
+    $('sitResult').style.display = '';
+  }
+  result = await aiCall;
   /* No AI answer (blank rep, expr, or AI down): show the bank's sample only —
      never present it as a correction of what they wrote. */
   const fallback = !result;
@@ -1301,6 +1323,8 @@ async function finishRep() {
   showCalque(clean ? '' : result.calque);
 
   $('cleanLead').style.display = clean ? '' : 'none';
+  const pred = picks && !fallback && fixed ? predictScore(blurt, fixed, clean, picks) : null;
+  if (picks) predictShow(blurt, fixed, clean, picks, pred);
   const showFixed = judged && !!fixed && !clean;
   $('fixedBlock').style.display = showFixed ? '' : 'none';
   if (showFixed) {
@@ -1346,7 +1370,67 @@ async function finishRep() {
       note: result.note || '',
       tags: fallback ? [] : result.tags,
       clean: fallback || p.kind === 'expr' ? null : clean,
+      conf: current.conf || null,
+      pred,
     });
+}
+
+/* ---- predict the fix ---- */
+let predictResolve = null;
+/* Shows your words as buttons; resolves with the picked word indexes on Reveal. */
+function predictGate(blurt) {
+  const words = blurt.split(/\s+/).filter(Boolean);
+  $('predBox').style.display = '';
+  $('predBox').innerHTML =
+    '<div class="eyebrow">🎯 Before you see it: tap the words you think will change</div>' +
+    '<div class="predWords">' +
+    words.map((w, i) => '<button class="predWord" data-i="' + i + '" onclick="this.classList.toggle(\'picked\')">' + esc(w) + '</button>').join('') +
+    '</div><div class="row"><button class="btn pulse" id="predReveal" onclick="predictReveal()">Reveal</button></div>';
+  $('predReveal').focus({ preventScroll: true });
+  return new Promise((res) => (predictResolve = res));
+}
+function predictReveal() {
+  const picks = [...document.querySelectorAll('#predBox .predWord.picked')].map((b) => Number(b.dataset.i));
+  $('predBox').innerHTML = '<p class="hint"><span class="spin"></span> Checking…</p>';
+  if (predictResolve) predictResolve(picks);
+  predictResolve = null;
+}
+/* Right when every changed word was picked (a missing word counts as found if
+   you picked a word next to the gap), with at most one extra pick. A clean rep
+   is right only with no picks. */
+function predictScore(blurt, fixed, clean, picks) {
+  const P = new Set(picks);
+  if (clean) return P.size === 0;
+  const { ops } = diffOps(blurt, fixed);
+  const n = blurt.split(/\s+/).filter(Boolean).length;
+  const dels = ops.filter((o) => o.op === 'del').map((o) => o.i);
+  const gaps = ops.filter((o) => o.op === 'ins').map((o) => [o.i - 1, o.i].filter((x) => x >= 0 && x < n));
+  const expected = new Set(dels.concat(...gaps));
+  const found = dels.every((d) => P.has(d)) && gaps.every((g) => !g.length || g.some((x) => P.has(x)));
+  return found && [...P].filter((x) => !expected.has(x)).length <= 1;
+}
+function predictShow(blurt, fixed, clean, picks, pred) {
+  const words = blurt.split(/\s+/).filter(Boolean);
+  const changed = new Set(clean ? [] : diffOps(blurt, fixed).ops.filter((o) => o.op === 'del').map((o) => o.i));
+  const P = new Set(picks);
+  $('predBox').innerHTML =
+    '<div class="eyebrow">🎯 ' +
+    (pred === null ? 'Your picks' : pred ? 'You saw it coming' : clean ? 'Nothing needed changing' : 'Not quite') +
+    '</div><div class="predWords">' +
+    words
+      .map((w, i) => '<button class="predWord' + (changed.has(i) ? (P.has(i) ? ' hit' : ' miss') : P.has(i) ? ' picked' : '') + '" disabled>' + esc(w) + '</button>')
+      .join('') +
+    '</div>';
+}
+function togglePredict() {
+  state.settings.predict = state.settings.predict === false;
+  saveState();
+  renderPredict();
+}
+function renderPredict() {
+  const on = state.settings.predict !== false;
+  $('predictChip').textContent = on ? '🎯 on' : 'off';
+  $('predictChip').classList.toggle('on', on);
 }
 
 /* Flag a word-for-word translation from Vietnamese when the AI spots one. */
@@ -1513,6 +1597,7 @@ async function finishLadder(last) {
     logAttempt({
       source: 'practice',
       kind: 'ladder',
+      conf: current.conf || null,
       prompt: p.text,
       blurt: final,
       fix: fixed || out.natural || '',
@@ -1571,6 +1656,7 @@ async function finishThreeWays(lastAttempt) {
     logAttempt({
       source: 'three',
       kind: p.kind,
+      conf: current.conf || null,
       prompt: p.text,
       blurt: takes[bi] || nonBlank[0],
       fix: res.natural || '',
@@ -1665,6 +1751,7 @@ function startReplay(orig, opts) {
   $('chunkHint').style.display = 'none';
   $('dislikeBtn').style.display = 'none'; /* replays aren't bank prompts */
   renderThreeUI(); /* clear any leftover 3-ways counter/label from a prior rep */
+  renderConf();
   $('blurtInput').value = '';
   $('blurtInput').disabled = false;
   $('checkBtn').disabled = false;
@@ -1809,12 +1896,19 @@ function setWriteMode(m) {
   if (m === 'free') write.seed = freeSeed();
   if (m === 'react') write.react = null;
   if (m === 'copy') write.copy = null;
+  if (m === 'rewrite') {
+    write.rewrite = yesterdayEntry();
+    $('writeInput').value = '';
+  }
   writeRender();
 }
 function writeRender() {
   const m = write.mode,
     inp = $('writeInput');
-  $('writeModes').innerHTML = WRITE_MODES.map(
+  const modes = yesterdayEntry() ? WRITE_MODES.concat({ id: 'rewrite', label: '↻ Rewrite yesterday' }) : WRITE_MODES;
+  if (m === 'rewrite' && !write.rewrite) write.rewrite = yesterdayEntry();
+  if (m === 'rewrite' && !write.rewrite) return setWriteMode('journal'); /* nothing from yesterday anymore */
+  $('writeModes').innerHTML = modes.map(
     (x) =>
       '<button class="chip ' +
       (m === x.id ? 'on' : '') +
@@ -1859,6 +1953,24 @@ function writeRender() {
             '</button></p>'
           : '');
     }
+  } else if (m === 'rewrite' && write.rewrite) {
+    const y = write.rewrite;
+    $('writeEyebrow').textContent = '↻ Rewrite yesterday · fresh, from memory';
+    $('writeSeed').style.fontSize = '1.02rem';
+    $('writeSeed').innerHTML =
+      '<span class="reactMeta">Yesterday you wrote about</span><span class="reactText">' + esc(y.prompt || '(no prompt)') + '</span>';
+    /* a cue, never the whole entry: at most 8 words, at most half of it */
+    const words = y.text.split(/\s+/);
+    const cue = words
+      .slice(0, Math.min(8, Math.ceil(words.length / 2)))
+      .join(' ')
+      .replace(/[^A-Za-z0-9'’]+$/, '');
+    $('writeHint').textContent = 'It started: “' + cue + '…”. Write it again from scratch; the fixes come after.';
+    inp.disabled = false;
+    inp.placeholder = 'Write it again…';
+    $('writeActions').innerHTML =
+      write.phase === 'checked' ? '' : '<button class="btn pulse" id="writeCheckBtn" onclick="writeCheckNow()">Check it</button>';
+    if (write.phase === 'idle') $('writeResult').innerHTML = '';
   } else if (m === 'copy') {
     $('writeEyebrow').textContent = 'Copy · type it out, word for word';
     inp.disabled = write.phase === 'checked';
@@ -1969,6 +2081,42 @@ async function reactNext() {
   write.lastReact = r.text;
   renderReactSeed();
   $('writeInput').focus();
+}
+
+/* ---- rewrite yesterday: the latest Write / Freewrite / React entry from yesterday ---- */
+const REWRITE_SOURCES = ['write', 'free', 'react'];
+function yesterdayEntry() {
+  const y = attempts.filter((a) => a.d === dayStr(-1) && REWRITE_SOURCES.includes(a.source));
+  if (!y.length) return null;
+  const last = y[y.length - 1];
+  /* one entry = the sentences logged together for the same prompt */
+  const items = y.filter((a) => a.source === last.source && a.prompt === last.prompt);
+  return { source: last.source, prompt: last.prompt, items, text: items.map((a) => a.blurt).join(' ') };
+}
+/* Yesterday's fixes next to today's, with what they were about. */
+function rewriteCompareHTML(y, sents) {
+  const tagLine = (tags) => {
+    const m = {};
+    tags.forEach((t) => (m[t] = (m[t] || 0) + 1));
+    const k = Object.keys(m);
+    return k.length ? k.map((t) => esc(TAG_LABELS[t] || t) + (m[t] > 1 ? ' ×' + m[t] : '')).join(' · ') : 'no fixes';
+  };
+  const col = (title, rows, tags) =>
+    '<div class="rewriteCol"><div class="eyebrow">' + title + '</div>' + rows.join('') + '<p class="hint">' + tagLine(tags) + '</p></div>';
+  const row = (orig, fix, clean) =>
+    '<div class="writeSent">' +
+    (clean === true
+      ? '<div class="cleanSent">✓ ' + esc(fix || orig) + '</div>'
+      : clean === false && fix
+        ? '<div class="diff">' + wordDiff(orig, fix) + '</div>'
+        : '<div>' + esc(orig) + ' <small class="meta">not checked</small></div>') +
+    '</div>';
+  return (
+    '<div class="rewriteCmp">' +
+    col('Yesterday', y.items.map((a) => row(a.blurt, a.fix, a.clean)), y.items.flatMap((a) => a.tags || [])) +
+    col('Today', sents.map((x) => row(x.original, x.fixed, x.clean)), sents.flatMap((x) => x.tags)) +
+    '</div>'
+  );
 }
 
 /* ---- copy: type a native text out exactly (no AI) ---- */
@@ -2158,9 +2306,9 @@ async function writeCheckNow() {
   } else {
     res.sents.forEach((x) =>
       logAttempt({
-        source: mode === 'react' ? 'react' : 'write',
-        kind: mode === 'react' && write.react ? write.react.kind : mode,
-        prompt: mode === 'react' && write.react ? write.react.text : seed,
+        source: mode === 'react' ? 'react' : mode === 'rewrite' ? 'rewrite' : 'write',
+        kind: mode === 'react' && write.react ? write.react.kind : mode === 'rewrite' ? write.rewrite.source : mode,
+        prompt: mode === 'react' && write.react ? write.react.text : mode === 'rewrite' ? write.rewrite.prompt : seed,
         blurt: x.original,
         fix: x.fixed,
         natural: x.natural,
@@ -2174,6 +2322,7 @@ async function writeCheckNow() {
   write.sents = res.sents;
   write.ready = res.ready;
   writeRenderResult(res);
+  if (mode === 'rewrite') $('writeResult').insertAdjacentHTML('afterbegin', rewriteCompareHTML(write.rewrite, res.sents));
   if (mode === 'free') {
     if (btn) btn.remove();
   } else writeRender(); /* swaps Check for Start over */
@@ -2328,7 +2477,7 @@ const ARCH_FILTERS = [
   { id: 'chat', label: 'Chat', source: 'chat' },
 ];
 const ARCH_PAGE = 50;
-const SOURCE_LABELS = { practice: 'practice', three: '3 ways', replay: 'replay', write: 'write', free: 'freewrite', chat: 'chat', react: 'react', copy: 'copy' };
+const SOURCE_LABELS = { practice: 'practice', three: '3 ways', replay: 'replay', write: 'write', free: 'freewrite', chat: 'chat', react: 'react', copy: 'copy', rewrite: 'rewrite' };
 let arch = { q: '', filter: 'all', rows: [], more: true, loading: false, seq: 0 };
 let archTimer = null;
 
@@ -2762,8 +2911,8 @@ function diffOps(a, b) {
   while (i < A.length || j < B.length) {
     if (i < A.length && j < B.length && nA[i] === nB[j]) ops.push({ op: 'same', text: B[j], j: j++, i: i++ });
     else if (j < B.length && (i === A.length || L[i][j + 1] >= L[i + 1][j]))
-      ops.push({ op: 'ins', text: B[j], j: j++ });
-    else ops.push({ op: 'del', text: A[i++], j });
+      ops.push({ op: 'ins', text: B[j], j: j++, i }); /* i: inserted before a[i] */
+    else ops.push({ op: 'del', text: A[i], j, i: i++ });
   }
   return { ops, B };
 }
@@ -3102,6 +3251,18 @@ const CORE_CAP = 100,
   CORE_STREAK = 3;
 let coreCur = null,
   coreTimer = null;
+/* You used this chunk for real (a message, a meeting): counts in Stats and the recap. */
+function usedChunk(i) {
+  const c = chunks[i];
+  if (!c) return;
+  c.used = (c.used || 0) + 1;
+  c.lastUsed = dayStr(0);
+  chunkSave(c);
+  renderChunks();
+}
+function usedThisWeek() {
+  return chunks.filter((c) => c.lastUsed && c.lastUsed >= dayStr(-6));
+}
 function toggleCore(i) {
   const c = chunks[i];
   if (!c || c.coreDone) return;
@@ -4120,6 +4281,9 @@ function convRender(thinking) {
 function resetResultCard() {
   resetSaveBtn();
   $('cleanLead').style.display = 'none';
+  $('predBox').style.display = 'none';
+  $('predBox').innerHTML = '';
+  if (predictResolve) predictReveal(); /* a gate left open by leaving mid-rep */
   $('typeBack').style.display = 'none';
   $('typeBackIn').value = '';
   $('typeBackOut').innerHTML = '';
@@ -4250,6 +4414,11 @@ function renderChunks() {
         '<div class="row"><button class="btn ghost" onclick="expandChunk(' +
         i +
         ')">🌱 Related</button>' +
+        '<button class="btn ghost" onclick="usedChunk(' +
+        i +
+        ')" title="You used this in real life">✔ used it' +
+        (c.used ? ' · ' + c.used : '') +
+        '</button>' +
         '<button class="btn ghost" onclick="toggleCore(' +
         i +
         ')" title="Your 100: the chunks you want to own">' +
@@ -5311,6 +5480,37 @@ function errorTypesHTML() {
     '</div>'
   );
 }
+/* Calibration (how sure you felt vs how it went) and Noticing (predict the fix),
+   last 30 days. */
+function selfTrustHTML() {
+  const recent = attempts.filter((a) => a.d >= dayStr(-29));
+  const rate = (list) => (list.length ? Math.round((100 * list.filter((a) => a.clean).length) / list.length) : null);
+  const graded = recent.filter((a) => a.clean != null);
+  const unsure = graded.filter((a) => a.conf === 'unsure'),
+    sure = graded.filter((a) => a.conf === 'sure');
+  const preds = recent.filter((a) => a.pred != null);
+  let html = '';
+  if (unsure.length || sure.length) {
+    const u = rate(unsure),
+      su = rate(sure);
+    html +=
+      '<div style="margin-top:22px"><div class="eyebrow">Calibration · 30 days</div>' +
+      (unsure.length ? '<p>😐 Felt unsure ' + unsure.length + '× → <b>' + u + '%</b> were already clean</p>' : '') +
+      (sure.length ? '<p>😎 Felt sure ' + sure.length + '× → <b>' + su + '%</b> were already clean</p>' : '') +
+      (unsure.length >= 3 && u >= 60
+        ? '<p class="note">Most of what you felt unsure about was already fine. Your English is better than your gut says.</p>'
+        : '') +
+      '</div>';
+  }
+  if (preds.length)
+    html +=
+      '<div style="margin-top:22px"><div class="eyebrow">Noticing · 30 days</div><div class="statRow" style="margin-top:0"><div class="statCell"><div class="statBig">' +
+      rate(preds.map((a) => ({ clean: a.pred }))) +
+      '%</div><p class="hint">of ' +
+      preds.length +
+      ' reps, you called the fix before seeing it</p></div></div></div>';
+  return html;
+}
 function renderStats() {
   const h = state.history || {};
   const days = [];
@@ -5366,6 +5566,9 @@ function renderStats() {
     '<div class="statCell"><div class="statBig">' +
     chunks.length +
     '</div><p class="hint">chunks learned</p></div>' +
+    (usedThisWeek().length
+      ? '<div class="statCell"><div class="statBig">' + usedThisWeek().length + '</div><p class="hint">chunks used for real this week</p></div>'
+      : '') +
     (chunks.some((c) => c.core)
       ? '<div class="statCell"><div class="statBig">' +
         chunks.filter((c) => c.coreDone).length +
@@ -5384,6 +5587,7 @@ function renderStats() {
     '</div>' +
     heatmapHTML() +
     errorTypesHTML() +
+    selfTrustHTML() +
     (state.lastPattern && state.lastPattern.text
       ? '<div style="margin-top:18px"><div class="eyebrow">This week\'s pattern</div><div class="chunkItem"><div>' +
         esc(state.lastPattern.text) +
@@ -5490,6 +5694,7 @@ async function maybeWeeklyRecap() {
     fresh +
     ' new chunks.' +
     (worst ? ' Nemesis: "' + worst.chunk + '" (missed ' + worst.misses + 'x).' : '') +
+    (usedThisWeek().length ? ' Used for real: ' + usedThisWeek().map((c) => '"' + c.chunk + '"').join(', ') + '.' : '') +
     (pattern ? ' Pattern: ' + pattern : '') +
     ' Keep the chain alive.';
   state.lastRecap = today;
