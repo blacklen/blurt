@@ -1473,7 +1473,11 @@ function nextReplay() {
 }
 function startReplay(orig, opts) {
   const warmup = !!(opts && opts.warmup);
-  if (!warmup) {
+  const single = !!(opts && opts.single); /* one attempt from the archive, outside any run */
+  if (single) {
+    endReplayRun();
+    repSource = 'bank'; /* Next rep goes back to normal practice */
+  } else if (!warmup) {
     /* start a fresh run unless one is already in progress */
     if (!replayRun || !replayRun.queue.length) {
       const pool = replayPool();
@@ -1959,6 +1963,160 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+/* ================= "Your English": the archive of everything you wrote ================= */
+const ARCH_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'clean', label: '✓ Clean only' },
+  { id: 'practice', label: 'Practice', source: 'practice' },
+  { id: 'write', label: 'Write', source: 'write' },
+  { id: 'free', label: 'Free', source: 'free' },
+  { id: 'chat', label: 'Chat', source: 'chat' },
+];
+const ARCH_PAGE = 50;
+const SOURCE_LABELS = { practice: 'practice', three: '3 ways', replay: 'replay', write: 'write', free: 'freewrite', chat: 'chat' };
+let arch = { q: '', filter: 'all', rows: [], more: true, loading: false, seq: 0 };
+let archTimer = null;
+
+function archiveHTML() {
+  return (
+    '<div style="margin-top:28px" id="archive"><div class="eyebrow">Your English · everything you wrote</div>' +
+    '<input class="drillIn" id="archSearch" type="search" autocomplete="off" placeholder="Search your sentences…" oninput="archSearchInput()" style="margin-top:0">' +
+    '<div class="chips" id="archChips"></div>' +
+    '<div id="archList"></div>' +
+    '<div class="row" id="archMore"></div></div>'
+  );
+}
+function archFilter() {
+  return ARCH_FILTERS.find((f) => f.id === arch.filter) || ARCH_FILTERS[0];
+}
+function archMatches(a) {
+  const f = archFilter();
+  if (f.id === 'clean' && a.clean !== true) return false;
+  if (f.source && a.source !== f.source) return false;
+  return true;
+}
+/* First page comes from the attempts already in memory (last 90 days) unless
+   you're searching; everything older, and every search, asks the server. */
+async function archReset() {
+  arch.rows = [];
+  arch.more = true;
+  const seq = ++arch.seq;
+  $('archSearch').value = arch.q;
+  $('archChips').innerHTML = ARCH_FILTERS.map(
+    (f) =>
+      '<button class="chip ' + (arch.filter === f.id ? 'on' : '') + '" onclick="setArchFilter(\'' + f.id + '\')">' + f.label + '</button>',
+  ).join('');
+  if (!arch.q) {
+    arch.rows = attempts.filter(archMatches).slice().reverse().slice(0, ARCH_PAGE);
+    archRenderList();
+  } else {
+    $('archList').innerHTML = '<p class="hint"><span class="spin"></span> Searching…</p>';
+    await archFetch(seq);
+  }
+}
+async function archFetch(seq) {
+  if (arch.loading) return;
+  arch.loading = true;
+  const f = archFilter();
+  const qs = ['limit=' + ARCH_PAGE];
+  const last = arch.rows[arch.rows.length - 1];
+  if (last) qs.push('before=' + encodeURIComponent(last.created_at));
+  if (arch.q) qs.push('q=' + encodeURIComponent(arch.q));
+  if (f.id === 'clean') qs.push('clean=1');
+  if (f.source) qs.push('source=' + f.source);
+  try {
+    const r = await api('/api/attempts?' + qs.join('&'));
+    if (seq !== arch.seq) return; /* a newer search or filter took over */
+    const got = (r && r.attempts) || [];
+    arch.rows = arch.rows.concat(got);
+    arch.more = got.length === ARCH_PAGE;
+  } catch (e) {
+    if (seq === arch.seq) $('archMore').innerHTML = '<p class="hint">Couldn\'t load more. <button class="btn ghost" onclick="archLoadMore()">Try again</button></p>';
+    return;
+  } finally {
+    arch.loading = false;
+  }
+  archRenderList();
+}
+function archLoadMore() {
+  archFetch(arch.seq);
+}
+function setArchFilter(id) {
+  arch.filter = id;
+  archReset();
+}
+function archSearchInput() {
+  clearTimeout(archTimer);
+  archTimer = setTimeout(() => {
+    arch.q = $('archSearch').value.trim();
+    archReset();
+  }, 300);
+}
+function archRenderList() {
+  const rows = arch.rows;
+  $('archList').innerHTML = rows.length
+    ? rows.map(archRowHTML).join('')
+    : '<p class="hint">' + (arch.q ? 'Nothing matches “' + esc(arch.q) + '”.' : 'Nothing here yet.') + '</p>';
+  $('archMore').innerHTML = arch.more
+    ? '<button class="btn ghost" onclick="archLoadMore()">Load ' + (rows.length ? 'older' : 'more') + '</button>'
+    : rows.length
+      ? '<p class="hint">That\'s everything.</p>'
+      : '';
+}
+function archRowHTML(a, i) {
+  const hasFix = !!a.fix && norm(a.fix) !== norm(a.blurt);
+  const body =
+    a.clean === true
+      ? '<div class="cleanSent">✓ ' + esc(a.fix || a.blurt) + '</div>'
+      : hasFix && a.clean === false
+        ? '<div class="diff">' + wordDiff(a.blurt, a.fix) + '</div>'
+        : '<div>' + esc(a.blurt) + (a.clean == null ? ' <small class="meta">not checked</small>' : '') + '</div>';
+  const btns =
+    (hasFix && a.clean === false
+      ? '<button class="btn ghost" onclick="archSaveChunk(' + i + ', this)">Save as chunk</button>'
+      : '') +
+    (a.prompt && a.fix && a.source !== 'free'
+      ? '<button class="btn ghost" onclick="archRetry(' + i + ')">Retry</button>'
+      : '');
+  return (
+    '<div class="archRow"><div class="archMeta">' +
+    esc(a.d) +
+    ' <span class="srcBadge">' +
+    esc(SOURCE_LABELS[a.source] || a.source) +
+    '</span></div>' +
+    (a.prompt ? '<div class="archPrompt">' + esc(a.prompt) + '</div>' : '') +
+    body +
+    (btns ? '<div class="row archBtns">' + btns + '</div>' : '') +
+    '</div>'
+  );
+}
+/* Save the part you got wrong, as fixed. The suggestion is editable; it has to
+   appear in the fixed sentence so Drill can blank it. */
+async function archSaveChunk(i, btn) {
+  const a = arch.rows[i];
+  if (!a || btn.disabled) return;
+  const pick = prompt('Chunk to save (a phrase from the fixed sentence):', fixSpan(a.blurt, a.fix));
+  if (pick == null) return;
+  const chunk = pick.trim();
+  if (!chunk || !drillBlank(chunk, a.fix).hasBlank) {
+    alert('That phrase isn\'t in the fixed sentence:\n\n' + a.fix);
+    return;
+  }
+  const c = { ...newChunkBase(), chunk, example: a.fix, context: a.prompt || a.blurt };
+  chunks.unshift(c);
+  await chunkAdd(c);
+  renderHeader();
+  renderHW();
+  btn.textContent = 'Saved ✓';
+  btn.disabled = true;
+}
+function archRetry(i) {
+  const a = arch.rows[i];
+  if (!a) return;
+  showTab('practice');
+  startReplay({ prompt: a.prompt, blurt: a.blurt, fix: a.fix, kind: a.kind, d: a.d }, { single: true });
+}
+
 /* ================= voice ================= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 /* Mic buttons only when the browser supports it AND Voice input is switched on
@@ -2230,10 +2388,10 @@ function norm(s) {
     .replace(/\s+/g, ' ')
     .trim();
 }
-/* Word-level diff of a → b as HTML: words only in a are <del>, words only in b
-   are <ins>. Words are compared through norm() (so case and punctuation alone
-   don't count as a change) and shown as b spells them. */
-function wordDiff(a, b) {
+/* Word-level diff of a → b as a list of ops: {op:'same'|'del'|'ins', text, j}
+   where j is the word's index in b (same/ins). Words are compared through
+   norm(), so case and punctuation alone don't count as a change. */
+function diffOps(a, b) {
   const A = String(a || '').split(/\s+/).filter(Boolean),
     B = String(b || '').split(/\s+/).filter(Boolean);
   const nA = A.map(norm),
@@ -2243,10 +2401,22 @@ function wordDiff(a, b) {
   for (let i = A.length - 1; i >= 0; i--)
     for (let j = B.length - 1; j >= 0; j--)
       L[i][j] = nA[i] === nB[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
-  const out = [];
+  const ops = [];
   let i = 0,
-    j = 0,
-    dels = [],
+    j = 0;
+  while (i < A.length || j < B.length) {
+    if (i < A.length && j < B.length && nA[i] === nB[j]) ops.push({ op: 'same', text: B[j], j: j++, i: i++ });
+    else if (j < B.length && (i === A.length || L[i][j + 1] >= L[i + 1][j]))
+      ops.push({ op: 'ins', text: B[j], j: j++ });
+    else ops.push({ op: 'del', text: A[i++], j });
+  }
+  return { ops, B };
+}
+/* The diff as HTML: words only in a are <del>, words only in b are <ins>,
+   shown as b spells them. */
+function wordDiff(a, b) {
+  const out = [];
+  let dels = [],
     ins = [];
   const flush = () => {
     if (dels.length) out.push('<del>' + esc(dels.join(' ')) + '</del>');
@@ -2254,17 +2424,28 @@ function wordDiff(a, b) {
     dels = [];
     ins = [];
   };
-  while (i < A.length || j < B.length) {
-    if (i < A.length && j < B.length && nA[i] === nB[j]) {
+  diffOps(a, b).ops.forEach((o) => {
+    if (o.op === 'same') {
       flush();
-      out.push(esc(B[j]));
-      i++;
-      j++;
-    } else if (j < B.length && (i === A.length || L[i][j + 1] >= L[i + 1][j])) ins.push(B[j++]);
-    else dels.push(A[i++]);
-  }
+      out.push(esc(o.text));
+    } else (o.op === 'del' ? dels : ins).push(o.text);
+  });
   flush();
   return out.join(' ');
+}
+/* The part of the fixed sentence around what changed: first to last changed
+   word, plus one word either side, at most 6 words. A starting suggestion for
+   a chunk; '' when nothing changed. */
+function fixSpan(blurt, fix) {
+  const { ops, B } = diffOps(blurt, fix);
+  const js = ops.filter((o) => o.op !== 'same').map((o) => Math.min(o.j, B.length - 1));
+  if (!js.length || !B.length) return '';
+  let lo = Math.max(0, Math.min(...js) - 1),
+    hi = Math.min(B.length - 1, Math.max(...js) + 1);
+  if (hi - lo > 5) hi = lo + 5;
+  return B.slice(lo, hi + 1)
+    .join(' ')
+    .replace(/^[^A-Za-z0-9'’]+|[^A-Za-z0-9'’]+$/g, '');
 }
 function drillCheck() {
   if (micLive) stopMic();
@@ -4407,7 +4588,9 @@ function renderStats() {
           )
           .join('') +
         '</div>'
-      : '');
+      : '') +
+    archiveHTML();
+  archReset();
 }
 
 /* GitHub-style activity heatmap: last 12 weeks of reps from state.history,
