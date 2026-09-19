@@ -712,6 +712,7 @@ function renderHW() {
       (state.freezes > 1 ? 's' : '') +
       ' banked — auto-used to cover a missed day. Earn one every 7-day run.</div>';
   }
+  html += sessionHTML();
   const n = smartNext();
   /* reps still owed → a freewrite is offered too; it counts as one rep */
   const free = state.hw.reps < hwReps() && loggedIn();
@@ -723,6 +724,8 @@ function renderHW() {
         : '') +
       (n ? '<button class="btn pulse" onclick="startSmartSession()">' + n.label + '</button>' : '') +
       '</div>';
+  if (!session && !sessionRecap)
+    html += '<div class="row"><button class="btn ghost" onclick="startSession()">▶ 15-minute session</button></div>';
   $('hwCard').innerHTML = html;
   if (state.streakFrozeNote) {
     delete state.streakFrozeNote;
@@ -737,6 +740,93 @@ function renderHW() {
 /* Smart daily session: surface the single highest-value next action — clear due
    drills first (best retention ROI), then hit the rep quota with nemesis-targeted
    AI prompts, then one mistake replay. */
+/* A 15-minute session: one freewrite, three blurts, one piece of writing.
+   Steps advance as you finish each thing; the recap is what you did. */
+const SESSION_STEPS = [
+  { id: 'free', label: '✍️ Freewrite' },
+  { id: 'reps', label: '🎯 3 blurts', total: 3 },
+  { id: 'write', label: '📓 One piece of writing' },
+];
+let session = null,
+  sessionRecap = null;
+function startSession() {
+  session = { step: 0, reps: 0, from: attempts.length, started: Date.now() };
+  sessionRecap = null;
+  renderHW();
+  sessionGo();
+}
+function sessionGo() {
+  if (!session) return;
+  const step = SESSION_STEPS[session.step];
+  if (!step) return endSession();
+  if (step.id === 'free') {
+    showTab('write');
+    setWriteMode('free');
+  } else if (step.id === 'reps') {
+    showTab('practice');
+    loggedIn() ? genPrompt() : startRep();
+  } else {
+    showTab('write');
+    setWriteMode('journal');
+  }
+  renderHW();
+}
+/* Called when a step's work finishes. */
+function sessionDone(kind) {
+  if (!session) return;
+  const step = SESSION_STEPS[session.step];
+  if (!step || step.id !== kind) return;
+  if (kind === 'reps' && ++session.reps < step.total) {
+    renderHW();
+    return;
+  }
+  session.step++;
+  if (session.step >= SESSION_STEPS.length) endSession();
+  else sessionGo();
+}
+function endSession() {
+  const s = session;
+  session = null;
+  if (!s) return;
+  const mine = attempts.slice(s.from);
+  const words = mine.reduce((n, a) => n + (a.blurt || '').split(/\s+/).filter(Boolean).length, 0);
+  const graded = mine.filter((a) => a.clean != null && a.source !== 'copy');
+  const cleanPct = graded.length ? Math.round((100 * graded.filter((a) => a.clean).length) / graded.length) : null;
+  const wins = mine.filter((a) => a.clean === true && (a.fix || a.blurt));
+  const win = wins.length ? wins[Math.floor(Math.random() * wins.length)] : null;
+  const h = hist();
+  h.sessions = (h.sessions || 0) + 1;
+  saveState();
+  sessionRecap = {
+    mins: Math.max(1, Math.round((Date.now() - s.started) / 60000)),
+    words,
+    cleanPct,
+    win: win ? win.fix || win.blurt : '',
+  };
+  renderHW(); /* the recap lives on the homework card, which every tab shows */
+}
+function dismissSessionRecap() {
+  sessionRecap = null;
+  renderHW();
+}
+function sessionHTML() {
+  if (sessionRecap) {
+    const r = sessionRecap;
+    return (
+      '<div class="hwDone">✦ Session done — ' + r.mins + ' min, ' + r.words + ' words' + (r.cleanPct == null ? '' : ', ' + r.cleanPct + '% clean') + '</div>' +
+      (r.win ? '<div class="hwClean">✓ you nailed this: “' + esc(r.win) + '”</div>' : '') +
+      '<div class="hwWarn">🔥 ' + state.streak + ' day streak</div>' +
+      '<div class="row"><button class="btn ghost" onclick="dismissSessionRecap()">Nice</button></div>'
+    );
+  }
+  if (!session) return '';
+  const step = SESSION_STEPS[session.step];
+  return (
+    '<div class="hwClean">▶ Session · step ' + (session.step + 1) + ' of ' + SESSION_STEPS.length + ': ' + step.label +
+    (step.id === 'reps' ? ' (' + session.reps + '/' + step.total + ')' : '') + '</div>' +
+    '<div class="row"><button class="btn ghost" onclick="endSession()">End session</button></div>'
+  );
+}
 function smartNext() {
   if (loggedIn() && warmupPick())
     return { fn: 'warmup', label: "🔥 Warm up — beat yesterday's miss" };
@@ -744,6 +834,10 @@ function smartNext() {
   if (due) return { fn: 'drill', label: '▶ Drill ' + due + ' due chunk' + (due > 1 ? 's' : '') };
   if (state.hw.reps < hwReps())
     return { fn: 'practice', label: '▶ Blurt a prompt (' + state.hw.reps + '/' + hwReps() + ')' };
+  /* a long piece is a treat, not homework: once a week, and only on a good week */
+  const w = cleanStats(dayStr(-6));
+  if (loggedIn() && w.pct !== null && w.pct >= 70 && w.n >= 5 && (!state.lastLong || state.lastLong <= dayStr(-7)))
+    return { fn: 'long', label: '📜 Write something longer' };
   if (loggedIn() && replayPool().length) return { fn: 'replay', label: '▶ Replay a past mistake' };
   return null;
 }
@@ -760,6 +854,11 @@ function startSmartSession() {
   } else if (n.fn === 'replay') {
     showTab('practice');
     startReplay();
+  } else if (n.fn === 'long') {
+    state.lastLong = dayStr(0);
+    saveState();
+    showTab('write');
+    setWriteMode('long');
   }
 }
 function renderAll() {
@@ -1257,6 +1356,7 @@ async function finishRep() {
   const p = current.prompt;
 
   creditRep();
+  sessionDone('reps');
 
   if (current.replay) {
     await finishReplay(blurt);
@@ -1333,6 +1433,15 @@ async function finishRep() {
     /* The chunk box saves your own fixed sentence as the drill example, so only
        offer it when Drill can actually blank the chunk in that sentence. */
     $('fixedChunkBox').style.display = drillBlank(result.chunk, fixed).hasBlank ? '' : 'none';
+  }
+  /* the same idea in smaller words, when the AI offered one that's really simpler */
+  const simpler = !fallback && result.simpler && norm(result.simpler) !== norm(fixed) && norm(result.simpler) !== norm(native) ? result.simpler : '';
+  $('simplerBox').style.display = simpler ? '' : 'none';
+  $('simplerBox').open = false;
+  if (simpler) {
+    $('simplerText').textContent = simpler;
+    const b = $('simplerSave');
+    b.style.display = drillBlank(result.chunk, simpler).hasBlank ? '' : 'none';
   }
   const dupe = !!fixed && norm(native) === norm(fixed);
   $('suggestEyebrow').textContent = clean
@@ -1443,6 +1552,13 @@ function showCalque(text) {
 /* Internal labels for what went wrong, used only for stats (never shown as
    grammar jargon in the notes). */
 const ERROR_TAGS = ['article', 'tense', 'preposition', 'word-order', 'word-choice', 'plural', 'missing-word', 'calque', 'none'];
+/* Notes are for a person who freezes, not a grammar class. Appended to every
+   correction prompt; the tags above stay internal, for stats only. */
+const COACH_RULES =
+  '\nIn every note: explain in plain words a friend would use. NEVER use grammar terminology (no "article", "adverbial", "present perfect", "preposition"). Say what to do instead, e.g. "in English the time usually goes at the end".';
+/* Optional plainer version of the same idea, offered under the fix. */
+const SIMPLER_FIELD =
+  '"simpler":"the same idea in the smallest, most common words, or empty if it was already simple"';
 const TAGS_FIELD =
   '"tags":["which of these describe their mistakes: ' + ERROR_TAGS.join(', ') + '. Use [\\"none\\"] when there were none."]';
 /* Keep only known tags, once each; "none" is implied by an empty list. */
@@ -1461,6 +1577,8 @@ async function askGemini(p, blurt) {
     instr =
       '{"fixedAnswer":"THEIR sentence, corrected. Keep their own words and structure; change only what is grammatically wrong, unclear, or unnatural. This is their answer cleaned up — NOT a rewrite. If nothing needs changing, copy it exactly.","clean":"true if their sentence needed no meaningful change (a native would say it that way, ignoring capitalization and punctuation), else false","natural":"how a native speaker would naturally say it (casual register, 1-2 sentences, keep their intended meaning)","chunk":"the single most reusable multi-word phrase from your natural version worth memorizing","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (e.g. wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.",' +
       TAGS_FIELD +
+      ',' +
+      SIMPLER_FIELD +
       ',"note":"one short encouraging coaching note (max 22 words). If clean, say specifically what they did well. Otherwise name the main fix."}';
   } else if (p.kind === 'reflex') {
     task =
@@ -1472,6 +1590,8 @@ async function askGemini(p, blurt) {
     instr =
       '{"fixedAnswer":"THEIR reply, minimally corrected: keep their words, fix only what a native would not say. Copy it exactly if it works.","clean":"true if their reply would land as a natural instant reaction in that moment. Be generous: any idiomatic line that fits counts, it does NOT have to match the example. Else false.","natural":"up to 2 other short lines a native might fire back here, separated by \\" / \\"","chunk":"the key phrase from the example reply, copied exactly","calque":"ONLY if their reply is a word-for-word translation a native would never say: one short line naming it. Otherwise empty string.",' +
       TAGS_FIELD +
+      ',' +
+      SIMPLER_FIELD +
       ',"note":"ONE line IN VIETNAMESE (max 20 words): did it land as an instant reaction, and when this kind of line fires"}';
   } else {
     task =
@@ -1482,6 +1602,8 @@ async function askGemini(p, blurt) {
     instr =
       '{"fixedAnswer":"THEIR sentence, corrected. Keep their own words and structure; change only what is grammatically wrong, unclear, or unnatural, and make sure the target chunk is used. This is their answer cleaned up — NOT a rewrite.","clean":"true if their sentence needed no meaningful change (natural as written and it uses the target chunk; ignore capitalization and punctuation), else false","natural":"a different, native way to say it that uses the target chunk. Must NOT be the same sentence as fixedAnswer.","chunk":"the target chunk, copied exactly","calque":"ONLY if their attempt is a word-for-word translation from Vietnamese that a native would never say (wrong word order, literal idiom): one short line naming the calque and the natural shape instead. Otherwise empty string.",' +
       TAGS_FIELD +
+      ',' +
+      SIMPLER_FIELD +
       ',"note":"one short tip (max 20 words). If clean, say specifically what they did well. Otherwise: did they use the chunk well, and the key fix."}';
   }
   const userMsg = `You are a friendly English fluency coach for a Vietnamese software developer practicing fast speech-like production.
@@ -1489,7 +1611,7 @@ ${task}
 Their fast, unedited attempt: "${blurt}"
 
 Reply with ONLY a JSON object:
-${instr}`;
+${instr}${COACH_RULES}`;
   const obj = await aiObj({
     contents: [{ parts: [{ text: userMsg }] }],
     generationConfig: { responseMimeType: 'application/json' },
@@ -1497,6 +1619,7 @@ ${instr}`;
   if (!obj || !obj.chunk) return null;
   obj.clean = truthy(obj.clean);
   obj.tags = cleanTags(obj.tags);
+  obj.simpler = String(obj.simpler || '').trim();
   if (p.kind === 'sit' || p.kind === 'reflex' || p.kind === 'expr') {
     /* situation/reflex/expression need at least one answer field; fill the missing
        one from the other so the renderer always has a real value to show. */
@@ -1525,7 +1648,7 @@ Their three attempts:
 ${tries}
 Pick which attempt sounds most natural, then give one fresh native model version, the key reusable chunk, and a short note.
 Reply with ONLY a JSON object:
-{"best":1,"clean":"true if the best attempt needed no meaningful change (ignore capitalization and punctuation), else false",${TAGS_FIELD.replace('their mistakes', 'the mistakes in the best attempt')},"natural":"one natural native version (1-2 sentences)","chunk":"the single most reusable phrase from your native version","note":"max 22 words: which attempt was most natural and one quick tip"}`;
+{"best":1,"clean":"true if the best attempt needed no meaningful change (ignore capitalization and punctuation), else false",${TAGS_FIELD.replace('their mistakes', 'the mistakes in the best attempt')},"natural":"one natural native version (1-2 sentences)","chunk":"the single most reusable phrase from your native version","note":"max 22 words: which attempt was most natural and one quick tip"}${COACH_RULES}`;
   const obj = await aiObj({
     contents: [{ parts: [{ text: userMsg }] }],
     generationConfig: { responseMimeType: 'application/json' },
@@ -1550,7 +1673,7 @@ Round 1: "${rounds[0] || '(blank)'}"
 Round 2: "${rounds[1] || '(blank)'}"
 Round 3: "${rounds[2] || '(blank)'}"
 Reply with ONLY a JSON object:
-{"fixedAnswer":"their ROUND 3 attempt, minimally corrected: keep their words, change only what is wrong or unnatural; copy exactly if fine","clean":"true if round 3 needed no meaningful change, else false",${TAGS_FIELD.replace('their mistakes', 'the mistakes in round 3')},"natural":"one natural native version (1-2 sentences)","chunk":"the single most reusable phrase from your native version","note":"max 22 words: what got looser or better under time pressure, and one tip"}`,
+{"fixedAnswer":"their ROUND 3 attempt, minimally corrected: keep their words, change only what is wrong or unnatural; copy exactly if fine","clean":"true if round 3 needed no meaningful change, else false",${TAGS_FIELD.replace('their mistakes', 'the mistakes in round 3')},"natural":"one natural native version (1-2 sentences)","chunk":"the single most reusable phrase from your native version","note":"max 22 words: what got looser or better under time pressure, and one tip"}${COACH_RULES}`,
           },
         ],
       },
@@ -1766,7 +1889,7 @@ Their earlier attempt (had issues): "${orig.blurt}"
 The corrected version they were shown then: "${orig.fix}"
 Their NEW attempt: "${blurt}"
 Judge whether the new attempt avoids the earlier mistake and sounds natural. Reply with ONLY JSON:
-{"improved":true or false,"clean":"true if the NEW attempt needed no meaningful change (ignore capitalization and punctuation), else false",${TAGS_FIELD.replace('their mistakes', 'the mistakes in the NEW attempt')},"natural":"the most natural way to say it (1-2 sentences)","chunk":"the single most reusable phrase from the natural version","note":"one short coaching note, max 22 words"}`;
+{"improved":true or false,"clean":"true if the NEW attempt needed no meaningful change (ignore capitalization and punctuation), else false",${TAGS_FIELD.replace('their mistakes', 'the mistakes in the NEW attempt')},"natural":"the most natural way to say it (1-2 sentences)","chunk":"the single most reusable phrase from the natural version","note":"one short coaching note, max 22 words"}${COACH_RULES}`;
   const obj = await aiObj({
     contents: [{ parts: [{ text: msg }] }],
     generationConfig: { responseMimeType: 'application/json' },
@@ -1839,7 +1962,12 @@ const WRITE_MODES = [
   { id: 'copy', label: '📄 Copy' },
   { id: 'explain', label: '🧑‍🏫 Explain' },
   { id: 'dialogue', label: '🗣 Two voices' },
+  { id: 'long', label: '📜 Long' },
 ];
+const LONG_TOPICS = ['a sprint retro: what went well, what didn\'t', 'what you would change about the codebase', 'a bug you fixed, start to finish', 'how you decide what to work on first', 'the best code review you ever got', 'what you would tell yourself a year ago', 'a tool you love and why', 'the last thing that surprised you at work', 'how your team could ship faster', 'what makes a good teammate'];
+function longTopic() {
+  return LONG_TOPICS[Math.floor(Math.random() * LONG_TOPICS.length)];
+}
 const EXPLAIN_TOPICS = ['what a race condition is', 'why we use feature flags', 'how our deploy works', 'what a code review is for', 'why tests sometimes flake', 'what technical debt is', 'how caching speeds things up', 'what an API is, to a non-developer', 'why we write migrations', 'how git branches work', 'what a memory leak is', 'why the build is slow', 'what "eventual consistency" means', 'how you debug a bug you can\'t reproduce', 'why naming things is hard', 'what a database index does', 'how retries can make things worse', 'what a staging environment is for', 'why we pair program', 'how you estimate a task', 'what an on-call rotation is', 'why rollbacks matter', 'what a feature freeze is', 'how rate limiting works', 'why logs matter at 3 a.m.', 'what a pull request should include', 'how you onboard to a new codebase', 'what "done" means for a ticket', 'why small commits help', 'how a queue decouples services', 'what a timezone bug looks like', 'why we avoid global state', 'how you say no to scope creep', 'what a postmortem is', 'why accessibility matters', 'how CI catches problems early', 'what the difference is between a bug and a feature request', 'how you split a big task', 'why we document decisions', 'what happens when you type a URL'];
 /* A dev topic to explain, sometimes built from your own context in Settings. */
 function explainTopic() {
@@ -1919,11 +2047,11 @@ function setWriteMode(m) {
   if (m === 'free') write.seed = freeSeed();
   if (m === 'react') write.react = null;
   if (m === 'copy') write.copy = null;
-  if (m === 'explain') write.topic = null;
+  if (m === 'explain' || m === 'long') write.topic = null;
   if (m === 'dialogue') write.scene = null;
   if (m === 'explain' || m === 'dialogue') $('writeInput').value = '';
-  if (m === 'rewrite') {
-    write.rewrite = yesterdayEntry();
+  if (m === 'rewrite' || m === 'then') {
+    write.rewrite = m === 'then' ? thenEntry() : yesterdayEntry();
     $('writeInput').value = '';
   }
   writeRender();
@@ -1931,9 +2059,10 @@ function setWriteMode(m) {
 function writeRender() {
   const m = write.mode,
     inp = $('writeInput');
-  const modes = yesterdayEntry() ? WRITE_MODES.concat({ id: 'rewrite', label: '↻ Rewrite yesterday' }) : WRITE_MODES;
-  if (m === 'rewrite' && !write.rewrite) write.rewrite = yesterdayEntry();
-  if (m === 'rewrite' && !write.rewrite) return setWriteMode('journal'); /* nothing from yesterday anymore */
+  let modes = yesterdayEntry() ? WRITE_MODES.concat({ id: 'rewrite', label: '↻ Rewrite yesterday' }) : WRITE_MODES;
+  if (thenEntry()) modes = modes.concat({ id: 'then', label: '⏳ Then vs now' });
+  if ((m === 'rewrite' || m === 'then') && !write.rewrite) write.rewrite = m === 'then' ? thenEntry() : yesterdayEntry();
+  if ((m === 'rewrite' || m === 'then') && !write.rewrite) return setWriteMode('journal'); /* nothing to redo anymore */
   $('writeModes').innerHTML = modes.map(
     (x) =>
       '<button class="chip ' +
@@ -1979,12 +2108,13 @@ function writeRender() {
             '</button></p>'
           : '');
     }
-  } else if (m === 'rewrite' && write.rewrite) {
+  } else if ((m === 'rewrite' || m === 'then') && write.rewrite) {
     const y = write.rewrite;
-    $('writeEyebrow').textContent = '↻ Rewrite yesterday · fresh, from memory';
+    $('writeEyebrow').textContent =
+      m === 'then' ? '⏳ Then vs now · you wrote this on ' + y.d : '↻ Rewrite yesterday · fresh, from memory';
     $('writeSeed').style.fontSize = '1.02rem';
     $('writeSeed').innerHTML =
-      '<span class="reactMeta">Yesterday you wrote about</span><span class="reactText">' + esc(y.prompt || '(no prompt)') + '</span>';
+      '<span class="reactMeta">' + (m === 'then' ? 'Back then you wrote about' : 'Yesterday you wrote about') + '</span><span class="reactText">' + esc(y.prompt || '(no prompt)') + '</span>';
     /* a cue, never the whole entry: at most 8 words, at most half of it */
     const words = y.text.split(/\s+/);
     const cue = words
@@ -1997,6 +2127,29 @@ function writeRender() {
     $('writeActions').innerHTML =
       write.phase === 'checked' ? '' : '<button class="btn pulse" id="writeCheckBtn" onclick="writeCheckNow()">Check it</button>';
     if (write.phase === 'idle') $('writeResult').innerHTML = '';
+  } else if (m === 'long') {
+    if (!write.topic) write.topic = longTopic();
+    $('writeEyebrow').textContent = 'Long · around 200 words, no timer';
+    $('writeSeed').style.fontSize = '1.1rem';
+    $('writeSeed').textContent = write.topic;
+    inp.disabled = false;
+    inp.placeholder = 'Take your time. Paragraphs are fine…';
+    if (write.phase === 'idle') {
+      $('writeResult').innerHTML =
+        '<input class="drillIn" id="longOwn" autocomplete="off" placeholder="…or type your own title, then Enter" style="margin-top:14px">';
+      const own = $('longOwn');
+      own.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' || !own.value.trim()) return;
+        e.preventDefault();
+        write.topic = own.value.trim();
+        writeRender();
+      });
+    }
+    const n = inp.value.split(/\s+/).filter(Boolean).length;
+    $('writeHint').textContent = n ? n + ' words so far — aim for about 200.' : 'About 200 words. The check starts with how it flows, then the sentences.';
+    $('writeActions').innerHTML =
+      (write.phase === 'checked' ? '' : '<button class="btn pulse" id="writeCheckBtn" onclick="writeCheckNow()">Check it</button>') +
+      '<button class="btn ghost" onclick="writeNewSeed()">Another title</button>';
   } else if (m === 'explain' || m === 'dialogue') {
     const ex = m === 'explain';
     if (ex && !write.topic) write.topic = explainTopic();
@@ -2141,6 +2294,7 @@ async function reactNext() {
 
 function writeNewSeed() {
   if (write.mode === 'explain') write.topic = explainTopic();
+  if (write.mode === 'long') write.topic = longTopic();
   if (write.mode === 'dialogue') write.scene = dialogueSeed();
   write.phase = 'idle';
   $('writeInput').value = '';
@@ -2148,6 +2302,17 @@ function writeNewSeed() {
 }
 /* ---- rewrite yesterday: the latest Write / Freewrite / React entry from yesterday ---- */
 const REWRITE_SOURCES = ['write', 'free', 'react'];
+const THEN_DAYS = 60;
+/* Something you wrote over 60 days ago and haven't redone since. */
+function thenEntry() {
+  const cutoff = dayStr(-THEN_DAYS);
+  const later = new Set(attempts.filter((a) => a.d > cutoff).map((a) => a.prompt));
+  const old = attempts.filter((a) => a.d <= cutoff && a.prompt && a.blurt && a.fix && !later.has(a.prompt));
+  if (!old.length) return null;
+  const a = old[Math.floor(Math.random() * old.length)];
+  const items = attempts.filter((x) => x.prompt === a.prompt && x.d === a.d && x.source === a.source);
+  return { source: a.source, prompt: a.prompt, items, text: items.map((x) => x.blurt).join(' '), then: true, d: a.d, id: a.id };
+}
 function yesterdayEntry() {
   const y = attempts.filter((a) => a.d === dayStr(-1) && REWRITE_SOURCES.includes(a.source));
   if (!y.length) return null;
@@ -2176,8 +2341,8 @@ function rewriteCompareHTML(y, sents) {
     '</div>';
   return (
     '<div class="rewriteCmp">' +
-    col('Yesterday', y.items.map((a) => row(a.blurt, a.fix, a.clean)), y.items.flatMap((a) => a.tags || [])) +
-    col('Today', sents.map((x) => row(x.original, x.fixed, x.clean)), sents.flatMap((x) => x.tags)) +
+    col(y.then ? y.d : 'Yesterday', y.items.map((a) => row(a.blurt, a.fix, a.clean)), y.items.flatMap((a) => a.tags || [])) +
+    col(y.then ? 'Today (' + dayStr(0) + ')' : 'Today', sents.map((x) => row(x.original, x.fixed, x.clean)), sents.flatMap((x) => x.tags)) +
     '</div>'
   );
 }
@@ -2280,6 +2445,7 @@ function finishFreewrite() {
     creditRep();
   }
   $('writeHint').textContent = '';
+  sessionDone('free');
   $('writeResult').innerHTML =
     '<div class="writeSum">' +
     words +
@@ -2298,7 +2464,9 @@ async function writeCheck(mode, text) {
   const ctx = (state.settings.context || '').trim();
   const r = write.react;
   const instr =
-    mode === 'explain'
+    mode === 'long'
+      ? 'This is a longer piece (aim was ~200 words) titled "' + (write.topic || '') + '". Judge it as written English: first how it holds together, then the sentences.'
+      : mode === 'explain'
       ? 'This is an explanation of "' + (write.topic || 'a topic') + '" for a new teammate. Judge it as clear, spoken-style English.'
       : mode === 'dialogue'
         ? 'This is a short dialogue they wrote, playing both people, for this scene: "' + (write.scene || '') + '". Treat each line as one sentence; "original" is the line WITHOUT the "Name:" label.'
@@ -2315,8 +2483,8 @@ ${ctx ? 'Their context (names, role, project): ' + ctx : ''}
 Their text:
 """${text}"""
 Split it into sentences, in order; don't merge, drop or reorder any. For each sentence return:
-{"original":"the sentence exactly as written","fixed":"THEIR sentence minimally corrected: keep their words and structure, change only what is wrong or unnatural. Copy it exactly if nothing needs changing.","natural":"how a native would phrase it, or empty if fixed already is","chunk":"one reusable multi-word phrase from fixed or natural worth saving, or empty","clean":true or false (true = no meaningful change needed, ignoring capitalization and punctuation),${TAGS_FIELD}}
-Reply with ONLY JSON: {"sentences":[...],"note":"one encouraging line (max 25 words) about the whole text: what worked, and the one thing to watch","ready":"${mode === 'draft' ? 'the full message, cleaned up, in their tone, ready to send' : ''}"${mode === 'react' ? ',"fit":"one line: does the reply match the tone and register of the original (too formal, too blunt, just right)?"' : ''}${mode === 'explain' ? ',"clarity":"one line: would a new teammate get it? What to add or cut."' : ''}${mode === 'dialogue' ? ',"questions":"one line on whether the questions in it sound natural"' : ''}}`;
+{"original":"the sentence exactly as written","fixed":"THEIR sentence minimally corrected: keep their words and structure, change only what is wrong or unnatural. Copy it exactly if nothing needs changing.","natural":"how a native would phrase it, or empty if fixed already is","chunk":"one reusable multi-word phrase from fixed or natural worth saving, or empty","clean":true or false (true = no meaningful change needed, ignoring capitalization and punctuation),${TAGS_FIELD},${SIMPLER_FIELD}}
+Reply with ONLY JSON: {"sentences":[...],"note":"one encouraging line (max 25 words) about the whole text: what worked, and the one thing to watch","ready":"${mode === 'draft' ? 'the full message, cleaned up, in their tone, ready to send' : ''}"${mode === 'react' ? ',"fit":"one line: does the reply match the tone and register of the original (too formal, too blunt, just right)?"' : ''}${mode === 'explain' ? ',"clarity":"one line: would a new teammate get it? What to add or cut."' : ''}${mode === 'dialogue' ? ',"questions":"one line on whether the questions in it sound natural"' : ''}${mode === 'long' ? ',"flow":["one short note per paragraph, in order: order, transitions, what to cut"]' : ''}}${COACH_RULES}`;
   const obj = await aiObj({
     contents: [{ parts: [{ text: msg }] }],
     generationConfig: { responseMimeType: 'application/json' },
@@ -2333,6 +2501,7 @@ Reply with ONLY JSON: {"sentences":[...],"note":"one encouraging line (max 25 wo
         fixed,
         natural,
         chunk: String(x.chunk || '').trim(),
+        simpler: String(x.simpler || '').trim(),
         tags: cleanTags(x.tags),
         clean: truthy(x.clean) || norm(original) === norm(fixed),
       };
@@ -2344,6 +2513,7 @@ Reply with ONLY JSON: {"sentences":[...],"note":"one encouraging line (max 25 wo
     ready: String(obj.ready || ''),
     /* the one mode-specific line, per mode */
     fit: String((mode === 'explain' ? obj.clarity : mode === 'dialogue' ? obj.questions : obj.fit) || ''),
+    flow: Array.isArray(obj.flow) ? obj.flow.map(String).filter(Boolean) : [],
   };
 }
 async function writeCheckNow() {
@@ -2379,12 +2549,13 @@ async function writeCheckNow() {
   } else {
     res.sents.forEach((x) =>
       logAttempt({
-        source: mode === 'react' ? 'react' : mode === 'rewrite' ? 'rewrite' : 'write',
-        kind: mode === 'react' && write.react ? write.react.kind : mode === 'rewrite' ? write.rewrite.source : mode,
+        source: mode === 'react' ? 'react' : mode === 'rewrite' || mode === 'then' ? 'rewrite' : 'write',
+        kind: mode === 'react' && write.react ? write.react.kind : mode === 'rewrite' || mode === 'then' ? write.rewrite.source : mode,
+        note: mode === 'then' ? 'then:' + write.rewrite.id : '',
         prompt:
           mode === 'react' && write.react
             ? write.react.text
-            : mode === 'rewrite'
+            : mode === 'rewrite' || mode === 'then'
               ? write.rewrite.prompt
               : mode === 'dialogue'
                 ? write.scene
@@ -2402,10 +2573,13 @@ async function writeCheckNow() {
   write.sents = res.sents;
   write.ready = res.ready;
   writeRenderResult(res);
-  if (mode === 'rewrite') $('writeResult').insertAdjacentHTML('afterbegin', rewriteCompareHTML(write.rewrite, res.sents));
+  if (mode === 'rewrite' || mode === 'then') $('writeResult').insertAdjacentHTML('afterbegin', rewriteCompareHTML(write.rewrite, res.sents));
   if (mode === 'free') {
     if (btn) btn.remove();
-  } else writeRender(); /* swaps Check for Start over */
+  } else {
+    writeRender(); /* swaps Check for Start over */
+    sessionDone('write');
+  }
 }
 function writeStartOver() {
   write.phase = 'idle';
@@ -2426,6 +2600,12 @@ function writeRenderResult(res) {
   const n = res.sents.length,
     c = res.sents.filter((x) => x.clean).length;
   let html =
+    /* for a long piece, how it holds together comes before the sentences */
+    (res.flow && res.flow.length
+      ? '<div class="eyebrow" style="margin-top:18px">How it flows</div>' +
+        res.flow.map((f, i) => '<p class="note">¶' + (i + 1) + ' · ' + esc(f) + '</p>').join('') +
+        '<div class="eyebrow" style="margin-top:18px">Sentence by sentence</div>'
+      : '') +
     (c
       ? '<div class="writeSum" style="color:var(--mint)">✓ ' + c + ' of ' + n + ' sentence' + (n > 1 ? 's' : '') + ' already natural</div>'
       : '<div class="writeSum">' + n + ' sentence' + (n > 1 ? 's' : '') + ', small fixes below</div>') +
@@ -2438,6 +2618,7 @@ function writeRenderResult(res) {
         ? '<div class="cleanSent">✓ ' + esc(x.fixed) + '</div>'
         : '<div class="natural diff">' + wordDiff(x.original, x.fixed) + '</div>') +
       (x.natural ? '<details><summary>show a native version</summary>' + esc(x.natural) + '</details>' : '') +
+      (x.simpler && norm(x.simpler) !== norm(x.fixed) ? '<details><summary>↓ simpler</summary>' + esc(x.simpler) + '</details>' : '') +
       (writeChunkExample(x)
         ? '<div class="chunkBox"><div>chunk → <b>' +
           esc(x.chunk) +
@@ -2538,6 +2719,10 @@ document.addEventListener('DOMContentLoaded', () => {
   inp.addEventListener('input', () => {
     write.lastKey = Date.now();
     if (write.mode === 'copy' && write.copy && !write.copy.start) write.copy.start = Date.now();
+    if (write.mode === 'long' && write.phase === 'idle') {
+      const n = inp.value.split(/\s+/).filter(Boolean).length;
+      $('writeHint').textContent = n + ' words so far — aim for about 200.';
+    }
     if (write.mode === 'free' && write.phase === 'running') {
       inp.classList.remove('stalling');
       $('writeHint').textContent = '';
@@ -2754,7 +2939,7 @@ async function askNatives() {
           {
             text: `A Vietnamese developer learning English asks whether this English phrase is something natives actually say: "${sel.text}"
 Context it appeared in: "${sel.around}"
-Reply with ONLY JSON: {"common":"yes|rare|no","why":"one short line in plain words — no grammar terms","alts":["a natural alternative","another one"]}`,
+Reply with ONLY JSON: {"common":"yes|rare|no","why":"one short line in plain words — no grammar terms","alts":["a natural alternative","another one"]}${COACH_RULES}`,
           },
         ],
       },
@@ -4337,7 +4522,7 @@ Transcript:
 ${convTranscript()}
 Target phrases the learner was practicing: ${conv.targets.join(', ') || '(none)'}
 Assess the learner's spoken English across the conversation, then check each of the learner's lines (the "Learner:" turns, in order, one entry per line). Reply ONLY JSON:
-{"grade":"a short verdict like 'Natural' / 'Getting there' / 'Keep practicing'","used":["which target phrases they actually used, if any"],"note":"2-3 sentences of specific, encouraging feedback with one concrete tip","lines":[{"you":"the learner's line, exactly as written","fixed":"THEIR line minimally corrected: keep their words, change only what is wrong or unnatural. Copy it exactly if nothing needs changing.","clean":true or false (true = no meaningful change needed, ignoring capitalization and punctuation),${TAGS_FIELD}}]}`,
+{"grade":"a short verdict like 'Natural' / 'Getting there' / 'Keep practicing'","used":["which target phrases they actually used, if any"],"note":"2-3 sentences of specific, encouraging feedback with one concrete tip","lines":[{"you":"the learner's line, exactly as written","fixed":"THEIR line minimally corrected: keep their words, change only what is wrong or unnatural. Copy it exactly if nothing needs changing.","clean":true or false (true = no meaningful change needed, ignoring capitalization and punctuation),${TAGS_FIELD}}]}${COACH_RULES}`,
           },
         ],
       },
@@ -4469,6 +4654,7 @@ function convRender(thinking) {
 function resetResultCard() {
   resetSaveBtn();
   $('cleanLead').style.display = 'none';
+  $('simplerBox').style.display = 'none';
   $('predBox').style.display = 'none';
   $('predBox').innerHTML = '';
   if (predictResolve) predictReveal(); /* a gate left open by leaving mid-rep */
@@ -4519,6 +4705,7 @@ function resetSaveBtn() {
     ['saveChunkBtn', 'Save'],
     ['saveFixedBtn', 'Save'],
     ['saveSuggestBtn', 'Save'],
+    ['simplerSave', 'Save as chunk'],
   ].forEach(([id, label]) => {
     const b = $(id);
     if (b) {
@@ -4530,15 +4717,26 @@ function resetSaveBtn() {
 async function saveChunk(which) {
   if (!lastResult) return;
   const btnId =
-    which === 'fixed' ? 'saveFixedBtn' : which === 'suggested' ? 'saveSuggestBtn' : 'saveChunkBtn';
+    which === 'fixed'
+      ? 'saveFixedBtn'
+      : which === 'suggested'
+        ? 'saveSuggestBtn'
+        : which === 'simpler'
+          ? 'simplerSave'
+          : 'saveChunkBtn';
   const b = $(btnId);
   if (b && b.disabled) return; /* already saving/saved — ignore double taps */
   if (b) {
     b.textContent = 'Saving…';
     b.disabled = true;
   }
+  if (which === 'simpler' && !drillBlank(lastResult.chunk, lastResult.simpler || '').hasBlank) return;
   const example =
-    which === 'fixed' ? lastResult.fixedAnswer || lastResult.natural : lastResult.natural;
+    which === 'fixed'
+      ? lastResult.fixedAnswer || lastResult.natural
+      : which === 'simpler'
+        ? lastResult.simpler
+        : lastResult.natural;
   const newChunk = {
     ...newChunkBase(),
     chunk: lastResult.chunk,
@@ -5699,6 +5897,48 @@ function selfTrustHTML() {
       ' reps, you called the fix before seeing it</p></div></div></div>';
   return html;
 }
+/* Phrases you actually reuse: 2-4 word runs from your clean sentences (90 days).
+   No AI — just counting. Grams that are only filler words don't count. */
+const VOICE_STOP = new Set('a an the i you he she it we they me my your our is am are was were be been do does did to of in on at for with and or but so if that this these those not no yes just very really some any there here as by from up out about'.split(' '));
+function voicePhrases() {
+  const counts = new Map();
+  attempts
+    .filter((a) => a.clean === true && a.d >= dayStr(-89) && a.source !== 'copy')
+    .forEach((a) => {
+      const w = norm(a.fix || a.blurt).split(' ').filter(Boolean);
+      for (let n = 2; n <= 4; n++)
+        for (let i = 0; i + n <= w.length; i++) {
+          const g = w.slice(i, i + n);
+          if (g.every((x) => VOICE_STOP.has(x))) continue;
+          const k = g.join(' ');
+          counts.set(k, (counts.get(k) || 0) + 1);
+        }
+    });
+  const all = [...counts.entries()].filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length);
+  const out = [];
+  for (const [g, n] of all) {
+    /* skip a short run already covered by a longer one you use just as often */
+    if (out.some(([g2, n2]) => g2.includes(g) && n2 >= n)) continue;
+    out.push([g, n]);
+    if (out.length === 10) break;
+  }
+  return out;
+}
+function voiceHTML() {
+  const phrases = voicePhrases();
+  const used = chunks.filter((c) => c.used).sort((a, b) => (b.used || 0) - (a.used || 0));
+  if (!phrases.length && !used.length) return '';
+  return (
+    '<div style="margin-top:22px"><div class="eyebrow">Your voice · phrases you reuse</div>' +
+    (phrases.length
+      ? '<div class="rxBank">' + phrases.map(([g, n]) => '<span class="rxWord" style="cursor:default">' + esc(g) + ' <small>×' + n + '</small></span>').join('') + '</div>'
+      : '') +
+    (used.length
+      ? '<p class="hint" style="margin-top:12px">✔ Used for real: ' + used.map((c) => esc(c.chunk) + (c.used > 1 ? ' ×' + c.used : '')).join(', ') + '</p>'
+      : '') +
+    '</div>'
+  );
+}
 function renderStats() {
   const h = state.history || {};
   const days = [];
@@ -5776,6 +6016,7 @@ function renderStats() {
     heatmapHTML() +
     errorTypesHTML() +
     selfTrustHTML() +
+    voiceHTML() +
     lettersHTML() +
     (state.lastPattern && state.lastPattern.text
       ? '<div style="margin-top:18px"><div class="eyebrow">This week\'s pattern</div><div class="chunkItem"><div>' +

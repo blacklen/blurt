@@ -165,6 +165,10 @@
   .nativesPop .alt{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}
   .nativesPop .alt .btn{padding:5px 10px;font-size:.78rem}
   .nativesPop .popClose{position:absolute;top:6px;right:10px;background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer}
+  .simplerBox{margin-top:12px}
+  .simplerBox summary{cursor:pointer;color:var(--muted);font-size:.85rem;font-weight:600;list-style:none}
+  .simplerBox summary::-webkit-details-marker{display:none}
+  .simplerBox .natural{margin-top:10px;font-size:1rem}
   .confRow{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:.8rem;color:var(--muted)}
   .confRow .chip{padding:4px 11px}
   #predBox{margin:0 0 16px}
