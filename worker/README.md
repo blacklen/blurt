@@ -170,6 +170,8 @@ A cron trigger runs at the top of every hour. It sends the daily ntfy ping only
 when the hour matches the reminder time saved in your state, and only once a
 day. The ping names a real due chunk (`WHERE due <= today`).
 
+Micro-rep pings (Settings → ⚡) go out at the extra hours saved in `state.ntfy.micro.hours`, at most once per hour, with a random Vietnamese prompt read from `prompts.json` through the `ASSETS` binding and an ntfy `Click` link to `<your origin>/?quick=1`.
+
 ## Notes
 
 - The secret is compared in constant time. Pick a long, random value; the

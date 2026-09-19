@@ -91,6 +91,7 @@
           <div class="eyebrow" id="promptKind">Express this</div>
           <p class="promptText" id="promptText"></p>
           <p class="hint" id="chunkHint" style="display:none;margin-top:8px">Use this chunk → <b id="chunkHintText"></b></p>
+          <p class="hint" id="ladderCounter" style="display:none;margin-top:8px">Round <b id="ladderNum">1</b> of 3 — same idea, less time each round.</p>
           <p class="hint" id="threeCounter" style="display:none;margin-top:8px">Phrasing <b id="threeNum">1</b> of 3 — say it a different way each time.</p>
         </div>
         <div class="clock" id="clock">45</div>
@@ -319,6 +320,15 @@
         <select id="ntfyHour" class="drillIn" style="margin-top:0;width:auto"></select>
         <button class="btn ghost" onclick="saveNtfy()">Save & send test ping</button>
       </div>
+      <hr style="border:none;border-top:1.5px solid var(--line);margin:16px 0">
+      <div class="eyebrow">⚡ Micro-rep pings</div>
+      <p class="hint">A few pings a day, each with one Vietnamese sentence. Tapping it opens the app straight into a rep.</p>
+      <div class="row">
+        <button class="chip" id="microChip" onclick="toggleMicro()"></button>
+        <input id="microHours" class="drillIn" style="margin-top:0;width:150px" placeholder="10, 15, 20" autocomplete="off">
+        <button class="btn ghost" onclick="saveMicro()">Save</button>
+      </div>
+      <p class="hint" id="microStatus"></p>
     </div>
   </div>
 </div>

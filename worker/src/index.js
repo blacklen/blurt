@@ -462,11 +462,16 @@ async function fireDueReminder(env) {
   } catch (e) {
     return;
   }
-  if (!ntfy || !ntfy.on) return;
+  if (!ntfy) return;
   const off = Number(ntfy.tzOffset) || 0; // minutes the user's clock is behind UTC
   const local = new Date(Date.now() - off * 60000);
-  if (local.getUTCHours() !== Number(ntfy.hour)) return;
+  const hour = local.getUTCHours();
   const today = local.toISOString().slice(0, 10); // user's local calendar day
+  if (ntfy.on && hour === Number(ntfy.hour)) await sendDailyReminder(env, today);
+  if (microHours(ntfy).includes(hour)) await sendMicroPing(env, ntfy, today, hour);
+}
+
+async function sendDailyReminder(env, today) {
   if (env.BLURT_KV && (await env.BLURT_KV.get('ntfy:lastsent')) === today) return; // already sent today
   if (env.BLURT_KV) await env.BLURT_KV.put('ntfy:lastsent', today, { expirationTtl: 172800 });
   await fetch('https://ntfy.sh/' + encodeURIComponent(env.NTFY_TOPIC), {
@@ -476,6 +481,37 @@ async function fireDueReminder(env) {
     headers: { 'X-Title': 'Blurt homework', 'X-Tags': 'books' },
     body: '⏰ ' + (await reminderBody(env, today)),
   });
+}
+
+// Micro-reps: at the hours you picked, a one-prompt ping that opens straight
+// into a rep (?quick=1). Same shape in server/server.js.
+function microHours(ntfy) {
+  const m = ntfy && ntfy.micro;
+  if (!m || !m.on || !Array.isArray(m.hours)) return [];
+  return m.hours.map(Number).filter((h) => h >= 0 && h <= 23);
+}
+async function sendMicroPing(env, ntfy, today, hour) {
+  const mark = today + ':' + hour;
+  if (env.BLURT_KV && (await env.BLURT_KV.get('ntfy:micro')) === mark) return; // this hour's ping went out
+  if (env.BLURT_KV) await env.BLURT_KV.put('ntfy:micro', mark, { expirationTtl: 7200 });
+  const headers = { 'X-Title': 'Quick blurt', 'X-Tags': 'zap' };
+  if (ntfy.origin && /^https?:\/\//.test(ntfy.origin)) headers['Click'] = ntfy.origin.replace(/\/+$/, '') + '/?quick=1';
+  await fetch('https://ntfy.sh/' + encodeURIComponent(env.NTFY_TOPIC), {
+    method: 'POST',
+    headers,
+    body: '⚡ ' + (await microPrompt(env)) + '\nSay it in English. Tap to answer.',
+  });
+}
+// A random Vietnamese prompt from the static bank (served by the assets binding).
+async function microPrompt(env) {
+  const fallback = 'Hôm nay bạn thế nào?';
+  try {
+    const r = await env.ASSETS.fetch(new Request('https://assets.local/prompts.json'));
+    const vn = (await r.json()).filter((p) => p && p.kind === 'vn' && p.text);
+    return vn.length ? vn[Math.floor(Math.random() * vn.length)].text : fallback;
+  } catch (e) {
+    return fallback;
+  }
 }
 
 // Build a reminder that names an actual due chunk. This used to pull the entire

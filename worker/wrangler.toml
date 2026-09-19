@@ -30,3 +30,5 @@ id = "bbd78c19aa154c148a0337ac3ce8501a"
 # Static assets are served first; anything unmatched (i.e. /api/*) runs the Worker.
 [assets]
 directory = "./public"
+# lets the cron read prompts.json for micro-rep pings
+binding = "ASSETS"

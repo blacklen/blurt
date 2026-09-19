@@ -42,6 +42,7 @@ const REP_BASE = 45,
 /* Reflex is typed, not spoken: one short line, fired back fast. */
 const REFLEX_SECONDS = 8;
 function repSeconds() {
+  if (current && current.ladder) return LADDER_SECONDS[current.ladder.round - 1];
   if (current && current.prompt && current.prompt.kind === 'reflex') return REFLEX_SECONDS;
   return Math.max(REP_MIN, REP_BASE - (state.streak || 0));
 }
@@ -429,7 +430,7 @@ async function loadAll() {
   hideLoadError();
   if (!state.cats || !state.cats.length) state.cats = CATS.map((c) => c.id);
   if (!Array.isArray(state.disliked)) state.disliked = []; /* bank prompt texts to never re-serve */
-  if (!['vn', 'sit', 'reflex', 'expr', 'mix', 'three'].includes(state.ptype)) state.ptype = 'vn';
+  if (!['vn', 'sit', 'reflex', 'expr', 'mix', 'three', 'ladder'].includes(state.ptype)) state.ptype = 'vn';
   if (!state.settings) state.settings = { hwReps: 3 };
   if (!(state.settings.hwReps > 0)) state.settings.hwReps = 3;
   if (typeof state.settings.voice !== 'boolean') state.settings.voice = false;
@@ -465,6 +466,7 @@ async function loadAll() {
   renderAll();
   setLoading(false); /* real numbers are on screen now — drop the placeholders */
   initNtfy();
+  maybeQuickStart();
   maybeWeeklyRecap();
 }
 async function saveState() {
@@ -774,7 +776,8 @@ const $ = (id) => document.getElementById(id);
 /* Share of graded attempts (clean true/false, not null) that needed no fix,
    for days from..to inclusive. pct is null when nothing was graded. */
 function cleanStats(from, to) {
-  const g = attempts.filter((a) => a.clean != null && a.d >= from && (!to || a.d <= to));
+  /* copying a text isn't producing English, so it stays out of the clean rate */
+  const g = attempts.filter((a) => a.clean != null && a.source !== 'copy' && a.d >= from && (!to || a.d <= to));
   const c = g.filter((a) => a.clean).length;
   return { n: g.length, clean: c, pct: g.length ? Math.round((100 * c) / g.length) : null };
 }
@@ -897,7 +900,10 @@ const PTYPES = [
   { id: 'expr', label: 'Expression' },
   { id: 'mix', label: 'Mix' },
   { id: 'three', label: '3 ways' },
+  { id: 'ladder', label: '🪜 Ladder' },
 ];
+/* Speed ladder: one prompt, three rounds, less time each round. */
+const LADDER_SECONDS = [30, 20, 12];
 /* '3 ways' is a flow variation, not a prompt kind — under the hood it draws any
    kind, like Mix. Keep this list in sync wherever ptype gates kind filtering.
    'reflex' and 'expr' are judged like 'sit' (see askGemini) but each draws
@@ -1102,6 +1108,7 @@ function startRepWith(p) {
   /* '3 ways': collect three different phrasings before checking. */
   const three = state.ptype === 'three';
   current.three = three ? { attempts: [], n: 1 } : null;
+  current.ladder = state.ptype === 'ladder' ? { round: 1, texts: [] } : null;
   renderThreeUI();
   /* "Not for me" only applies to real bank prompts (not AI-generated ones). */
   const isBank = PROMPTS.concat(REFLEXES, EXPRESSIONS, myReflexes).some((x) => norm(x.text) === norm(p.text));
@@ -1115,6 +1122,13 @@ function startRepWith(p) {
 }
 /* Reflect the current 3-ways step in the counter + primary button label. */
 function renderThreeUI() {
+  const l = current && current.ladder;
+  $('ladderCounter').style.display = l ? '' : 'none';
+  if (l) {
+    $('ladderNum').textContent = l.round;
+    $('checkBtn').textContent = l.round < 3 ? 'Next round →' : 'Check it';
+    return;
+  }
   const t = current && current.three;
   $('threeCounter').style.display = t ? '' : 'none';
   if (t) {
@@ -1126,7 +1140,18 @@ function renderThreeUI() {
 }
 /* The primary action: in 3-ways mode, banks the phrasing and advances (or checks
    on the third); otherwise just checks the single rep. */
+/* Keep this round's text and go again with less time. */
+function ladderAdvance() {
+  const l = current.ladder;
+  l.texts.push($('blurtInput').value.trim());
+  l.round++;
+  renderThreeUI();
+  $('blurtInput').value = '';
+  $('blurtInput').focus();
+  startTimer();
+}
 function repPrimary() {
+  if (current && current.ladder && current.ladder.round < 3) return ladderAdvance();
   const t = current && current.three;
   if (t && t.n < 3) {
     t.attempts.push($('blurtInput').value.trim());
@@ -1174,7 +1199,10 @@ function tick() {
     secondsLeft--;
     $('clock').textContent = Math.max(secondsLeft, 0);
     $('timebar').style.transform = 'scaleX(' + secondsLeft / repTotal + ')';
-    if (secondsLeft <= 0) finishRep();
+    if (secondsLeft <= 0) {
+      if (current && current.ladder && current.ladder.round < 3) ladderAdvance();
+      else finishRep();
+    }
   }, 1000);
 }
 function stopTimer() {
@@ -1224,6 +1252,11 @@ async function finishRep() {
 
   if (current.three) {
     await finishThreeWays(blurt);
+    return;
+  }
+
+  if (current.ladder) {
+    await finishLadder(blurt);
     return;
   }
 
@@ -1419,6 +1452,76 @@ Reply with ONLY a JSON object:
   return obj;
 }
 
+async function askGeminiLadder(p, rounds) {
+  const framing =
+    p.kind === 'vn' ? 'Idea to express (Vietnamese): "' + p.text + '"' : 'Situation: "' + p.text + '"';
+  const obj = await aiObj({
+    contents: [
+      {
+        parts: [
+          {
+            text: `A Vietnamese software developer said ONE idea three times with a shrinking timer (30s, then 20s, then 12s) to beat their inner editor.
+${framing}
+Round 1: "${rounds[0] || '(blank)'}"
+Round 2: "${rounds[1] || '(blank)'}"
+Round 3: "${rounds[2] || '(blank)'}"
+Reply with ONLY a JSON object:
+{"fixedAnswer":"their ROUND 3 attempt, minimally corrected: keep their words, change only what is wrong or unnatural; copy exactly if fine","clean":"true if round 3 needed no meaningful change, else false",${TAGS_FIELD.replace('their mistakes', 'the mistakes in round 3')},"natural":"one natural native version (1-2 sentences)","chunk":"the single most reusable phrase from your native version","note":"max 22 words: what got looser or better under time pressure, and one tip"}`,
+          },
+        ],
+      },
+    ],
+    generationConfig: { responseMimeType: 'application/json' },
+  });
+  if (!obj || !obj.natural) return null;
+  obj.clean = truthy(obj.clean);
+  obj.tags = cleanTags(obj.tags);
+  return obj;
+}
+async function finishLadder(last) {
+  const p = current.prompt;
+  const rounds = [...current.ladder.texts, last];
+  const final = [...rounds].reverse().find(Boolean) || '';
+  show('resultCard');
+  resetResultCard();
+  showCalque('');
+  $('vnResult').style.display = '';
+  $('sitResult').style.display = 'none';
+  $('yourBlurt').innerHTML =
+    'Your three rounds:' +
+    rounds
+      .map(
+        (r, i) =>
+          '<div>' + LADDER_SECONDS[i] + 's · ' + (r ? esc(r) + ' <small>(' + r.split(/\s+/).length + ' words)</small>' : '(blank)') + '</div>',
+      )
+      .join('');
+  $('naturalText').innerHTML = '<span class="spin"></span> Checking round 3...';
+  $('chunkText').textContent = '...';
+  $('noteText').textContent = '';
+  const res = final ? await askGeminiLadder(p, rounds) : null;
+  const out = res || { natural: p.sample, chunk: p.chunk || '', note: p.note || '' };
+  lastResult = { natural: out.natural, chunk: out.chunk || '', note: out.note || '' };
+  const fixed = res ? String(res.fixedAnswer || '').trim() : '';
+  const clean = !!fixed && (res.clean || norm(final) === norm(fixed));
+  $('cleanLead').style.display = clean ? '' : 'none';
+  $('naturalText').innerHTML =
+    (fixed && !clean ? '<div class="diff">' + wordDiff(final, fixed) + '</div><div class="eyebrow" style="margin:12px 0 4px">A native might say</div>' : '') +
+    esc(out.natural);
+  $('chunkText').textContent = out.chunk || '—';
+  $('noteText').textContent = out.note || '';
+  if (final)
+    logAttempt({
+      source: 'practice',
+      kind: 'ladder',
+      prompt: p.text,
+      blurt: final,
+      fix: fixed || out.natural || '',
+      natural: out.natural || '',
+      note: out.note || '',
+      tags: res ? res.tags : [],
+      clean: res && fixed ? clean : null,
+    });
+}
 async function finishThreeWays(lastAttempt) {
   const p = current.prompt;
   const takes = [...current.three.attempts, lastAttempt]; /* 3 entries, blanks allowed */
@@ -1646,6 +1749,7 @@ const WRITE_MODES = [
   { id: 'journal', label: '📓 Journal' },
   { id: 'draft', label: '✉️ Draft a message' },
   { id: 'react', label: '💬 React' },
+  { id: 'copy', label: '📄 Copy' },
 ];
 const REACT_ICONS = { reddit: '👽 Reddit comment', slack: '💬 Slack', text: '📱 Text', email: '✉️ Email' };
 let REACTS = null; /* backup texts (reacts.json) for when the AI is down */
@@ -1704,6 +1808,7 @@ function setWriteMode(m) {
   write.sents = [];
   if (m === 'free') write.seed = freeSeed();
   if (m === 'react') write.react = null;
+  if (m === 'copy') write.copy = null;
   writeRender();
 }
 function writeRender() {
@@ -1754,6 +1859,16 @@ function writeRender() {
             '</button></p>'
           : '');
     }
+  } else if (m === 'copy') {
+    $('writeEyebrow').textContent = 'Copy · type it out, word for word';
+    inp.disabled = write.phase === 'checked';
+    inp.placeholder = 'Type it out…';
+    $('writeHint').textContent = 'The clock starts on your first key. Native phrasing goes in through your fingers.';
+    $('writeActions').innerHTML =
+      (write.phase === 'checked' ? '' : '<button class="btn pulse" onclick="copyDone()">Done</button>') +
+      '<button class="btn ghost" onclick="copyNext()">Another one</button>';
+    if (!write.copy) copyNext();
+    else renderReactSeed(write.copy.r);
   } else if (m === 'react') {
     $('writeEyebrow').textContent = 'React · read it, then reply';
     inp.disabled = false;
@@ -1795,19 +1910,16 @@ function fmtClock(s) {
 }
 
 /* ---- react: a short native text to read and reply to ---- */
-function renderReactSeed() {
-  const r = write.react;
+function renderReactSeed(r = write.react) {
   $('writeSeed').style.fontSize = '1.02rem';
   $('writeSeed').innerHTML = r
     ? '<span class="reactMeta">' + esc(REACT_ICONS[r.kind] || r.kind) + ' · from ' + esc(r.from) + '</span><span class="reactText">' + esc(r.text) + '</span>'
     : '<span class="spin"></span> Finding something to react to…';
 }
-async function reactNext() {
-  write.react = null;
-  write.phase = 'idle';
-  $('writeInput').value = '';
-  $('writeResult').innerHTML = '';
-  renderReactSeed();
+/* A short native text (Reddit comment, Slack thread, text, email): AI-written
+   around your moods and due chunks, or one of reacts.json when the AI is down.
+   Shared by React (reply to it) and Copy (type it out). */
+async function fetchNativeText() {
   let r = null;
   if (loggedIn()) {
     const topics = CATS.filter((c) => state.cats.includes(c.id)).map((c) => c.label.slice(2).trim());
@@ -1843,11 +1955,51 @@ Reply ONLY JSON: {"kind":"reddit|slack|text|email","from":"who wrote it","text":
     const pick = REACTS.filter((x) => !write.lastReact || x.text !== write.lastReact);
     r = pick.length ? pick[Math.floor(Math.random() * pick.length)] : { kind: 'text', from: 'a friend', text: 'hey! how was your weekend?' };
   }
+  return r;
+}
+async function reactNext() {
+  write.react = null;
+  write.phase = 'idle';
+  $('writeInput').value = '';
+  $('writeResult').innerHTML = '';
+  renderReactSeed();
+  const r = await fetchNativeText();
   if (write.mode !== 'react') return; /* switched modes while waiting */
   write.react = r;
   write.lastReact = r.text;
   renderReactSeed();
   $('writeInput').focus();
+}
+
+/* ---- copy: type a native text out exactly (no AI) ---- */
+async function copyNext() {
+  write.copy = null;
+  write.phase = 'idle';
+  $('writeInput').value = '';
+  $('writeInput').disabled = false;
+  $('writeResult').innerHTML = '';
+  renderReactSeed(null);
+  const r = await fetchNativeText();
+  if (write.mode !== 'copy') return;
+  write.copy = { r, start: 0 };
+  write.lastReact = r.text;
+  writeRender();
+  $('writeInput').focus();
+}
+function copyDone() {
+  const c = write.copy,
+    typed = $('writeInput').value.trim();
+  if (!c || !typed || write.phase === 'checked') return;
+  const { ops, B } = diffOps(typed, c.r.text);
+  const acc = B.length ? Math.round((100 * ops.filter((o) => o.op === 'same').length) / B.length) : 0;
+  const mins = c.start ? (Date.now() - c.start) / 60000 : 0;
+  const words = typed.split(/\s+/).length;
+  write.phase = 'checked';
+  logAttempt({ source: 'copy', kind: c.r.kind, prompt: c.r.text, blurt: typed, fix: c.r.text, clean: acc >= 95 });
+  $('writeResult').innerHTML =
+    '<div class="writeSum"' + (acc >= 95 ? ' style="color:var(--mint)"' : '') + '>' + acc + '% accurate' + (mins > 0 ? ' · ' + Math.round(words / mins) + ' words/min' : '') + '</div>' +
+    (acc < 100 ? '<div class="natural diff" style="margin-top:12px">' + wordDiff(typed, c.r.text) + '</div>' : '<p class="note">Word for word.</p>');
+  writeRender();
 }
 
 /* ---- freewrite: forward-only typing ---- */
@@ -2147,7 +2299,7 @@ document.addEventListener('DOMContentLoaded', () => {
   inp.addEventListener('beforeinput', freewriteGuard);
   ['cut', 'paste', 'drop'].forEach((ev) =>
     inp.addEventListener(ev, (e) => {
-      if (write.mode === 'free' && write.phase === 'running') e.preventDefault();
+      if ((write.mode === 'free' && write.phase === 'running') || write.mode === 'copy') e.preventDefault();
     }),
   );
   inp.addEventListener('keydown', (e) => {
@@ -2156,6 +2308,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   inp.addEventListener('input', () => {
     write.lastKey = Date.now();
+    if (write.mode === 'copy' && write.copy && !write.copy.start) write.copy.start = Date.now();
     if (write.mode === 'free' && write.phase === 'running') {
       inp.classList.remove('stalling');
       $('writeHint').textContent = '';
@@ -2175,7 +2328,7 @@ const ARCH_FILTERS = [
   { id: 'chat', label: 'Chat', source: 'chat' },
 ];
 const ARCH_PAGE = 50;
-const SOURCE_LABELS = { practice: 'practice', three: '3 ways', replay: 'replay', write: 'write', free: 'freewrite', chat: 'chat', react: 'react' };
+const SOURCE_LABELS = { practice: 'practice', three: '3 ways', replay: 'replay', write: 'write', free: 'freewrite', chat: 'chat', react: 'react', copy: 'copy' };
 let arch = { q: '', filter: 'all', rows: [], more: true, loading: false, seq: 0 };
 let archTimer = null;
 
@@ -2787,6 +2940,11 @@ const RMODES = [
     desc: 'hear a sentence read aloud, type or say what you heard',
   },
   {
+    id: 'core',
+    label: '⭐ Your 100',
+    desc: 'your starred chunks, 10 seconds each — 3 exact in a row and it’s owned',
+  },
+  {
     id: 'sense',
     label: '👂 Sounds right?',
     desc: 'two sentences, tap the natural one — mostly your own old slips',
@@ -2919,6 +3077,7 @@ function randomBegin(mode) {
   else if (mode === 'context') rxSession = { mode: 'context' };
   else if (mode === 'dictation') rxSession = { mode: 'dictation' };
   else if (mode === 'sense') rxSession = { mode: 'sense', recent: [] };
+  else if (mode === 'core') rxSession = { mode: 'core' };
   else rxSession = { mode: 'shuffle' };
   $('randomEyebrow').textContent = 'Random · ' + RMODES.find((m) => m.id === mode).label;
   $('randomModes').innerHTML = RMODES.map(
@@ -2933,7 +3092,84 @@ function randomBegin(mode) {
   ).join('');
   if (mode === 'dictation') dictationNext();
   else if (mode === 'sense') senseNext();
+  else if (mode === 'core') coreNext();
   else rxNext();
+}
+
+/* ---- ⭐ your 100: the chunks you want automatic ---- */
+const CORE_CAP = 100,
+  CORE_SECONDS = 10,
+  CORE_STREAK = 3;
+let coreCur = null,
+  coreTimer = null;
+function toggleCore(i) {
+  const c = chunks[i];
+  if (!c || c.coreDone) return;
+  if (!c.core && chunks.filter((x) => x.core).length >= CORE_CAP) {
+    alert('Your 100 is full. Un-star one first.');
+    return;
+  }
+  c.core = !c.core;
+  chunkSave(c);
+  renderChunks();
+}
+function coreNext() {
+  clearInterval(coreTimer);
+  const pool = chunks
+    .map((c, i) => i)
+    .filter((i) => chunks[i].core && !chunks[i].coreDone && drillBlank(chunks[i].chunk, chunks[i].example || '').hasBlank);
+  const owned = chunks.filter((c) => c.coreDone).length,
+    starred = chunks.filter((c) => c.core).length;
+  if (!pool.length) {
+    $('randomBody').innerHTML =
+      '<div class="empty">' +
+      (starred ? '✓ Every starred chunk is owned (' + owned + '). Star more in My chunks.' : 'Star chunks in My chunks (☆ Your 100) to build your list.') +
+      '</div>';
+    return;
+  }
+  const idx = pool[Math.floor(Math.random() * pool.length)],
+    c = chunks[idx];
+  const bl = drillBlank(c.chunk, c.example);
+  coreCur = { idx, answer: bl.answer, left: CORE_SECONDS, done: false };
+  $('randomBody').innerHTML =
+    '<div class="rxMeta">⭐ ' + owned + ' / ' + CORE_CAP + ' owned · streak on this one: ' + (c.coreStreak || 0) + '/' + CORE_STREAK + '</div>' +
+    '<div class="drillSentence">' + bl.html + '</div>' +
+    '<div class="clock" id="coreClock" style="text-align:right">' + CORE_SECONDS + '</div>' +
+    '<input class="drillIn" id="coreInput" autocomplete="off" placeholder="Exact words, fast…">' +
+    '<div id="coreVerdict"></div>';
+  const inp = $('coreInput');
+  inp.focus({ preventScroll: true });
+  inp.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault(); /* or the same Enter also "clicks" the Next button focused below */
+    coreCheck();
+  });
+  coreTimer = setInterval(() => {
+    if (!coreCur || coreCur.done || !$('coreClock')) return clearInterval(coreTimer); /* left the mode */
+    coreCur.left--;
+    $('coreClock').textContent = Math.max(0, coreCur.left);
+    if (coreCur.left <= 0) coreCheck();
+  }, 1000);
+}
+/* Exact words only (punctuation and case aside): owning means no hesitation. */
+function coreCheck() {
+  if (!coreCur || coreCur.done) return;
+  coreCur.done = true;
+  clearInterval(coreTimer);
+  const c = chunks[coreCur.idx],
+    typed = $('coreInput').value;
+  const ok = !!norm(typed) && norm(typed) === norm(coreCur.answer);
+  c.coreStreak = ok ? (c.coreStreak || 0) + 1 : 0;
+  if (c.coreStreak >= CORE_STREAK) c.coreDone = true;
+  scoreRandom(c, ok); /* saves the chunk too */
+  $('coreInput').disabled = true;
+  $('coreVerdict').innerHTML =
+    (ok
+      ? '<p class="verdict good">✓ ' + (c.coreDone ? 'Owned! “' + esc(c.chunk) + '” is yours.' : c.coreStreak + ' in a row') + '</p>'
+      : '<p class="verdict badv">✗ It was: <b>' + esc(coreCur.answer) + '</b> — streak back to 0</p>') +
+    '<div class="row"><button class="btn pulse js-next" onclick="coreNext()">Next →</button></div>';
+  const nb = $('coreVerdict').querySelector('.js-next');
+  if (nb) nb.focus({ preventScroll: true });
 }
 
 /* ---- sounds right?: pick the natural sentence (self-contained, like dictation) ---- */
@@ -3023,7 +3259,9 @@ function dictationNext() {
     '<div id="dictVerdict"></div>';
   $('dictInput').focus();
   $('dictInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') dictCheck();
+    if (e.key !== 'Enter') return;
+    e.preventDefault(); /* or the same Enter also "clicks" the Next button dictCheck focuses */
+    dictCheck();
   });
   dictPlay();
 }
@@ -4012,6 +4250,11 @@ function renderChunks() {
         '<div class="row"><button class="btn ghost" onclick="expandChunk(' +
         i +
         ')">🌱 Related</button>' +
+        '<button class="btn ghost" onclick="toggleCore(' +
+        i +
+        ')" title="Your 100: the chunks you want to own">' +
+        (c.coreDone ? '✓ owned' : c.core ? '⭐ in your 100' : '☆ Your 100') +
+        '</button>' +
         (leech
           ? '<button class="btn ghost" onclick="reformulateChunk(' +
             i +
@@ -4310,7 +4553,55 @@ async function boot() {
 }
 
 /* ================= ntfy reminders ================= */
+/* Micro-reps: state.ntfy.micro = {on, hours}; the server cron sends them. */
+function microCfg() {
+  const m = state.ntfy.micro || {};
+  return { on: !!m.on, hours: Array.isArray(m.hours) && m.hours.length ? m.hours : [10, 15, 20] };
+}
+function renderMicro() {
+  const m = microCfg();
+  $('microChip').textContent = m.on ? '⚡ on' : 'off';
+  $('microChip').classList.toggle('on', m.on);
+  $('microHours').value = m.hours.join(', ');
+}
+function toggleMicro() {
+  state.ntfy.micro = { ...microCfg(), on: !microCfg().on };
+  saveMicro(); /* reads the hours box as typed, then re-renders */
+}
+function saveMicro() {
+  const hours = [
+    ...new Set(
+      $('microHours')
+        .value.split(/[^0-9]+/)
+        .filter(Boolean)
+        .map(Number)
+        .filter((h) => h >= 0 && h <= 23),
+    ),
+  ].sort((a, b) => a - b);
+  if (!hours.length) {
+    $('microStatus').textContent = 'Enter hours like 10, 15, 20 (0–23).';
+    return;
+  }
+  state.ntfy.micro = { on: microCfg().on, hours };
+  state.ntfy.origin = location.origin; /* where the ping's tap should open */
+  state.ntfy.tzOffset = new Date().getTimezoneOffset();
+  saveState();
+  renderMicro();
+  $('microStatus').textContent = microCfg().on
+    ? 'On — pings at ' + hours.map((h) => pad(h) + ':00').join(', ') + '.'
+    : 'Off. Hours saved for when you switch it on.';
+}
+/* Opened from a micro ping (?quick=1): straight into one rep. */
+function maybeQuickStart() {
+  const q = new URLSearchParams(location.search);
+  if (!q.has('quick')) return;
+  history.replaceState(null, '', location.pathname);
+  showTab('practice');
+  startRep();
+  $('promptKind').textContent = '⚡ quick blurt · ' + $('promptKind').textContent;
+}
 function initNtfy() {
+  renderMicro();
   const sel = $('ntfyHour');
   sel.innerHTML = '';
   for (let h = 7; h <= 21; h++) {
@@ -5075,6 +5366,13 @@ function renderStats() {
     '<div class="statCell"><div class="statBig">' +
     chunks.length +
     '</div><p class="hint">chunks learned</p></div>' +
+    (chunks.some((c) => c.core)
+      ? '<div class="statCell"><div class="statBig">' +
+        chunks.filter((c) => c.coreDone).length +
+        ' / ' +
+        CORE_CAP +
+        '</div><p class="hint">⭐ owned of your 100</p></div>'
+      : '') +
     '<div class="statCell"><div class="statBig">' +
     state.streak +
     '</div><p class="hint">day streak</p></div>' +

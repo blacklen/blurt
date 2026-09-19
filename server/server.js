@@ -7,6 +7,7 @@
  * This is the local-dev twin of the Cloudflare Worker in ../worker.
  */
 
+const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
@@ -295,7 +296,8 @@ app.use(express.static(path.join(__dirname, '../worker/public')));
 // current hour matches the user's chosen time. The server owning the schedule
 // (rather than pre-queuing un-cancellable ntfy X-Delay messages) is what keeps
 // changing the reminder time from producing duplicate pings.
-let ntfyLastSent = null;
+let ntfyLastSent = null,
+  microLastSent = null;
 async function fireDueReminder() {
   if (!NTFY_TOPIC) return;
   const row = db.prepare('SELECT value FROM documents WHERE key = ?').get('blurt:state');
@@ -306,22 +308,56 @@ async function fireDueReminder() {
   } catch (e) {
     return;
   }
-  if (!ntfy || !ntfy.on) return;
+  if (!ntfy) return;
   const off = Number(ntfy.tzOffset) || 0; // minutes the user's clock is behind UTC
   const local = new Date(Date.now() - off * 60000);
-  if (local.getUTCHours() !== Number(ntfy.hour)) return;
+  const hour = local.getUTCHours();
   const today = local.toISOString().slice(0, 10);
-  if (ntfyLastSent === today) return; // already sent today
-  ntfyLastSent = today;
-  try {
-    await fetch('https://ntfy.sh/' + encodeURIComponent(NTFY_TOPIC), {
-      method: 'POST',
-      headers: { 'X-Title': 'Blurt homework ⏰', 'X-Tags': 'books' },
-      body: reminderBody(today),
-    });
-  } catch (e) {
-    ntfyLastSent = null; // failed → let the next tick retry
+  if (ntfy.on && hour === Number(ntfy.hour) && ntfyLastSent !== today) {
+    ntfyLastSent = today;
+    try {
+      await fetch('https://ntfy.sh/' + encodeURIComponent(NTFY_TOPIC), {
+        method: 'POST',
+        headers: { 'X-Title': 'Blurt homework ⏰', 'X-Tags': 'books' },
+        body: reminderBody(today),
+      });
+    } catch (e) {
+      ntfyLastSent = null; // failed → let the next tick retry
+    }
   }
+  const mark = today + ':' + hour;
+  if (microHours(ntfy).includes(hour) && microLastSent !== mark) {
+    microLastSent = mark;
+    const headers = { 'X-Title': 'Quick blurt', 'X-Tags': 'zap' };
+    if (ntfy.origin && /^https?:\/\//.test(ntfy.origin)) headers['Click'] = ntfy.origin.replace(/\/+$/, '') + '/?quick=1';
+    try {
+      await fetch('https://ntfy.sh/' + encodeURIComponent(NTFY_TOPIC), {
+        method: 'POST',
+        headers,
+        body: '⚡ ' + microPrompt() + '\nSay it in English. Tap to answer.',
+      });
+    } catch (e) {
+      microLastSent = null;
+    }
+  }
+}
+// Same micro-rep rules as the Worker: hours from state.ntfy.micro, one
+// random Vietnamese prompt from the static bank.
+function microHours(ntfy) {
+  const m = ntfy && ntfy.micro;
+  if (!m || !m.on || !Array.isArray(m.hours)) return [];
+  return m.hours.map(Number).filter((h) => h >= 0 && h <= 23);
+}
+let vnPrompts = null;
+function microPrompt() {
+  try {
+    if (!vnPrompts)
+      vnPrompts = JSON.parse(fs.readFileSync(path.join(__dirname, '../worker/public/prompts.json'), 'utf8')).filter(
+        (p) => p && p.kind === 'vn' && p.text
+      );
+    if (vnPrompts.length) return vnPrompts[Math.floor(Math.random() * vnPrompts.length)].text;
+  } catch (e) {}
+  return 'Hôm nay bạn thế nào?';
 }
 // Name an actual due chunk in the ping so it's useful at a glance.
 function reminderBody(today) {
