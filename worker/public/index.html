@@ -61,6 +61,7 @@
     <button id="tabPractice" class="active" onclick="showTab('practice')">Practice</button>
     <button id="tabRandom" onclick="showTab('random')">Random</button>
     <button id="tabChat" onclick="showTab('chat')">Chat</button>
+    <button id="tabWrite" onclick="showTab('write')">Write</button>
     <button id="tabDrill" onclick="showTab('drill')">Drill<span class="dueBadge" id="dueBadge" style="display:none">0</span></button>
     <button id="tabChunks" onclick="showTab('chunks')">My chunks (<span id="chunkCount">0</span>)</button>
     <button id="tabStats" onclick="showTab('stats')">Stats</button>
@@ -171,6 +172,24 @@
   </div>
 
   <!-- ============ CHAT ============ -->
+  <!-- ============ WRITE ============ -->
+  <div id="write" style="display:none">
+    <div class="card" id="writeCard">
+      <div class="chips" id="writeModes" style="margin-top:0"></div>
+      <div class="blurtHead">
+        <div>
+          <div class="eyebrow" id="writeEyebrow"></div>
+          <p class="promptText" id="writeSeed"></p>
+        </div>
+        <div class="clock" id="writeTimer" style="display:none"></div>
+      </div>
+      <textarea id="writeInput" autocomplete="off" spellcheck="false"></textarea>
+      <p class="hint" id="writeHint"></p>
+      <div class="row" id="writeActions"></div>
+      <div id="writeResult"></div>
+    </div>
+  </div>
+
   <div id="chat" style="display:none">
     <div class="card" id="chatCard">
       <div class="eyebrow">Conversation · live English role-play</div>
@@ -255,6 +274,12 @@
         <button class="btn ghost" onclick="saveHwReps()">Save</button>
       </div>
       <p class="hint" id="hwCfgStatus"></p>
+      <p class="hint" style="margin-top:16px">Freewrite length, in minutes.</p>
+      <div class="row">
+        <input id="freeMinIn" class="drillIn" type="number" min="1" max="30" step="1" style="margin-top:0;width:90px" inputmode="numeric">
+        <button class="btn ghost" onclick="saveFreeMin()">Save</button>
+      </div>
+      <p class="hint" id="freeMinStatus"></p>
     </div>
 
     <div class="card" id="voiceCard">

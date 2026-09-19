@@ -451,6 +451,7 @@ async function loadAll() {
     }
   }
   migrateRepLog();
+  if (state.write && state.write.date !== dayStr(0)) delete state.write; /* drafts last one day */
   if (!state.ntfy) state.ntfy = { on: false, hour: 14, tzOffset: new Date().getTimezoneOffset() };
   if (state.ntfy.on === undefined)
     state.ntfy.on = !!state.ntfy.topic; /* migrate old topic-based opt-in */
@@ -704,11 +705,16 @@ function renderHW() {
       ' banked — auto-used to cover a missed day. Earn one every 7-day run.</div>';
   }
   const n = smartNext();
-  if (n)
+  /* reps still owed → a freewrite is offered too; it counts as one rep */
+  const free = state.hw.reps < hwReps() && loggedIn();
+  if (n || free)
     html +=
-      '<div class="row"><button class="btn pulse" onclick="startSmartSession()">' +
-      n.label +
-      '</button></div>';
+      '<div class="row">' +
+      (free
+        ? '<button class="btn ' + (n ? 'ghost' : 'pulse') + '" onclick="startFreewriteFromHW()">✍️ Freewrite ' + freeMin() + ' min</button>'
+        : '') +
+      (n ? '<button class="btn pulse" onclick="startSmartSession()">' + n.label + '</button>' : '') +
+      '</div>';
   $('hwCard').innerHTML = html;
   if (state.streakFrozeNote) {
     delete state.streakFrozeNote;
@@ -790,6 +796,8 @@ function toggleSettings() {
     stopMic();
     $('hwRepsIn').value = state.settings.hwReps;
     $('hwCfgStatus').textContent = '';
+    $('freeMinIn').value = freeMin();
+    $('freeMinStatus').textContent = '';
     $('personalCtx').value = state.settings.context || '';
     $('ctxStatus').textContent = '';
     renderVoice();
@@ -824,13 +832,15 @@ function visibleSaveBtn() {
     .find((b) => b && !b.disabled && b.offsetParent !== null);
 }
 function showTab(t) {
-  ['practice', 'drill', 'random', 'chat', 'chunks', 'stats'].forEach(
+  if (t !== 'write' && write.phase === 'running') finishFreewrite(); /* leaving ends it; what's written counts */
+  ['practice', 'drill', 'random', 'chat', 'write', 'chunks', 'stats'].forEach(
     (x) => ($(x).style.display = x === t ? '' : 'none'),
   );
   $('tabPractice').classList.toggle('active', t === 'practice');
   $('tabDrill').classList.toggle('active', t === 'drill');
   $('tabRandom').classList.toggle('active', t === 'random');
   $('tabChat').classList.toggle('active', t === 'chat');
+  $('tabWrite').classList.toggle('active', t === 'write');
   $('tabChunks').classList.toggle('active', t === 'chunks');
   $('tabStats').classList.toggle('active', t === 'stats');
   if (t !== 'drill')
@@ -840,6 +850,7 @@ function showTab(t) {
   if (t === 'drill') drillNext();
   if (t === 'random') randomLauncher();
   if (t === 'chat') convLauncher();
+  if (t === 'write') writeRender();
   if (t === 'stats') renderStats();
   if (t !== 'practice') {
     stopTimer();
@@ -1564,6 +1575,389 @@ async function finishReplay(blurt) {
   $('chunkText').textContent = out.chunk || '—';
   $('noteText').textContent = out.note || '';
 }
+
+/* ================= write tab: freewrite, journal, draft ================= */
+const WRITE_MODES = [
+  { id: 'free', label: '⏱ Freewrite' },
+  { id: 'journal', label: '📓 Journal' },
+  { id: 'draft', label: '✉️ Draft a message' },
+];
+const STALL_MS = 5000; /* no keystroke this long → nudge */
+/* mode, seed prompt, and the live freewrite (timer, attempt) */
+let write = { mode: 'free', seed: null, phase: 'idle', left: 0, timer: null, lastKey: 0, attempt: null, sents: [] };
+
+function freeMin() {
+  return state.settings.freeMin || 3;
+}
+/* A Vietnamese sentence from the selected moods, as the freewrite's starting idea. */
+function freeSeed() {
+  const vn = PROMPTS.filter((p) => p.kind === 'vn');
+  const mine = vn.filter((p) => state.cats.includes(p.cat));
+  const src = mine.length ? mine : vn;
+  return src.length ? src[Math.floor(Math.random() * src.length)] : { text: 'Hôm nay của bạn thế nào?' };
+}
+function setWriteMode(m) {
+  if (write.phase === 'running') return; /* finish the freewrite first */
+  write.mode = m;
+  write.phase = 'idle';
+  write.attempt = null;
+  write.sents = [];
+  if (m === 'free') write.seed = freeSeed();
+  writeRender();
+}
+function writeRender() {
+  const m = write.mode,
+    inp = $('writeInput');
+  $('writeModes').innerHTML = WRITE_MODES.map(
+    (x) =>
+      '<button class="chip ' +
+      (m === x.id ? 'on' : '') +
+      '" onclick="setWriteMode(\'' +
+      x.id +
+      '\')">' +
+      x.label +
+      '</button>',
+  ).join('');
+  $('writeTimer').style.display = m === 'free' ? '' : 'none';
+  inp.classList.remove('stalling');
+  if (m === 'free') {
+    if (!write.seed) write.seed = freeSeed();
+    $('writeEyebrow').textContent = 'no backspace · keep going';
+    $('writeSeed').textContent = write.seed.text;
+    inp.placeholder = 'Start typing in English. Anything that comes to mind. Mistakes stay.';
+    if (write.phase === 'idle') {
+      inp.value = '';
+      inp.disabled = true;
+      $('writeTimer').textContent = fmtClock(freeMin() * 60);
+      $('writeHint').textContent =
+        freeMin() + ' minutes, no deleting, no pasting. It only gets checked if you ask.';
+      $('writeActions').innerHTML =
+        '<button class="btn pulse" onclick="startFreewrite()">▶ Start ' +
+        freeMin() +
+        ':00</button><button class="btn ghost" onclick="setWriteMode(\'free\')">Another idea</button>';
+      $('writeResult').innerHTML = '';
+    }
+  } else {
+    const journal = m === 'journal';
+    $('writeEyebrow').textContent = journal ? 'Journal · casual' : 'Draft · a real message';
+    $('writeSeed').textContent = journal
+      ? 'What happened today? A few sentences.'
+      : 'Write the Slack message or email you actually need to send.';
+    inp.placeholder = journal
+      ? 'Today I…'
+      : 'Hi Minh, quick question about…';
+    inp.disabled = false;
+    const saved = state.write && state.write.date === dayStr(0) && state.write.mode === m ? state.write.text : '';
+    if (write.phase === 'idle') {
+      inp.value = saved || '';
+      $('writeResult').innerHTML = '';
+    }
+    $('writeHint').textContent = journal
+      ? 'Each sentence comes back as ✓ already natural, or with only the mistakes marked.'
+      : 'Keeps your tone. Fixes only what a native colleague would notice.';
+    $('writeActions').innerHTML = '<button class="btn pulse" id="writeCheckBtn" onclick="writeCheckNow()">Check it</button>';
+  }
+}
+function fmtClock(s) {
+  return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+/* ---- freewrite: forward-only typing ---- */
+function startFreewrite() {
+  const inp = $('writeInput');
+  write.phase = 'running';
+  write.left = freeMin() * 60;
+  write.lastKey = Date.now();
+  write.attempt = null;
+  inp.value = '';
+  inp.disabled = false;
+  inp.focus();
+  $('writeTimer').textContent = fmtClock(write.left);
+  $('writeHint').textContent = '';
+  $('writeActions').innerHTML = '';
+  $('writeResult').innerHTML = '';
+  clearInterval(write.timer);
+  write.timer = setInterval(freewriteTick, 1000);
+}
+function freewriteTick() {
+  write.left--;
+  $('writeTimer').textContent = fmtClock(Math.max(0, write.left));
+  const stalled = Date.now() - write.lastKey > STALL_MS;
+  $('writeInput').classList.toggle('stalling', stalled);
+  $('writeHint').textContent = stalled ? 'keep typing…' : '';
+  if (write.left <= 0) finishFreewrite();
+}
+/* Only ever append: deletes, cuts, pastes and drops are refused, and typing
+   anywhere but the end is moved to the end. beforeinput covers phone keyboards,
+   whose keydown events don't say which key was pressed. */
+function freewriteGuard(e) {
+  if (write.mode !== 'free' || write.phase !== 'running') return;
+  const inp = $('writeInput');
+  const t = e.inputType || '';
+  if (t.startsWith('delete') || t === 'insertFromPaste' || t === 'insertFromDrop' || t === 'historyUndo' || t === 'historyRedo') {
+    e.preventDefault();
+    return;
+  }
+  const atEnd = inp.selectionStart === inp.value.length && inp.selectionEnd === inp.value.length;
+  if (!atEnd && (t === 'insertText' || t === 'insertLineBreak' || t === 'insertParagraph')) {
+    e.preventDefault();
+    inp.value += t === 'insertText' ? e.data || '' : '\n';
+    caretToEnd();
+    write.lastKey = Date.now();
+  }
+}
+function caretToEnd() {
+  const inp = $('writeInput');
+  inp.setSelectionRange(inp.value.length, inp.value.length);
+}
+function freewriteWords(text) {
+  return (text.match(/[A-Za-z0-9'’]+/g) || []).length;
+}
+function finishFreewrite() {
+  clearInterval(write.timer);
+  write.timer = null;
+  if (write.phase !== 'running') return;
+  write.phase = 'done';
+  const inp = $('writeInput');
+  inp.disabled = true;
+  inp.classList.remove('stalling');
+  const text = inp.value.trim();
+  const words = freewriteWords(text);
+  const mins = (freeMin() * 60 - Math.max(0, write.left)) / 60 || freeMin();
+  if (words) {
+    write.attempt = logAttempt({ source: 'free', kind: 'free', prompt: write.seed.text, blurt: text, clean: null });
+    creditRep();
+  }
+  $('writeHint').textContent = '';
+  $('writeResult').innerHTML =
+    '<div class="writeSum">' +
+    words +
+    ' words · ' +
+    Math.round(words / mins) +
+    ' per minute</div>' +
+    (words ? '<p class="hint">Saved as it is. Nobody graded it.</p>' : '<p class="hint">Nothing written — nothing logged. Try again?</p>');
+  $('writeActions').innerHTML =
+    (words && loggedIn()
+      ? '<button class="btn" id="writeCheckBtn" onclick="writeCheckNow()">What would a native tweak?</button>'
+      : '') + '<button class="btn ghost" onclick="setWriteMode(\'free\')">Again</button>';
+}
+
+/* ---- checking: one AI call, one verdict per sentence ---- */
+async function writeCheck(mode, text) {
+  const ctx = (state.settings.context || '').trim();
+  const instr =
+    mode === 'draft'
+      ? 'This is a real work message they are about to send. Keep their tone, intent and length; fix only what a native colleague would notice.'
+      : mode === 'free'
+        ? 'This is a timed freewrite: fast, unedited, stream of thought. Judge it as casual written English.'
+        : 'This is a casual journal entry, like a diary or a text to a friend. Casual register is fine.';
+  const msg = `You are a friendly English coach for a Vietnamese software developer building confidence in writing.
+${instr}
+${ctx ? 'Their context (names, role, project): ' + ctx : ''}
+Their text:
+"""${text}"""
+Split it into sentences, in order; don't merge, drop or reorder any. For each sentence return:
+{"original":"the sentence exactly as written","fixed":"THEIR sentence minimally corrected: keep their words and structure, change only what is wrong or unnatural. Copy it exactly if nothing needs changing.","natural":"how a native would phrase it, or empty if fixed already is","chunk":"one reusable multi-word phrase from fixed or natural worth saving, or empty","clean":true or false (true = no meaningful change needed, ignoring capitalization and punctuation),${TAGS_FIELD}}
+Reply with ONLY JSON: {"sentences":[...],"note":"one encouraging line (max 25 words) about the whole text: what worked, and the one thing to watch","ready":"${mode === 'draft' ? 'the full message, cleaned up, in their tone, ready to send' : ''}"}`;
+  const obj = await aiObj({
+    contents: [{ parts: [{ text: msg }] }],
+    generationConfig: { responseMimeType: 'application/json' },
+  });
+  if (!obj || !Array.isArray(obj.sentences)) return null;
+  const sents = obj.sentences
+    .filter((x) => x && x.original && String(x.original).trim())
+    .map((x) => {
+      const original = String(x.original).trim(),
+        fixed = String(x.fixed || x.original).trim();
+      const natural = x.natural && norm(x.natural) !== norm(fixed) ? String(x.natural).trim() : '';
+      return {
+        original,
+        fixed,
+        natural,
+        chunk: String(x.chunk || '').trim(),
+        tags: cleanTags(x.tags),
+        clean: truthy(x.clean) || norm(original) === norm(fixed),
+      };
+    });
+  if (!sents.length) return null;
+  return { sents, note: String(obj.note || ''), ready: String(obj.ready || '') };
+}
+async function writeCheckNow() {
+  const mode = write.mode;
+  const text = $('writeInput').value.trim();
+  if (!text) return;
+  const btn = $('writeCheckBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Reading…';
+  }
+  const res = await writeCheck(mode, text);
+  if (!res) {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Try again';
+    }
+    $('writeResult').innerHTML =
+      '<p class="hint">Couldn\'t reach the AI. Your text is still here' + (mode === 'free' ? ' and saved' : '') + '.</p>';
+    return;
+  }
+  const seed = $('writeSeed').textContent;
+  if (mode === 'free' && write.attempt) {
+    /* grade the freewrite you already logged: same id, so it's an update */
+    write.attempt = logAttempt({
+      ...write.attempt,
+      fix: res.sents.map((x) => x.fixed).join(' '),
+      natural: res.sents.map((x) => x.natural || x.fixed).join(' '),
+      note: res.note,
+      tags: [...new Set(res.sents.flatMap((x) => x.tags))],
+      clean: res.sents.every((x) => x.clean),
+    });
+  } else {
+    res.sents.forEach((x) =>
+      logAttempt({
+        source: 'write',
+        kind: mode,
+        prompt: seed,
+        blurt: x.original,
+        fix: x.fixed,
+        natural: x.natural,
+        tags: x.tags,
+        clean: x.clean,
+      }),
+    );
+    creditRep();
+  }
+  write.phase = 'checked';
+  write.sents = res.sents;
+  write.ready = res.ready;
+  writeRenderResult(res);
+  if (btn) btn.remove();
+}
+/* The example saved with a chunk must contain it, or Drill can't blank it. */
+function writeChunkExample(x) {
+  if (!x.chunk) return '';
+  if (drillBlank(x.chunk, x.fixed).hasBlank) return x.fixed;
+  if (x.natural && drillBlank(x.chunk, x.natural).hasBlank) return x.natural;
+  return '';
+}
+function writeRenderResult(res) {
+  const n = res.sents.length,
+    c = res.sents.filter((x) => x.clean).length;
+  let html =
+    '<div class="writeSum" style="color:var(--mint)">✓ ' +
+    c +
+    ' of ' +
+    n +
+    ' sentence' +
+    (n > 1 ? 's' : '') +
+    ' already natural</div>' +
+    (res.note ? '<p class="note">' + esc(res.note) + '</p>' : '');
+  res.sents.forEach((x, i) => {
+    html +=
+      '<div class="writeSent">' +
+      (x.clean
+        ? '<div class="cleanSent">✓ ' + esc(x.fixed) + '</div>'
+        : '<div class="natural diff">' + wordDiff(x.original, x.fixed) + '</div>') +
+      (x.natural ? '<details><summary>show a native version</summary>' + esc(x.natural) + '</details>' : '') +
+      (writeChunkExample(x)
+        ? '<div class="chunkBox"><div>chunk → <b>' +
+          esc(x.chunk) +
+          '</b></div><button class="btn ghost" id="writeSave' +
+          i +
+          '" onclick="saveWriteChunk(' +
+          i +
+          ')">Save</button></div>'
+        : '') +
+      '</div>';
+  });
+  const savable = res.sents.filter(writeChunkExample).length;
+  if (savable > 1)
+    html += '<div class="row"><button class="btn ghost" id="writeSaveAll" onclick="saveWriteChunk(\'all\')">Save all ' + savable + ' chunks</button></div>';
+  if (write.mode === 'draft' && res.ready)
+    html +=
+      '<div class="eyebrow" style="margin-top:22px">Clean version</div><div class="natural writeReady">' +
+      esc(res.ready) +
+      '</div><div class="row"><button class="btn pulse" id="writeCopyBtn" onclick="copyWriteReady()">Copy the clean version</button></div>';
+  $('writeResult').innerHTML = html;
+}
+async function saveWriteChunk(which) {
+  const idx = which === 'all' ? write.sents.map((_, i) => i) : [which];
+  const added = [];
+  idx.forEach((i) => {
+    const x = write.sents[i],
+      b = $('writeSave' + i);
+    const example = x && writeChunkExample(x);
+    if (!example || !b || b.disabled) return;
+    added.push({ ...newChunkBase(), chunk: x.chunk, example, context: x.original });
+    b.textContent = 'Saved ✓';
+    b.disabled = true;
+  });
+  if (!added.length) return;
+  added.forEach((c) => chunks.unshift(c));
+  await chunkAddMany(added);
+  if (which === 'all') {
+    $('writeSaveAll').textContent = 'Saved ✓';
+    $('writeSaveAll').disabled = true;
+  }
+  renderHeader();
+  renderHW();
+}
+async function copyWriteReady() {
+  const b = $('writeCopyBtn');
+  try {
+    await navigator.clipboard.writeText(write.ready || '');
+    b.textContent = 'Copied ✓';
+  } catch (e) {
+    b.textContent = 'Copy failed — select it by hand';
+  }
+}
+/* Journal/draft text survives a reload until the day ends. */
+let writeSaveTimer = null;
+function persistWriteText() {
+  if (write.mode === 'free') return;
+  clearTimeout(writeSaveTimer);
+  writeSaveTimer = setTimeout(() => {
+    state.write = { date: dayStr(0), mode: write.mode, text: $('writeInput').value };
+    saveState();
+  }, 800);
+}
+function saveFreeMin() {
+  const n = Math.floor(Number($('freeMinIn').value));
+  if (!(n >= 1 && n <= 30)) {
+    $('freeMinStatus').textContent = 'Enter a whole number from 1 to 30.';
+    return;
+  }
+  state.settings.freeMin = n;
+  $('freeMinIn').value = n;
+  saveState();
+  if (write.phase !== 'running') writeRender();
+  $('freeMinStatus').textContent = 'Saved — ' + n + ' minute' + (n === 1 ? '' : 's') + '.';
+}
+function startFreewriteFromHW() {
+  showTab('write');
+  setWriteMode('free');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = $('writeInput');
+  inp.addEventListener('beforeinput', freewriteGuard);
+  ['cut', 'paste', 'drop'].forEach((ev) =>
+    inp.addEventListener(ev, (e) => {
+      if (write.mode === 'free' && write.phase === 'running') e.preventDefault();
+    }),
+  );
+  inp.addEventListener('keydown', (e) => {
+    if (write.mode === 'free' && write.phase === 'running' && (e.key === 'Backspace' || e.key === 'Delete'))
+      e.preventDefault();
+  });
+  inp.addEventListener('input', () => {
+    write.lastKey = Date.now();
+    if (write.mode === 'free' && write.phase === 'running') {
+      inp.classList.remove('stalling');
+      $('writeHint').textContent = '';
+      caretToEnd();
+    } else persistWriteText();
+  });
+});
 
 /* ================= voice ================= */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;

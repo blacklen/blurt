@@ -95,6 +95,7 @@
   /* homework card */
   .hw{background:var(--heroBg);color:var(--heroFg);border-radius:18px;padding:20px 24px;margin-bottom:16px}
   .hw .eyebrow{color:#A9A7C2}
+  .hw .btn.ghost{color:var(--heroFg);border-color:rgba(251,250,246,.45)}
   .hwItem{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:1rem;font-weight:500}
   .hwItem .box{width:22px;height:22px;border-radius:7px;border:2px solid #4B4D66;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;flex:none}
   .hwItem.done .box{background:var(--mint);border-color:var(--mint)}
@@ -142,6 +143,18 @@
   /* "Nothing to fix" leads the result card, and is louder than any correction. */
   .cleanLead{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.5rem;line-height:1.25;color:var(--mint);border:2px solid var(--mint);border-radius:14px;padding:14px 16px;margin-bottom:14px}
   .blurred{filter:blur(6px);user-select:none}
+
+  /* Write tab */
+  #writeInput{min-height:160px;resize:vertical}
+  #writeInput.stalling{animation:stall 1.2s ease-in-out infinite}
+  @keyframes stall{50%{opacity:.45;border-color:var(--pulse)}}
+  .writeSum{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.3rem;margin-top:18px}
+  .writeSent{margin-top:14px}
+  .writeSent .cleanSent{color:var(--mint);font-size:1.05rem;line-height:1.5}
+  .writeSent details{margin-top:6px;font-size:.9rem;color:var(--muted)}
+  .writeSent summary{cursor:pointer;font-weight:600}
+  .writeSent .chunkBox{margin-top:8px;padding:9px 14px}
+  .writeReady{white-space:pre-wrap}
   #typeBackOut .natural{margin-top:12px}
 
   .spin{display:inline-block;width:16px;height:16px;border:2.5px solid var(--ink);border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-right:8px}
