@@ -1,5 +1,9 @@
 name = "blurt"
 main = "src/index.js"
+# This login has more than one Cloudflare account, so wrangler must be told
+# which one owns the Worker and the D1 database (otherwise it guesses, and the
+# API answers 7403/7404). An account id is not a secret.
+account_id = "8662a7c5ebb4d152d076beea42bdaec6"
 compatibility_date = "2025-01-01"
 
 # Fire the daily homework reminder. Cron runs at the top of every hour; the

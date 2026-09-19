@@ -499,14 +499,22 @@ async function sendMicroPing(env, ntfy, today, hour) {
   await fetch('https://ntfy.sh/' + encodeURIComponent(env.NTFY_TOPIC), {
     method: 'POST',
     headers,
-    body: '⚡ ' + (await microPrompt(env)) + '\nSay it in English. Tap to answer.',
+    body: '⚡ ' + (await microPrompt(env, ntfy)) + '\nSay it in English. Tap to answer.',
   });
 }
-// A random Vietnamese prompt from the static bank (served by the assets binding).
-async function microPrompt(env) {
+// A random Vietnamese prompt from the static bank. Older wrangler versions drop
+// the ASSETS binding, so fall back to fetching the file from the app's own
+// origin (the one saved for the ping's tap target), then to a fixed line.
+async function microPrompt(env, ntfy) {
   const fallback = 'Hôm nay bạn thế nào?';
+  const origin = ntfy && ntfy.origin && /^https?:\/\//.test(ntfy.origin) ? ntfy.origin.replace(/\/+$/, '') : null;
   try {
-    const r = await env.ASSETS.fetch(new Request('https://assets.local/prompts.json'));
+    const r = env.ASSETS
+      ? await env.ASSETS.fetch(new Request('https://assets.local/prompts.json'))
+      : origin
+        ? await fetch(origin + '/prompts.json')
+        : null;
+    if (!r || !r.ok) return fallback;
     const vn = (await r.json()).filter((p) => p && p.kind === 'vn' && p.text);
     return vn.length ? vn[Math.floor(Math.random() * vn.length)].text : fallback;
   } catch (e) {
