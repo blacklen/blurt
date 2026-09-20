@@ -33,7 +33,6 @@ After you submit, Gemini shows you how a native speaker would say it, picks the 
 - **Streak system** — homework = 3 practice reps + all due drill chunks. Miss a day, streak resets.
 - **Phone reminders** — daily ntfy.sh ping at a configurable hour, sent by the server.
 - **Sure / unsure** — optional tap under the answer box; Stats → Calibration shows how often "unsure" answers were already clean.
-- **Predict the fix** — after Check, tap the words you think will change before the answer shows (switch off in Settings); Stats → Noticing tracks it.
 - **✔ used it** — mark a chunk you used for real; Stats and the weekly recap count them.
 - **Micro-rep pings** — optional pings at hours you choose (Settings), each with one Vietnamese sentence; tapping opens the app straight into a rep (`/?quick=1`).
 - **↓ simpler** — every correction can offer the same idea in smaller words, collapsed under the fix, savable as a chunk.

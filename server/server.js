@@ -56,7 +56,6 @@ db.exec(`
     tags       TEXT,
     clean      INTEGER,
     conf       TEXT,
-    pred       INTEGER,
     created_at TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_attempts_d ON attempts(d);
@@ -177,7 +176,7 @@ app.delete('/api/chunks/:id', (req, res) => {
 
 /* ================= attempts ================= */
 // Same column list, validation, row shape and filters as the Worker.
-const ATTEMPT_COLS = ['id', 'd', 'source', 'kind', 'prompt', 'blurt', 'fix', 'natural', 'note', 'tags', 'clean', 'conf', 'pred', 'created_at'];
+const ATTEMPT_COLS = ['id', 'd', 'source', 'kind', 'prompt', 'blurt', 'fix', 'natural', 'note', 'tags', 'clean', 'conf', 'created_at'];
 const MAX_ATTEMPTS_PER_REQUEST = 175; // matches the Worker's D1-driven cap
 
 function validAttempt(a) {
@@ -196,7 +195,7 @@ function attemptValues(a) {
   return [
     a.id, a.d, a.source, txt(a.kind), txt(a.prompt), txt(a.blurt), txt(a.fix), txt(a.natural),
     txt(a.note), txt(tags), bit(a.clean), a.conf === 'sure' || a.conf === 'unsure' ? a.conf : null,
-    bit(a.pred), a.created_at,
+    a.created_at,
   ];
 }
 function rowToAttempt(r) {
@@ -204,7 +203,6 @@ function rowToAttempt(r) {
     ...r,
     tags: r.tags ? r.tags.split(',') : [],
     clean: r.clean == null ? null : !!r.clean,
-    pred: r.pred == null ? null : !!r.pred,
   };
 }
 
@@ -243,7 +241,7 @@ app.post('/api/attempts', (req, res) => {
     `INSERT INTO attempts (${ATTEMPT_COLS.join(', ')}) VALUES (${ATTEMPT_COLS.map(() => '?').join(', ')})
      ON CONFLICT(id) DO UPDATE SET
        fix = excluded.fix, natural = excluded.natural, note = excluded.note, tags = excluded.tags,
-       clean = excluded.clean, conf = excluded.conf, pred = excluded.pred`
+       clean = excluded.clean, conf = excluded.conf`
   );
   db.transaction(() => list.forEach((a) => stmt.run(...attemptValues(a))))();
   res.json({ ok: true, saved: list.length });

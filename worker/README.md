@@ -92,7 +92,7 @@ Schema lives in `migrations/`. Three tables:
 |---|---|
 | `documents(key, value, updated_at)` | JSON blobs: `blurt:state`, `blurt:aiPrompts` |
 | `chunks(id, data, due, ord, updated_at)` | one row per saved chunk |
-| `attempts(id, d, source, kind, prompt, blurt, fix, natural, note, tags, clean, conf, pred, created_at)` | everything you've written, kept for good |
+| `attempts(id, d, source, kind, prompt, blurt, fix, natural, note, tags, clean, conf, created_at)` | everything you've written, kept for good |
 
 `ord` is the chunk's creation position, so the bank loads in the same order on
 every device. Editing a chunk never changes it.
@@ -176,7 +176,7 @@ Every route requires `Authorization: Bearer <APP_SECRET>`.
 | GET | `/api/chunks` | — | The whole chunk bank → `{ chunks }` |
 | PUT | `/api/chunks` | `{ chunks: [...] }` | Batch upsert chunks by `id` (≤ 500) |
 | DELETE | `/api/chunks/:id` | — | Delete one chunk |
-| POST | `/api/attempts` | `{ attempts: [...] }` | Batch upsert attempts by `id` (≤ 175). A repeat `id` updates only the grading fields (`fix`, `natural`, `note`, `tags`, `clean`, `conf`, `pred`) |
+| POST | `/api/attempts` | `{ attempts: [...] }` | Batch upsert attempts by `id` (≤ 175). A repeat `id` updates only the grading fields (`fix`, `natural`, `note`, `tags`, `clean`, `conf`) |
 | GET | `/api/attempts` | — | Newest first → `{ attempts }`. Filters: `since=YYYY-MM-DD`, `before=<created_at>`, `q=<text>` (searches blurt/fix/prompt), `clean=1`, `source=<s>`, `limit` (default 50, or 5000 with `since`) |
 | POST | `/api/ai` | `{ model?, body }` | Proxy a Gemini `generateContent` call |
 | POST | `/api/notify` | `{ title?, message, delay? }` | Proxy an ntfy notification |

@@ -85,14 +85,14 @@ Local dev: `cd worker && npm run db:migrate:local && npm run dev` (needs `worker
 
 ### Phase 2: Persistent attempt log, error tags, clean rate
 
-**Schema** `worker/migrations/0002_attempts.sql`, mirrored in `server.js` `db.exec`:
+**Schema** `worker/migrations/0002_attempts.sql` (+ `0003_drop_attempt_pred.sql`), mirrored in `server.js` `db.exec`:
 ```sql
 CREATE TABLE IF NOT EXISTS attempts (
   id TEXT PRIMARY KEY, d TEXT NOT NULL, source TEXT NOT NULL, kind TEXT,
   prompt TEXT, blurt TEXT, fix TEXT, natural TEXT, note TEXT, tags TEXT,
-  clean INTEGER, conf TEXT, pred INTEGER, created_at TEXT NOT NULL
+  clean INTEGER, conf TEXT, created_at TEXT NOT NULL
 );
--- conf: 'sure' | 'unsure' | NULL (Phase 9e).  pred: 1 = she predicted the fix correctly, 0 = missed, NULL = not played (Phase 9f).
+-- conf: 'sure' | 'unsure' | NULL (Phase 9e).  (`pred`, Phase 9f, was dropped in 0003 — see below.)
 CREATE INDEX IF NOT EXISTS idx_attempts_d ON attempts(d);
 CREATE INDEX IF NOT EXISTS idx_attempts_created ON attempts(created_at);
 ```
@@ -198,7 +198,7 @@ Eighteen small, self-contained features. Each is one chip, one button, one Rando
 
 **Self-trust and noticing**
 - **9e Sure or unsure** — two small toggles under the Practice textarea, `😐 unsure · 😎 sure` (optional, default none); stored as `conf` on the attempt. Stats block **Calibration**: "felt unsure N times → clean M% of those / felt sure N → clean M%", last 30 days. If unsure-but-clean is high, say so in words.
-- **9f Predict the fix** — after Check, while the AI call is in flight, the result card shows the blurt as tappable words (`.predWord`, toggle class `.picked`) and a `Reveal` button. On reveal (or when the AI result lands and she taps Reveal), compare picked words with the `<del>` set from `wordDiff`; `pred = 1` if every changed word was picked and no more than one extra, else 0; clean reps with no picks count as 1. Stats: **Noticing** accuracy %.
+- **9f Predict the fix** — *removed 2026-09-20: it added nothing to a rep, and with no AI fix to diff against it marked every word a miss. Feature, `pred` column and the Noticing stat are all gone.* ~~after Check, while the AI call is in flight, the result card shows the blurt as tappable words (`.predWord`, toggle class `.picked`) and a `Reveal` button. On reveal (or when the AI result lands and she taps Reveal), compare picked words with the `<del>` set from `wordDiff`; `pred = 1` if every changed word was picked and no more than one extra, else 0; clean reps with no picks count as 1. Stats: **Noticing** accuracy %.~~
 - **9g Rewrite tomorrow** — Write-tab launcher offers `↻ Rewrite yesterday's entry` when an attempt with `source ∈ write|free|react` exists for `dayStr(-1)`. Shows only that entry's seed/prompt and its first 8 words as a cue, never the fix. She writes fresh; check via the Journal pipeline; then show yesterday's diff and today's diff side by side with the tag counts. Log `source:'rewrite'`.
 - **9h "I used it for real"** — `✔ used it` button on each chunk row: `c.used = (c.used||0)+1`, `c.lastUsed = dayStr(0)`, `chunkSave(c)`. Stats: `chunks used for real this week: N`; the weekly recap names them.
 
@@ -222,7 +222,7 @@ Plain `<script>` tags in dependency order so inline `onclick` globals keep worki
 ```
 core.js      $, esc, norm, dayStr, daysBetween, state, chunks, attempts, CATS, PTYPES, ERROR_TAGS, wordDiff
 sync.js      api, aiObj, queue*, flush, store, loadAll, loadChunks, loadAttempts, logAttempt
-practice.js  pool/pickPrompt, startRep…finishRep, askGemini*, replay, three-ways, ladder, genPrompt, type-it-back, sure/unsure, predict-the-fix, quick blurt
+practice.js  pool/pickPrompt, startRep…finishRep, askGemini*, replay, three-ways, ladder, genPrompt, type-it-back, sure/unsure, quick blurt
 drill.js     SM-2, drillBlank, drillNext…gradeDrill
 random.js    RMODES, rx*, dictation, sounds-right, core (Your 100)
 chat.js      conv*

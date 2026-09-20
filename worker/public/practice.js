@@ -425,14 +425,6 @@ async function finishRep() {
   /* expr has no AI judging — the curated sample IS the model answer, so there's
      nothing for the AI to correct against. */
   const aiCall = judged ? askGemini(p, blurt) : Promise.resolve(null);
-  /* Predict the fix: while the AI works, tap the words you expect to change. */
-  const predicting = judged && state.settings.predict !== false;
-  let picks = null;
-  if (predicting) {
-    $('sitResult').style.display = 'none';
-    picks = await predictGate(blurt);
-    $('sitResult').style.display = '';
-  }
   result = await aiCall;
   /* No AI answer (blank rep, expr, or AI down): show the bank's sample only —
      never present it as a correction of what they wrote. */
@@ -454,8 +446,6 @@ async function finishRep() {
   showCalque(clean ? '' : result.calque);
 
   $('cleanLead').style.display = clean ? '' : 'none';
-  const pred = picks && !fallback && fixed ? predictScore(blurt, fixed, clean, picks) : null;
-  if (picks) predictShow(blurt, fixed, clean, picks, pred);
   const showFixed = judged && !!fixed && !clean;
   $('fixedBlock').style.display = showFixed ? '' : 'none';
   if (showFixed) {
@@ -511,72 +501,7 @@ async function finishRep() {
       tags: fallback ? [] : result.tags,
       clean: fallback || p.kind === 'expr' ? null : clean,
       conf: current.conf || null,
-      pred,
     });
-}
-
-/* ---- predict the fix ---- */
-let predictResolve = null;
-
-/* Shows your words as buttons; resolves with the picked word indexes on Reveal. */
-function predictGate(blurt) {
-  const words = blurt.split(/\s+/).filter(Boolean);
-  $('predBox').style.display = '';
-  $('predBox').innerHTML =
-    '<div class="eyebrow">🎯 Before you see it: tap the words you think will change</div>' +
-    '<div class="predWords">' +
-    words.map((w, i) => '<button class="predWord" data-i="' + i + '" onclick="this.classList.toggle(\'picked\')">' + esc(w) + '</button>').join('') +
-    '</div><div class="row"><button class="btn pulse" id="predReveal" onclick="predictReveal()">Reveal</button></div>';
-  $('predReveal').focus({ preventScroll: true });
-  return new Promise((res) => (predictResolve = res));
-}
-
-function predictReveal() {
-  const picks = [...document.querySelectorAll('#predBox .predWord.picked')].map((b) => Number(b.dataset.i));
-  $('predBox').innerHTML = '<p class="hint"><span class="spin"></span> Checking…</p>';
-  if (predictResolve) predictResolve(picks);
-  predictResolve = null;
-}
-
-/* Right when every changed word was picked (a missing word counts as found if
-   you picked a word next to the gap), with at most one extra pick. A clean rep
-   is right only with no picks. */
-function predictScore(blurt, fixed, clean, picks) {
-  const P = new Set(picks);
-  if (clean) return P.size === 0;
-  const { ops } = diffOps(blurt, fixed);
-  const n = blurt.split(/\s+/).filter(Boolean).length;
-  const dels = ops.filter((o) => o.op === 'del').map((o) => o.i);
-  const gaps = ops.filter((o) => o.op === 'ins').map((o) => [o.i - 1, o.i].filter((x) => x >= 0 && x < n));
-  const expected = new Set(dels.concat(...gaps));
-  const found = dels.every((d) => P.has(d)) && gaps.every((g) => !g.length || g.some((x) => P.has(x)));
-  return found && [...P].filter((x) => !expected.has(x)).length <= 1;
-}
-
-function predictShow(blurt, fixed, clean, picks, pred) {
-  const words = blurt.split(/\s+/).filter(Boolean);
-  const changed = new Set(clean ? [] : diffOps(blurt, fixed).ops.filter((o) => o.op === 'del').map((o) => o.i));
-  const P = new Set(picks);
-  $('predBox').innerHTML =
-    '<div class="eyebrow">🎯 ' +
-    (pred === null ? 'Your picks' : pred ? 'You saw it coming' : clean ? 'Nothing needed changing' : 'Not quite') +
-    '</div><div class="predWords">' +
-    words
-      .map((w, i) => '<button class="predWord' + (changed.has(i) ? (P.has(i) ? ' hit' : ' miss') : P.has(i) ? ' picked' : '') + '" disabled>' + esc(w) + '</button>')
-      .join('') +
-    '</div>';
-}
-
-function togglePredict() {
-  state.settings.predict = state.settings.predict === false;
-  saveState();
-  renderPredict();
-}
-
-function renderPredict() {
-  const on = state.settings.predict !== false;
-  $('predictChip').textContent = on ? '🎯 on' : 'off';
-  $('predictChip').classList.toggle('on', on);
 }
 
 /* Flag a word-for-word translation from Vietnamese when the AI spots one. */
@@ -988,9 +913,6 @@ function resetResultCard() {
   resetSaveBtn();
   $('cleanLead').style.display = 'none';
   $('simplerBox').style.display = 'none';
-  $('predBox').style.display = 'none';
-  $('predBox').innerHTML = '';
-  if (predictResolve) predictReveal(); /* a gate left open by leaving mid-rep */
   $('typeBack').style.display = 'none';
   $('typeBackIn').value = '';
   $('typeBackOut').innerHTML = '';

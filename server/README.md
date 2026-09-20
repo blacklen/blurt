@@ -61,7 +61,7 @@ Every route requires `Authorization: Bearer <APP_SECRET>`. Same as the Worker.
 | GET | `/api/chunks` | — | The whole chunk bank → `{ chunks }` |
 | PUT | `/api/chunks` | `{ chunks: [...] }` | Batch upsert chunks by `id` |
 | DELETE | `/api/chunks/:id` | — | Delete one chunk |
-| POST | `/api/attempts` | `{ attempts: [...] }` | Batch upsert attempts by `id` (≤ 175). A repeat `id` updates only the grading fields (`fix`, `natural`, `note`, `tags`, `clean`, `conf`, `pred`) |
+| POST | `/api/attempts` | `{ attempts: [...] }` | Batch upsert attempts by `id` (≤ 175). A repeat `id` updates only the grading fields (`fix`, `natural`, `note`, `tags`, `clean`, `conf`) |
 | GET | `/api/attempts` | — | Newest first → `{ attempts }`. Filters: `since=YYYY-MM-DD`, `before=<created_at>`, `q=<text>` (searches blurt/fix/prompt), `clean=1`, `source=<s>`, `limit` (default 50, or 5000 with `since`) |
 | POST | `/api/ai` | `{ model?, body }` | Proxy a Gemini `generateContent` call |
 | POST | `/api/notify` | `{ title?, message, delay? }` | Proxy an ntfy notification |

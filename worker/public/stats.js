@@ -278,15 +278,13 @@ function errorTypesHTML() {
   );
 }
 
-/* Calibration (how sure you felt vs how it went) and Noticing (predict the fix),
-   last 30 days. */
+/* Calibration: how sure you felt vs how it went, last 30 days. */
 function selfTrustHTML() {
   const recent = attempts.filter((a) => a.d >= dayStr(-29));
   const rate = (list) => (list.length ? Math.round((100 * list.filter((a) => a.clean).length) / list.length) : null);
   const graded = recent.filter((a) => a.clean != null);
   const unsure = graded.filter((a) => a.conf === 'unsure'),
     sure = graded.filter((a) => a.conf === 'sure');
-  const preds = recent.filter((a) => a.pred != null);
   let html = '';
   if (unsure.length || sure.length) {
     const u = rate(unsure),
@@ -300,13 +298,6 @@ function selfTrustHTML() {
         : '') +
       '</div>';
   }
-  if (preds.length)
-    html +=
-      '<div style="margin-top:22px"><div class="eyebrow">Noticing · 30 days</div><div class="statRow" style="margin-top:0"><div class="statCell"><div class="statBig">' +
-      rate(preds.map((a) => ({ clean: a.pred }))) +
-      '%</div><p class="hint">of ' +
-      preds.length +
-      ' reps, you called the fix before seeing it</p></div></div></div>';
   return html;
 }
 

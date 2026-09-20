@@ -171,13 +171,6 @@
   .simplerBox .natural{margin-top:10px;font-size:1rem}
   .confRow{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:.8rem;color:var(--muted)}
   .confRow .chip{padding:4px 11px}
-  #predBox{margin:0 0 16px}
-  .predWords{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-  .predWord{font:inherit;font-size:1rem;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:5px 9px;cursor:pointer}
-  .predWord.picked{border-color:var(--pulse);background:var(--soft)}
-  .predWord.hit{border-color:var(--mint);color:var(--mint)}
-  .predWord.miss{border-color:var(--bad);color:var(--bad);border-style:dashed}
-  .predWord:disabled{cursor:default}
   .reactMeta{display:block;font-family:'Instrument Sans',sans-serif;font-size:.75rem;font-weight:600;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
   .reactText{display:block;font-family:'Instrument Sans',sans-serif;font-weight:500;white-space:pre-wrap;background:var(--soft);border-radius:14px;padding:14px 16px;line-height:1.5}
 

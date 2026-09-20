@@ -479,7 +479,6 @@ function logAttempt(a) {
     tags: cleanTags(a.tags),
     clean: a.clean == null ? null : !!a.clean,
     conf: a.conf || null,
-    pred: a.pred == null ? null : !!a.pred,
     created_at: a.created_at || now,
   };
   const i = attempts.findIndex((x) => x.id === row.id);

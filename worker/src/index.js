@@ -172,7 +172,7 @@ async function putChunks(req, env) {
 /* ================= attempts (everything you've written) ================= */
 
 // Column order for inserts. Same list in server/server.js.
-const ATTEMPT_COLS = ['id', 'd', 'source', 'kind', 'prompt', 'blurt', 'fix', 'natural', 'note', 'tags', 'clean', 'conf', 'pred', 'created_at'];
+const ATTEMPT_COLS = ['id', 'd', 'source', 'kind', 'prompt', 'blurt', 'fix', 'natural', 'note', 'tags', 'clean', 'conf', 'created_at'];
 const ATTEMPT_ROWS_PER_STMT = Math.floor(100 / ATTEMPT_COLS.length); // 7
 const MAX_ATTEMPTS_PER_REQUEST = ATTEMPT_ROWS_PER_STMT * MAX_STMTS; // 175
 
@@ -193,7 +193,7 @@ function attemptValues(a) {
   return [
     a.id, a.d, a.source, txt(a.kind), txt(a.prompt), txt(a.blurt), txt(a.fix), txt(a.natural),
     txt(a.note), txt(tags), bit(a.clean), a.conf === 'sure' || a.conf === 'unsure' ? a.conf : null,
-    bit(a.pred), a.created_at,
+    a.created_at,
   ];
 }
 // Row → the shape the client works with.
@@ -202,7 +202,6 @@ function rowToAttempt(r) {
     ...r,
     tags: r.tags ? r.tags.split(',') : [],
     clean: r.clean == null ? null : !!r.clean,
-    pred: r.pred == null ? null : !!r.pred,
   };
 }
 // GET filters: since (d >= day), before (created_at <), q (text search over
@@ -261,7 +260,7 @@ async function postAttempts(req, env) {
         `INSERT INTO attempts (${ATTEMPT_COLS.join(', ')}) VALUES ${page.map(() => row).join(', ')}
          ON CONFLICT(id) DO UPDATE SET
            fix = excluded.fix, natural = excluded.natural, note = excluded.note, tags = excluded.tags,
-           clean = excluded.clean, conf = excluded.conf, pred = excluded.pred`
+           clean = excluded.clean, conf = excluded.conf`
       ).bind(...page.flatMap(attemptValues))
     );
   }

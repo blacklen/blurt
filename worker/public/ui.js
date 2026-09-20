@@ -254,7 +254,6 @@ function toggleSettings() {
     $('personalCtx').value = state.settings.context || '';
     $('ctxStatus').textContent = '';
     renderVoice();
-    renderPredict();
   } /* don't run a rep behind the panel */
 }
 
