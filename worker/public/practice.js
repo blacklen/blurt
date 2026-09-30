@@ -412,7 +412,7 @@ async function finishRep() {
 
   /* Every kind uses the same layout: your sentence with only the mistakes fixed
      (as a word diff), then a native version. */
-  const judged = !!blurt && p.kind !== 'expr';
+  const judged = !!blurt && p.kind !== 'expr' && p.kind !== 'vn';
   $('vnResult').style.display = 'none';
   $('sitResult').style.display = '';
   $('fixedBlock').style.display = judged ? '' : 'none';
@@ -422,8 +422,8 @@ async function finishRep() {
   $('noteText').textContent = '';
 
   let result = null;
-  /* expr has no AI judging — the curated sample IS the model answer, so there's
-     nothing for the AI to correct against. */
+  /* expr and vn have no AI judging — the curated sample IS the model answer, so
+     you compare it yourself (vn: the boss's call 2026-09-30). */
   const aiCall = judged ? askGemini(p, blurt) : Promise.resolve(null);
   result = await aiCall;
   /* No AI answer (blank rep, expr, or AI down): show the bank's sample only —
@@ -499,7 +499,7 @@ async function finishRep() {
       natural: native,
       note: result.note || '',
       tags: fallback ? [] : result.tags,
-      clean: fallback || p.kind === 'expr' ? null : clean,
+      clean: fallback || p.kind === 'expr' || p.kind === 'vn' ? null : clean,
       conf: current.conf || null,
     });
 }
