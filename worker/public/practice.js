@@ -156,6 +156,20 @@ function mixDrawKind() {
   return Math.random() * 100 < share ? 'vn' : 'sit';
 }
 
+/* recentPrompts dies on reload, so also lean on your answer history (synced,
+   last 90 days): prompts you never answered first; once a pool is used up,
+   the oldest-answered quarter of it. */
+function leastAnswered(ps) {
+  const last = new Map();
+  attempts.forEach((a) => {
+    if (a.prompt && a.created_at > (last.get(norm(a.prompt)) || '')) last.set(norm(a.prompt), a.created_at);
+  });
+  const fresh = ps.filter((p) => !last.has(norm(p.text)));
+  if (fresh.length) return fresh;
+  const byAge = ps.slice().sort((a, b) => (last.get(norm(a.text)) < last.get(norm(b.text)) ? -1 : 1));
+  return byAge.slice(0, Math.max(1, Math.ceil(byAge.length / 4)));
+}
+
 function pickPrompt() {
   const ps = pool();
   let avail = ps.filter((p) => !recentPrompts.includes(p.text));
@@ -169,6 +183,7 @@ function pickPrompt() {
     const byK = k ? avail.filter((p) => p.kind === k) : [];
     if (byK.length) avail = byK;
   }
+  avail = leastAnswered(avail);
   const p = avail[Math.floor(Math.random() * avail.length)];
   rememberPrompt(p.text);
   return p;
